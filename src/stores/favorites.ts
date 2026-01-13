@@ -30,35 +30,41 @@ if (typeof window !== 'undefined') {
 
 // Sync local favorites with Supabase if user is logged in
 export async function syncFavoritesWithSupabase() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
 
-    const userId = session.user.id;
-    const localIds = localFavorites.get();
+        const userId = session.user.id;
+        const localIds = localFavorites.get();
 
-    // Fetch remote favorites
-    const { data: remoteFavorites } = await supabase
-        .from('favorites')
-        .select('product_id')
-        .eq('user_id', userId);
-
-    const remoteIds = remoteFavorites?.map(f => f.product_id) || [];
-
-    // Combine and remove duplicates
-    const combinedIds = [...new Set([...localIds, ...remoteIds])];
-
-    // Update local store
-    localFavorites.set(combinedIds);
-
-    // Update remote store for any missing ones
-    const missingInRemote = localIds.filter(id => !remoteIds.includes(id));
-    if (missingInRemote.length > 0) {
-        await supabase
+        // Fetch remote favorites
+        const { data: remoteFavorites, error } = await supabase
             .from('favorites')
-            .upsert(missingInRemote.map(id => ({
-                user_id: userId,
-                product_id: id
-            })));
+            .select('product_id')
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        const remoteIds = remoteFavorites?.map(f => f.product_id) || [];
+
+        // Combine and remove duplicates
+        const combinedIds = [...new Set([...localIds, ...remoteIds])];
+
+        // Update local store
+        localFavorites.set(combinedIds);
+
+        // Update remote store for any missing ones
+        const missingInRemote = localIds.filter(id => !remoteIds.includes(id));
+        if (missingInRemote.length > 0) {
+            await supabase
+                .from('favorites')
+                .upsert(missingInRemote.map(id => ({
+                    user_id: userId,
+                    product_id: id
+                })));
+        }
+    } catch (e) {
+        console.warn('Failed to sync favorites:', e);
     }
 }
 

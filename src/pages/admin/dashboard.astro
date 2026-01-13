@@ -1,13 +1,9 @@
 ---
-import BaseLayout from '@layouts/BaseLayout.astro';
+import AdminLayout from '@layouts/AdminLayout.astro';
 import { supabase } from '@lib/supabase';
 
 const user = Astro.locals.user;
 const profile = Astro.locals.profile;
-
-if (!user || profile?.role !== 'admin') {
-  return Astro.redirect('/auth/login');
-}
 
 // Fetch dashboard stats
 const { data: products } = await supabase
@@ -30,222 +26,194 @@ const totalOrders = orders?.length || 0;
 const totalRevenue = orders?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
 const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
 
+// Helper to calculate total stock
+function getTotalStock(product: any) {
+  if (!product.stock_by_sizes) return 0;
+  return Object.values(product.stock_by_sizes as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0);
+}
+
 // Low stock products
-const lowStockProducts = products?.filter(p => {
-  if (!p.stock_by_sizes) return false;
-  const totalStock = Object.values(p.stock_by_sizes as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0);
-  return totalStock < 10;
-}) || [];
+const lowStockProducts = products?.filter(p => getTotalStock(p) < 10) || [];
 ---
 
-<BaseLayout title="Panel de Administración">
-  <div class="min-h-screen bg-gray-50">
-    <!-- Admin Header -->
-    <header class="bg-white border-b border-gray-200">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
-            <p class="text-sm text-gray-600">Bienvenido, {profile?.full_name || profile?.email}</p>
-          </div>
-          <div class="flex items-center gap-4">
-            <a href="/" class="text-sm text-gray-600 hover:text-black">
-              Ver tienda
-            </a>
-            <a href="/auth/logout" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
-              Cerrar Sesión
-            </a>
-          </div>
-        </div>
+<AdminLayout title="Dashboard" activeSection="dashboard">
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Revenue -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-gray-600">Ingresos Totales</h3>
+        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
       </div>
-    </header>
+      <p class="text-3xl font-bold text-gray-900">{totalRevenue.toFixed(2)}€</p>
+      <p class="text-sm text-gray-500 mt-1">Total acumulado</p>
+    </div>
 
-    <!-- Admin Navigation -->
-    <nav class="bg-white border-b border-gray-200">
-      <div class="container-custom">
-        <div class="flex gap-6">
-          <a href="/admin/dashboard" class="px-4 py-3 border-b-2 border-black font-medium text-black">
-            Dashboard
-          </a>
-          <a href="/admin/products" class="px-4 py-3 border-b-2 border-transparent font-medium text-gray-600 hover:text-black hover:border-gray-300 transition-colors">
-            Productos
-          </a>
-          <a href="/admin/orders" class="px-4 py-3 border-b-2 border-transparent font-medium text-gray-600 hover:text-black hover:border-gray-300 transition-colors">
-            Pedidos
-          </a>
-        </div>
+    <!-- Total Orders -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-gray-600">Pedidos</h3>
+        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
       </div>
-    </nav>
+      <p class="text-3xl font-bold text-gray-900">{totalOrders}</p>
+      <p class="text-sm text-gray-500 mt-1">{pendingOrders} pendientes</p>
+    </div>
 
-    <!-- Main Content -->
-    <main class="container-custom py-8">
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Revenue -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-600">Ingresos Totales</h3>
-            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-900">{totalRevenue.toFixed(2)}€</p>
-          <p class="text-sm text-gray-500 mt-1">Total acumulado</p>
-        </div>
-
-        <!-- Total Orders -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-600">Pedidos</h3>
-            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-            </svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-900">{totalOrders}</p>
-          <p class="text-sm text-gray-500 mt-1">{pendingOrders} pendientes</p>
-        </div>
-
-        <!-- Total Products -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-600">Productos</h3>
-            <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-900">{totalProducts}</p>
-          <p class="text-sm text-gray-500 mt-1">En catálogo</p>
-        </div>
-
-        <!-- Low Stock Alert -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-medium text-gray-600">Stock Bajo</h3>
-            <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-900">{lowStockProducts.length}</p>
-          <p class="text-sm text-gray-500 mt-1">Productos con poco stock</p>
-        </div>
+    <!-- Total Products -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-gray-600">Productos</h3>
+        <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
       </div>
+      <p class="text-3xl font-bold text-gray-900">{totalProducts}</p>
+      <p class="text-sm text-gray-500 mt-1">En catálogo</p>
+    </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Recent Orders -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-bold text-gray-900">Pedidos Recientes</h2>
-              <a href="/admin/orders" class="text-sm text-black hover:underline font-medium">
-                Ver todos
-              </a>
-            </div>
-          </div>
-          <div class="divide-y divide-gray-200">
-            {recentOrders && recentOrders.length > 0 ? (
-              recentOrders.map(order => (
-                <div class="p-4 hover:bg-gray-50 transition-colors">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-900">
-                      Pedido #{order.id.slice(0, 8)}
-                    </span>
-                    <span class={`px-2 py-1 text-xs font-medium rounded-full ${
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-600">{order.order_items?.length || 0} productos</p>
-                  <p class="text-sm font-bold text-gray-900 mt-1">{Number(order.total_amount).toFixed(2)}€</p>
-                </div>
-              ))
-            ) : (
-              <div class="p-8 text-center text-gray-500">
-                No hay pedidos todavía
-              </div>
-            )}
-          </div>
-        </div>
-
-        <!-- Low Stock Products -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-bold text-gray-900">Productos con Stock Bajo</h2>
-              <a href="/admin/products" class="text-sm text-black hover:underline font-medium">
-                Ver todos
-              </a>
-            </div>
-          </div>
-          <div class="divide-y divide-gray-200">
-            {lowStockProducts.length > 0 ? (
-              lowStockProducts.slice(0, 5).map(product => {
-                const totalStock = Object.values(product.stock_by_sizes as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0);
-                return (
-                  <div class="p-4 hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center justify-between">
-                      <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-900">{product.name}</p>
-                        <p class="text-xs text-gray-500 mt-1">Stock total: {totalStock} unidades</p>
-                      </div>
-                      <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
-                        Bajo stock
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div class="p-8 text-center text-gray-500">
-                Todos los productos tienen stock suficiente
-              </div>
-            )}
-          </div>
-        </div>
+    <!-- Low Stock Alert -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-medium text-gray-600">Stock Bajo</h3>
+        <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
       </div>
-
-      <!-- Quick Actions -->
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a href="/admin/products/new" class="bg-black text-white rounded-xl p-6 hover:bg-gray-800 transition-colors group">
-          <div class="flex items-center gap-4">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            <div>
-              <h3 class="font-bold text-lg">Añadir Producto</h3>
-              <p class="text-sm text-gray-300">Crear nuevo producto</p>
-            </div>
-          </div>
-        </a>
-
-        <a href="/admin/orders" class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-black transition-colors group">
-          <div class="flex items-center gap-4">
-            <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <div>
-              <h3 class="font-bold text-lg text-gray-900">Gestionar Pedidos</h3>
-              <p class="text-sm text-gray-600">Ver y actualizar pedidos</p>
-            </div>
-          </div>
-        </a>
-
-        <a href="/admin/products" class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-black transition-colors group">
-          <div class="flex items-center gap-4">
-            <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-            </svg>
-            <div>
-              <h3 class="font-bold text-lg text-gray-900">Ver Productos</h3>
-              <p class="text-sm text-gray-600">Gestionar inventario</p>
-            </div>
-          </div>
-        </a>
-      </div>
-    </main>
+      <p class="text-3xl font-bold text-gray-900">{lowStockProducts.length}</p>
+      <p class="text-sm text-gray-500 mt-1">Productos con poco stock</p>
+    </div>
   </div>
-</BaseLayout>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Orders -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900">Pedidos Recientes</h2>
+          <a href="/admin/orders" class="text-sm text-black hover:underline font-medium">
+            Ver todos
+          </a>
+        </div>
+      </div>
+      <div class="divide-y divide-gray-200">
+        {recentOrders && recentOrders.length > 0 ? (
+          recentOrders.map(order => (
+            <div class="p-4 hover:bg-gray-50 transition-colors">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-900">
+                  Pedido #{order.id.slice(0, 8)}
+                </span>
+                <span class={`px-2 py-1 text-xs font-medium rounded-full ${
+                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                  order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                  order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {order.status}
+                </span>
+              </div>
+              <p class="text-sm text-gray-600">{order.order_items?.length || 0} productos</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">{Number(order.total_amount).toFixed(2)}€</p>
+            </div>
+          ))
+        ) : (
+          <div class="p-8 text-center text-gray-500">
+            No hay pedidos todavía
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Low Stock Products -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900">Productos con Stock Bajo</h2>
+          <a href="/admin/products" class="text-sm text-black hover:underline font-medium">
+            Ver todos
+          </a>
+        </div>
+      </div>
+      <div class="divide-y divide-gray-200">
+        {lowStockProducts.length > 0 ? (
+          lowStockProducts.slice(0, 5).map(product => {
+            const totalStock = getTotalStock(product);
+            return (
+              <div class="p-4 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">{product.name}</p>
+                    <p class="text-xs text-gray-500 mt-1">Stock total: {totalStock} unidades</p>
+                  </div>
+                  <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
+                    Bajo stock
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div class="p-8 text-center text-gray-500">
+            Todos los productos tienen stock suficiente
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+    <a href="/admin/products/new" class="bg-black text-white rounded-xl p-6 hover:bg-gray-800 transition-colors group">
+      <div class="flex items-center gap-4">
+        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        <div>
+          <h3 class="font-bold text-lg">Añadir Producto</h3>
+          <p class="text-sm text-gray-300">Crear nuevo producto</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="/admin/categories" class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-black transition-colors group">
+      <div class="flex items-center gap-4">
+        <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <div>
+          <h3 class="font-bold text-lg text-gray-900">Categorías</h3>
+          <p class="text-sm text-gray-600">Gestionar familias</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="/admin/brands" class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-black transition-colors group">
+      <div class="flex items-center gap-4">
+        <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        <div>
+          <h3 class="font-bold text-lg text-gray-900">Marcas</h3>
+          <p class="text-sm text-gray-600">Gestionar marcas</p>
+        </div>
+      </div>
+    </a>
+
+    <a href="/admin/orders" class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-black transition-colors group">
+      <div class="flex items-center gap-4">
+        <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <div>
+          <h3 class="font-bold text-lg text-gray-900">Pedidos</h3>
+          <p class="text-sm text-gray-600">Ver pedidos</p>
+        </div>
+      </div>
+    </a>
+  </div>
+</AdminLayout>

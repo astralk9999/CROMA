@@ -111,35 +111,12 @@ export default function CartSlideOver() {
                 <span className="font-bold text-gray-700 uppercase tracking-wide">Total:</span>
                 <span className="text-2xl font-black text-black">{formatPrice(total)}</span>
               </div>
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/checkout', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        items: Object.values(items),
-                        origin: window.location.origin,
-                      }),
-                    });
-
-                    const data = await response.json();
-                    if (data.url) {
-                      window.location.href = data.url;
-                    } else {
-                      alert('Error al iniciar el pago: ' + (data.error || 'Desconocido'));
-                    }
-                  } catch (error) {
-                    console.error('Checkout error:', error);
-                    alert('Error de conexión al procesar el pago');
-                  }
-                }}
-                className="w-full py-4 bg-black text-white font-black uppercase tracking-wider hover:bg-gray-800 transition-colors"
+              <a
+                href="/checkout"
+                className="block w-full py-4 bg-black text-white font-black uppercase tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
                 Proceder al Pago
-              </button>
+              </a>
               <button
                 onClick={closeCart}
                 className="w-full py-2 text-black font-bold hover:underline uppercase tracking-wide"

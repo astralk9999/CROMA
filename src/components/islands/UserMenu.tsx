@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@lib/supabase';
 
-export default function UserMenu() {
+interface UserMenuProps {
+    initialProfile?: any;
+}
+
+export default function UserMenu({ initialProfile }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(initialProfile || null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -13,7 +17,8 @@ export default function UserMenu() {
             const { data: { session } } = await supabase.auth.getSession();
             setUser(session?.user ?? null);
 
-            if (session?.user) {
+            // Only fetch if we don't have an initial profile or if sesion user doesn't match
+            if (session?.user && !initialProfile) {
                 const { data } = await supabase
                     .from('profiles')
                     .select('*')
@@ -66,11 +71,13 @@ export default function UserMenu() {
                         className="fixed inset-0 z-40"
                         onClick={() => setIsOpen(false)}
                     ></div>
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                         {user ? (
                             <div className="py-2">
                                 <div className="px-4 py-3 border-b border-gray-200">
-                                    <p className="text-sm font-semibold text-gray-900">{profile?.full_name || 'Usuario'}</p>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        {profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario'}
+                                    </p>
                                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                                     {profile?.role === 'admin' && (
                                         <span className="inline-block mt-1 px-2 py-0.5 bg-black text-white text-xs font-medium rounded-full">

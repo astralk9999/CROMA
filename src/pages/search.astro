@@ -1,0 +1,76 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import ProductCard from '@components/product/ProductCard.astro';
+import { supabase } from '@lib/supabase';
+
+const query = Astro.url.searchParams.get('q') || '';
+
+let products: any[] = [];
+let loading = false;
+
+if (query) {
+  loading = true;
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .or(`name.ilike.%${query}%,description.ilike.%${query}%`) // Case insensitive search
+    .order('created_at', { ascending: false });
+  
+  if (!error && data) {
+    products = data;
+  }
+  loading = false;
+}
+
+// Get some random products if no search or no results? 
+// No, just show search bar.
+---
+
+<PublicLayout title={`Buscar: ${query || 'Productos'}`}>
+  <section class="container-custom py-12">
+    <div class="max-w-4xl mx-auto text-center mb-12">
+      <h1 class="text-4xl font-urban font-bold text-gray-900 mb-6 uppercase tracking-tighter">Buscar Productos</h1>
+      
+      <form action="/search" method="get" class="max-w-xl mx-auto relative">
+        <input 
+          type="text" 
+          name="q" 
+          value={query}
+          placeholder="Busca por nombre, categoría..." 
+          class="w-full px-6 py-4 text-lg border-2 border-gray-900 rounded-full focus:outline-none focus:ring-0 focus:border-brand-red transition-colors bg-white font-medium"
+          autofocus
+        />
+        <button 
+          type="submit" 
+          class="absolute right-2 top-2 bottom-2 bg-black text-white px-8 rounded-full hover:bg-gray-800 transition-colors font-bold uppercase tracking-wider"
+        >
+          Buscar
+        </button>
+      </form>
+    </div>
+
+    {query && (
+      <div class="mb-8">
+        <p class="text-gray-600 text-lg">
+          Resultados para "<span class="font-bold text-black">{query}</span>": {products.length} productos encontrados
+        </p>
+      </div>
+    )}
+
+    {products.length > 0 ? (
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+        {products.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+    ) : query ? (
+      <div class="text-center py-20 bg-gray-50 rounded-xl">
+        <p class="text-xl text-gray-500 font-medium">No se encontraron productos que coincidan con tu búsqueda.</p>
+        <p class="text-gray-400 mt-2">Intenta con otros términos o navega por las categorías.</p>
+        <a href="/productos" class="inline-block mt-6 text-black border-b-2 border-black hover:text-brand-red hover:border-brand-red transition-all font-bold">
+            Ver todo el catálogo ->
+        </a>
+      </div>
+    ) : null}
+  </section>
+</PublicLayout>

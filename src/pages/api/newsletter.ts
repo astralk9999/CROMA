@@ -15,23 +15,8 @@ export const POST: APIRoute = async ({ request }) => {
             });
         }
 
-        // Check if email already exists
-        const { data: existing } = await supabase
-            .from('newsletter_subscribers')
-            .select('email')
-            .eq('email', email.toLowerCase())
-            .single();
-
-        if (existing) {
-            return new Response(JSON.stringify({
-                message: '¡Ya estás suscrito! Gracias por tu interés.'
-            }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // Insert new subscriber
+        // Attempt to insert directly
+        // We rely on the database unique constraint to handle duplicates
         const { error } = await supabase
             .from('newsletter_subscribers')
             .insert({
@@ -39,6 +24,16 @@ export const POST: APIRoute = async ({ request }) => {
             });
 
         if (error) {
+            // Check for unique constraint violation (Postgres code 23505)
+            if (error.code === '23505') {
+                return new Response(JSON.stringify({
+                    message: '¡Ya estás suscrito! Gracias por tu interés.'
+                }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+
             console.error('Newsletter subscription error:', error);
             return new Response(JSON.stringify({
                 error: 'Error al suscribirse. Inténtalo de nuevo.'

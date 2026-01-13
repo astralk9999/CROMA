@@ -15,18 +15,32 @@ if (Astro.request.method === 'POST') {
   const fullName = formData.get('full_name') as string;
   const phone = formData.get('phone') as string;
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({
+  let redirectUrl = '/account/profile';
+
+  if (user) {
+    const updates = {
       full_name: fullName,
       phone: phone,
-    })
-    .eq('id', user.id);
+      updated_at: new Date(),
+    };
 
-  if (!error) {
-    return Astro.redirect('/account/profile?success=true');
+    // Use RPC for robust update
+    const { data: result, error } = await supabase.rpc('update_own_profile', {
+      p_full_name: updates.full_name,
+      p_phone: updates.phone
+    });
+
+    if (error) {
+      console.error('Profile update error:', error);
+      redirectUrl += `?error=${encodeURIComponent(error.message)}`;
+    } else {
+      redirectUrl += '?success=true';
+    }
   }
+  return Astro.redirect(redirectUrl);
 }
+
+const errorMsg = Astro.url.searchParams.get('error');
 
 const success = Astro.url.searchParams.get('success');
 ---
@@ -39,6 +53,12 @@ const success = Astro.url.searchParams.get('success');
       {success && (
         <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
           <p class="text-sm text-green-700">Perfil actualizado exitosamente</p>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+          <p class="text-sm text-red-700">Error al guardar: {errorMsg}</p>
         </div>
       )}
 

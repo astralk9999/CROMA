@@ -1,0 +1,261 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import { supabase } from '@lib/supabase';
+import { formatPrice } from '@lib/utils';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+// Require authentication
+if (!user) {
+  return Astro.redirect('/auth/login?redirect=/checkout');
+}
+---
+
+<PublicLayout title="Checkout">
+  <section class="container-custom py-12">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-3xl font-bold text-gray-900 mb-8">Finalizar Compra</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Checkout Form -->
+        <div class="lg:col-span-2">
+          <form id="checkout-form" class="space-y-6">
+            <!-- Shipping Address -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Dirección de Envío
+              </h2>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                  <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                  <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    required
+                    value={profile?.full_name || ''}
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="Tu nombre completo"
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required
+                    value={user?.email || ''}
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black bg-gray-50"
+                    readonly
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    required
+                    value={profile?.phone || ''}
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="Tu teléfono"
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
+                  <input 
+                    type="text" 
+                    id="address" 
+                    name="address" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="Calle, número, piso..."
+                  />
+                </div>
+
+                <div>
+                  <label for="city" class="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
+                  <input 
+                    type="text" 
+                    id="city" 
+                    name="city" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="Tu ciudad"
+                  />
+                </div>
+
+                <div>
+                  <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-1">Código Postal *</label>
+                  <input 
+                    type="text" 
+                    id="postal_code" 
+                    name="postal_code" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                    placeholder="12345"
+                  />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label for="country" class="block text-sm font-medium text-gray-700 mb-1">País *</label>
+                  <select 
+                    id="country" 
+                    name="country" 
+                    required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  >
+                    <option value="ES" selected>España</option>
+                    <option value="PT">Portugal</option>
+                    <option value="FR">Francia</option>
+                    <option value="IT">Italia</option>
+                    <option value="DE">Alemania</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Info -->
+            <div class="bg-gray-100 rounded-xl p-6 border border-gray-200">
+              <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                <div>
+                  <p class="font-bold text-gray-900">Pago seguro con Stripe</p>
+                  <p class="text-sm text-gray-600">Serás redirigido a Stripe para completar el pago de forma segura.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="submit-btn"
+              class="w-full py-4 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors text-lg"
+            >
+              Proceder al Pago
+            </button>
+          </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-4">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Resumen del Pedido</h2>
+            
+            <div id="cart-items" class="space-y-4 max-h-80 overflow-y-auto">
+              <!-- Items will be populated by JavaScript -->
+              <p class="text-gray-500 text-center py-4">Cargando carrito...</p>
+            </div>
+
+            <div class="border-t border-gray-200 mt-4 pt-4 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Subtotal</span>
+                <span id="subtotal" class="font-medium">0,00€</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Envío</span>
+                <span id="shipping" class="font-medium text-green-600">Gratis</span>
+              </div>
+              <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-2 mt-2">
+                <span>Total</span>
+                <span id="total">0,00€</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import { cartItems, cartTotal } from '@stores/cart';
+    import { formatPrice } from '../../lib/utils';
+
+    // Populate cart summary
+    const items = cartItems.get();
+    const total = cartTotal.get();
+    
+    const cartItemsContainer = document.getElementById('cart-items');
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('total');
+    const form = document.getElementById('checkout-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+    // Check if cart is empty
+    if (Object.keys(items).length === 0) {
+      window.location.href = '/';
+    } else {
+      // Render cart items
+      cartItemsContainer!.innerHTML = Object.entries(items).map(([key, item]) => `
+        <div class="flex gap-3 pb-3 border-b border-gray-100">
+          <img src="${item.image}" alt="${item.name}" class="w-16 h-20 object-cover rounded" />
+          <div class="flex-1">
+            <p class="font-medium text-gray-900 text-sm">${item.name}</p>
+            <p class="text-xs text-gray-500">Talla: ${item.size} | Qty: ${item.quantity}</p>
+            <p class="text-sm font-bold text-gray-900 mt-1">${formatPrice(item.price * item.quantity)}</p>
+          </div>
+        </div>
+      `).join('');
+
+      subtotalEl!.textContent = formatPrice(total);
+      totalEl!.textContent = formatPrice(total);
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Procesando...';
+
+      const formData = new FormData(form);
+      const shippingAddress = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        address: formData.get('address'),
+        city: formData.get('city'),
+        postal_code: formData.get('postal_code'),
+        country: formData.get('country'),
+      };
+
+      try {
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: Object.values(items),
+            shippingAddress,
+            origin: window.location.origin,
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Error: ' + (data.error || 'Error desconocido'));
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Proceder al Pago';
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Error de conexión');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Proceder al Pago';
+      }
+    });
+  </script>
+</PublicLayout>

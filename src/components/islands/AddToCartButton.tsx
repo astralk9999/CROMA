@@ -13,9 +13,10 @@ interface AddToCartButtonProps {
     stock: number;
     stockBySizes?: Record<string, number>;
   };
+  isNotYetAvailable?: boolean;
 }
 
-export default function AddToCartButton({ product }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, isNotYetAvailable = false }: AddToCartButtonProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const count = useStore(cartCount);
@@ -106,28 +107,37 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
       </div>
 
       {/* Add to Cart Button */}
-      <button
-        onClick={handleAddToCart}
-        disabled={isAdding || !selectedSize || selectedSizeStock <= 0}
-        className={`
-          w-full py-4 px-6 font-semibold text-white transition-all
-          ${!selectedSize || selectedSizeStock <= 0
-            ? 'bg-charcoal-400 cursor-not-allowed'
-            : isAdding
-              ? 'bg-gold-600 scale-95'
-              : 'bg-navy-800 hover:bg-navy-900'
+      {isNotYetAvailable ? (
+        <button
+          disabled
+          className="w-full py-4 px-6 font-semibold text-white bg-gray-400 cursor-not-allowed"
+        >
+          🔒 Próximamente
+        </button>
+      ) : (
+        <button
+          onClick={handleAddToCart}
+          disabled={isAdding || !selectedSize || selectedSizeStock <= 0}
+          className={`
+            w-full py-4 px-6 font-semibold text-white transition-all
+            ${!selectedSize || selectedSizeStock <= 0
+              ? 'bg-charcoal-400 cursor-not-allowed'
+              : isAdding
+                ? 'bg-gold-600 scale-95'
+                : 'bg-navy-800 hover:bg-navy-900'
+            }
+          `}
+        >
+          {!selectedSize
+            ? 'Selecciona una talla'
+            : selectedSizeStock <= 0
+              ? 'Agotado'
+              : isAdding
+                ? '¡Añadido!'
+                : 'Añadir al Carrito'
           }
-        `}
-      >
-        {!selectedSize
-          ? 'Selecciona una talla'
-          : selectedSizeStock <= 0
-            ? 'Agotado'
-            : isAdding
-              ? '¡Añadido!'
-              : 'Añadir al Carrito'
-        }
-      </button>
+        </button>
+      )}
     </div>
   );
 }

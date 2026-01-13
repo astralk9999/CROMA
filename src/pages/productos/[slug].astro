@@ -2,6 +2,7 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductGallery from '@components/product/ProductGallery.astro';
 import AddToCartButton from '@components/islands/AddToCartButton';
+import Countdown from '@components/islands/Countdown';
 import { supabase } from '@lib/supabase';
 import { formatPrice } from '@lib/utils';
 
@@ -31,6 +32,10 @@ if (!product) {
 }
 
 const mainImage = product.images?.[0] || '/placeholder.jpg';
+
+// Check if product is not yet available (Drop)
+const availableFrom = product.available_from ? new Date(product.available_from) : null;
+const isNotYetAvailable = availableFrom ? availableFrom > new Date() : false;
 ---
 
 <PublicLayout title={product.name} description={product.description}>
@@ -62,6 +67,18 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
 
       {/* Product Info */}
       <div>
+        {/* Drop Badge */}
+        {isNotYetAvailable && (
+          <div class="mb-4">
+            <span class="inline-flex items-center gap-2 px-3 py-1 bg-gray-900 text-white text-sm font-bold rounded-full">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              PRÓXIMO LANZAMIENTO
+            </span>
+          </div>
+        )}
+
         <h1 class="text-4xl font-serif font-bold text-navy-900 mb-4">
           {product.name}
         </h1>
@@ -76,16 +93,29 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
           </div>
         )}
 
-        {/* Stock Status */}
-        <div class="mb-6 p-4 bg-cream-200 rounded-lg">
-          {product.stock > 5 ? (
-            <p class="text-sm font-medium text-green-700">✓ En stock - Listo para enviar</p>
-          ) : product.stock > 0 ? (
-            <p class="text-sm font-medium text-gold-600">⚠ Solo quedan {product.stock} unidades</p>
-          ) : (
-            <p class="text-sm font-medium text-red-600">✗ Agotado</p>
-          )}
-        </div>
+        {/* Countdown for Drops */}
+        {isNotYetAvailable && availableFrom && (
+          <div class="mb-6">
+            <Countdown 
+              client:load
+              targetDate={availableFrom.toISOString()} 
+              title="Disponible en"
+            />
+          </div>
+        )}
+
+        {/* Stock Status - Only show if available */}
+        {!isNotYetAvailable && (
+          <div class="mb-6 p-4 bg-cream-200 rounded-lg">
+            {product.stock > 5 ? (
+              <p class="text-sm font-medium text-green-700">✓ En stock - Listo para enviar</p>
+            ) : product.stock > 0 ? (
+              <p class="text-sm font-medium text-gold-600">⚠ Solo quedan {product.stock} unidades</p>
+            ) : (
+              <p class="text-sm font-medium text-red-600">✗ Agotado</p>
+            )}
+          </div>
+        )}
 
         {/* Add to Cart */}
         <AddToCartButton 
@@ -100,6 +130,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
             stock: product.stock,
             stockBySizes: product.stockBySizes || undefined,
           }}
+          isNotYetAvailable={isNotYetAvailable}
         />
 
         {/* Additional Info */}

@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@lib/supabase';
 
-export default function MobileMenu() {
+interface MobileMenuProps {
+    initialProfile?: any;
+}
+
+export default function MobileMenu({ initialProfile }: MobileMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(initialProfile?.role === 'admin');
 
     // Check if user is admin
     useEffect(() => {
         const checkAdmin = async () => {
+            // If we have initial profile, skip immediate fetch
+            if (initialProfile) return;
+
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 const { data: profile } = await supabase
@@ -16,12 +23,15 @@ export default function MobileMenu() {
                     .eq('id', session.user.id)
                     .single();
                 setIsAdmin(profile?.role === 'admin');
+            } else {
+                setIsAdmin(false);
             }
         };
         checkAdmin();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
+                // If initialProfile exists, we might trust it, but on auth change we should verify
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('role')
@@ -34,7 +44,7 @@ export default function MobileMenu() {
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [initialProfile]);
 
     // Prevent scrolling when menu is open
     useEffect(() => {

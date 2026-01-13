@@ -26,7 +26,7 @@ export async function uploadImage(
     folder: string = 'products'
 ): Promise<CloudinaryUploadResult> {
     try {
-        const result = await cloudinary.uploader.upload(file, {
+        const result = await cloudinary.uploader.upload(file as string, {
             folder: `fashionmarket/${folder}`,
             transformation: [
                 { width: 1200, height: 1600, crop: 'limit' },

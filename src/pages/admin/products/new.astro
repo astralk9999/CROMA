@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import { supabase } from '@lib/supabase';
 
 const user = Astro.locals.user;
 const profile = Astro.locals.profile;
@@ -8,272 +9,174 @@ if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/auth/login');
 }
 
-const categories = [
-  'jackets',
-  'sweatshirt-pullover',
-  't-shirts',
-  'trousers',
-  'denim',
-  'shirts',
-  'accessories',
-  'underwear-socks',
-  'sportswear',
-  'shoes'
-];
+// Fetch categories and brands for dropdowns
+const { data: categories } = await supabase
+  .from('categories')
+  .select('*')
+  .order('name');
 
-const brands = [
-  'black-squad',
-  'urban-edge',
-  'street-kings',
-  'minimal-co',
-  'rebel-wear'
-];
+const { data: brands } = await supabase
+  .from('brands')
+  .select('*')
+  .order('name');
+
+const existingCategories = categories?.map(c => c.name) || [];
+const existingBrands = brands?.map(b => b.name) || [];
+
+// Fallback defaults if empty
+if (existingCategories.length === 0) {
+    existingCategories.push('jackets', 't-shirts', 'trousers', 'shoes');
+}
+if (existingBrands.length === 0) {
+    existingBrands.push('croma', 'urban-essentials');
+}
 ---
 
 <BaseLayout title="Añadir Producto">
   <div class="min-h-screen bg-gray-50">
-    <!-- Admin Header -->
     <header class="bg-white border-b border-gray-200">
       <div class="container-custom py-4">
         <div class="flex items-center justify-between">
-          <div>
+            <div>
             <h1 class="text-2xl font-bold text-gray-900">Añadir Nuevo Producto</h1>
             <p class="text-sm text-gray-600">Completa el formulario para crear un producto</p>
-          </div>
-          <div class="flex items-center gap-4">
+            </div>
+            <div class="flex items-center gap-4">
             <a href="/admin/products" class="text-sm text-gray-600 hover:text-black">
-              ← Volver a productos
+                ← Volver a productos
             </a>
-          </div>
+            </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container-custom py-8">
       <div class="max-w-4xl mx-auto">
         <form id="product-form" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-8">
-          <!-- Basic Information -->
-          <div>
+          
+            <!-- Basic Info -->
+            <div>
             <h2 class="text-lg font-bold text-gray-900 mb-4">Información Básica</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="md:col-span-2">
-                <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
-                  Nombre del Producto *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Ej: Urban Bomber Jacket"
-                />
-              </div>
+                <div class="md:col-span-2">
+                <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Nombre del Producto *</label>
+                <input type="text" id="name" name="name" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" placeholder="Ej: Urban Bomber Jacket" />
+                </div>
 
-              <div class="md:col-span-2">
-                <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows="4"
-                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="Descripción detallada del producto..."
-                ></textarea>
-              </div>
+                <div class="md:col-span-2">
+                <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
+                <textarea id="description" name="description" rows="4" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" placeholder="Descripción detallada..."></textarea>
+                </div>
 
-              <div>
-                <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
-                  Precio (€) *
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  required
-                  step="0.01"
-                  min="0"
-                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="99.99"
-                />
-              </div>
+                <div>
+                <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">Precio (€) *</label>
+                <input type="number" id="price" name="price" required step="0.01" min="0" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" placeholder="99.99" />
+                </div>
 
-              <div>
-                <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">
-                  Categoría *
-                </label>
-                <select
-                  id="category"
-                  name="category"
-                  required
-                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  {categories.map(cat => (
-                    <option value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
+                <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Categoría</label>
+            <select name="category" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+              <option value="">Seleccionar categoría</option>
+              {categories?.map(cat => (
+                <option value={cat.name}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
 
-              <div>
-                <label for="brand" class="block text-sm font-semibold text-gray-700 mb-2">
-                  Marca
-                </label>
-                <select
-                  id="brand"
-                  name="brand"
-                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                >
-                  <option value="">Seleccionar marca</option>
-                  {brands.map(brand => (
-                    <option value={brand}>{brand}</option>
-                  ))}
-                </select>
-              </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Marca</label>
+            <select name="brand" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+              <option value="">Seleccionar marca</option>
+              {brands?.map(brand => (
+                <option value={brand.name}>{brand.name}</option>
+              ))}
+            </select>
+          </div>      </div>
 
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Producto Destacado
-                </label>
+                <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Opciones</label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    name="featured"
-                    class="w-5 h-5 text-black border-gray-300 rounded focus:ring-black"
-                  />
-                  <span class="text-sm text-gray-700">Marcar como destacado</span>
+                    <input type="checkbox" name="featured" class="w-5 h-5 text-black border-gray-300 rounded focus:ring-black" />
+                    <span class="text-sm text-gray-700">Producto Destacado</span>
                 </label>
-              </div>
+                </div>
             </div>
-          </div>
+            </div>
 
-          <!-- Colors -->
-          <div>
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Colores Disponibles</h2>
+            <!-- OFFERS & DROPS (NEW) -->
+            <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Oferta / Drop Limitado
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="sale_price" class="block text-sm font-semibold text-gray-700 mb-2">Precio de Oferta (€)</label>
+                        <input type="number" id="sale_price" name="sale_price" step="0.01" min="0" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" placeholder="Opcional" />
+                        <p class="text-xs text-gray-500 mt-1">Si se llena, reemplazará visualmente al precio base.</p>
+                    </div>
+                    <div>
+                        <label for="sale_ends_at" class="block text-sm font-semibold text-gray-700 mb-2">Fin de la Oferta / Drop</label>
+                        <input type="datetime-local" id="sale_ends_at" name="sale_ends_at" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
+                        <p class="text-xs text-gray-500 mt-1">El producto dejará de ser oferta tras esta fecha.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Colores</h2>
             <div id="colors-container" class="space-y-2">
-              <div class="flex gap-2">
-                <input
-                  type="text"
-                  name="color"
-                  placeholder="Ej: black, white, blue"
-                  class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                />
-              </div>
+                <div class="flex gap-2">
+                <input type="text" name="color" placeholder="Ej: black, white" class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
+                </div>
             </div>
-            <button
-              type="button"
-              id="add-color-btn"
-              class="mt-2 text-sm text-black hover:underline font-medium"
-            >
-              + Añadir otro color
-            </button>
-          </div>
+            <button type="button" id="add-color-btn" class="mt-2 text-sm text-black hover:underline font-medium">+ Añadir otro color</button>
+            </div>
 
-          <!-- Stock by Size -->
-          <div>
+            <!-- Stock -->
+            <div>
             <h2 class="text-lg font-bold text-gray-900 mb-4">Stock por Talla</h2>
-            <div id="stock-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <!-- Default sizes -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">S</label>
-                <input
-                  type="number"
-                  name="stock_S"
-                  min="0"
-                  value="0"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">M</label>
-                <input
-                  type="number"
-                  name="stock_M"
-                  min="0"
-                  value="0"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">L</label>
-                <input
-                  type="number"
-                  name="stock_L"
-                  min="0"
-                  value="0"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">XL</label>
-                <input
-                  type="number"
-                  name="stock_XL"
-                  min="0"
-                  value="0"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                />
-              </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {['S', 'M', 'L', 'XL'].map(size => (
+                    <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{size}</label>
+                    <input type="number" name={`stock_${size}`} min="0" value="0" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
+                    </div>
+                ))}
             </div>
-          </div>
+            </div>
 
-          <!-- Images Upload -->
-          <div>
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Imágenes del Producto</h2>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <input
-                type="file"
-                id="images"
-                name="images"
-                accept="image/*"
-                multiple
-                class="hidden"
-              />
-              <label for="images" class="cursor-pointer">
-                <svg class="mx-auto w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-                <p class="text-sm text-gray-600 mb-1">
-                  <span class="font-semibold text-black">Haz clic para subir</span> o arrastra y suelta
-                </p>
-                <p class="text-xs text-gray-500">PNG, JPG, WEBP hasta 10MB</p>
-              </label>
+            <!-- Images -->
+            <div>
+             <h2 class="text-lg font-bold text-gray-900 mb-4">Imágenes</h2>
+             <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input type="file" id="images" name="images" accept="image/*" multiple class="hidden" />
+                <label for="images" class="cursor-pointer">
+                    <svg class="mx-auto w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    <span class="font-semibold text-black">Click para subir</span>
+                </label>
+             </div>
+             <div id="image-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+             <div id="upload-progress" class="mt-4 hidden text-center">
+                <p>Subiendo...</p>
+             </div>
             </div>
-            <div id="image-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-            <div id="upload-progress" class="mt-4 hidden">
-              <div class="bg-gray-200 rounded-full h-2">
-                <div id="progress-bar" class="bg-black h-2 rounded-full transition-all" style="width: 0%"></div>
-              </div>
-              <p id="progress-text" class="text-sm text-gray-600 mt-2 text-center">Subiendo imágenes...</p>
-            </div>
-          </div>
 
-          <!-- Submit Buttons -->
-          <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-            <a
-              href="/admin/products"
-              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors font-medium"
-            >
-              Cancelar
-            </a>
-            <button
-              type="submit"
-              id="submit-btn"
-              class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-            >
-              Crear Producto
-            </button>
-          </div>
+            <!-- Submit -->
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+                <a href="/admin/products" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 font-medium">Cancelar</a>
+                <button type="submit" id="submit-btn" class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">Crear Producto</button>
+            </div>
         </form>
       </div>
     </main>
   </div>
 
+
+
   <script>
-    import { supabase } from '@lib/supabase';
+    import { supabase } from '../../../lib/supabase';
 
     const form = document.getElementById('product-form') as HTMLFormElement;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
@@ -320,11 +223,11 @@ const brands = [
       imagePreview.innerHTML = '';
       files.forEach((file, index) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = (event: ProgressEvent<FileReader>) => {
           const div = document.createElement('div');
           div.className = 'relative group';
           div.innerHTML = `
-            <img src="${e.target?.result}" class="w-full h-32 object-cover rounded-lg" />
+            <img src="${event.target?.result}" class="w-full h-32 object-cover rounded-lg" />
             <button type="button" class="remove-image absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" data-index="${index}">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -333,8 +236,8 @@ const brands = [
           `;
           imagePreview.appendChild(div);
 
-          div.querySelector('.remove-image')?.addEventListener('click', (e) => {
-            const btn = e.currentTarget as HTMLButtonElement;
+          div.querySelector('.remove-image')?.addEventListener('click', (ev: Event) => {
+            const btn = ev.currentTarget as HTMLButtonElement;
             const idx = parseInt(btn.dataset.index || '0');
             selectedFiles.splice(idx, 1);
             div.remove();
@@ -409,6 +312,13 @@ const brands = [
         const brand = formData.get('brand') as string;
         const featured = formData.get('featured') === 'on';
 
+        // Collect Sale/Drop info
+        const salePriceRaw = formData.get('sale_price') as string;
+        const salePrice = salePriceRaw ? parseFloat(salePriceRaw) : null;
+        
+        const saleEndsAtRaw = formData.get('sale_ends_at') as string;
+        const saleEndsAt = saleEndsAtRaw ? new Date(saleEndsAtRaw).toISOString() : null;
+
         // Collect colors
         const colorInputs = form.querySelectorAll('input[name="color"]');
         const colors = Array.from(colorInputs)
@@ -434,24 +344,24 @@ const brands = [
           .replace(/^-+|-+$/g, '');
 
         // Create product
-        const { data, error } = await supabase
-          .from('products')
-          .insert({
-            name,
-            slug,
-            description,
-            price,
-            category,
-            brand,
-            colors,
-            images: uploadedImageUrls,
-            stock_by_sizes: stockBySizes,
-            featured,
-          })
-          .select()
-          .single();
+        // Create product using RPC (Bypass RLS)
+        const { data, error } = await supabase.rpc('admin_create_product', {
+          p_name: name,
+          p_slug: slug,
+          p_description: description,
+          p_price: price,
+          p_category: category,
+          p_brand: brand,
+          p_images: uploadedImageUrls,
+          p_stock_by_sizes: stockBySizes,
+          p_featured: featured,
+          p_sale_price: salePrice,
+          p_sale_ends_at: saleEndsAt,
+          p_colors: colors
+        });
 
         if (error) throw error;
+        if (!data) throw new Error('Error de permisos: El producto no se creó (bloqueo RLS). Ejecuta el script SQL.');
 
         alert('Producto creado exitosamente');
         window.location.href = '/admin/products';

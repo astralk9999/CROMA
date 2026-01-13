@@ -1,0 +1,100 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+---
+
+<PublicLayout title="Envíos y Devoluciones - CROMA">
+  <section class="container-custom py-16">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-5xl font-urban font-black text-gray-900 mb-8 uppercase">Envíos y Devoluciones</h1>
+      
+      <div class="space-y-8">
+        <!-- Shipping Info -->
+        <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
+          <div class="bg-black text-white p-6">
+            <h2 class="text-2xl font-urban font-bold uppercase">Información de Envío</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">Envío Estándar (España Peninsular)</h3>
+                <p class="text-gray-600">2-4 días laborables • <span class="font-bold">4,95€</span></p>
+                <p class="text-sm text-gray-500">Gratis en pedidos superiores a 50€</p>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">Envío Express</h3>
+                <p class="text-gray-600">24-48 horas • <span class="font-bold">7,95€</span></p>
+                <p class="text-sm text-gray-500">Disponible en ciudades principales</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900">Envío Internacional (UE)</h3>
+                <p class="text-gray-600">5-7 días laborables • <span class="font-bold">9,95€</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Returns -->
+        <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
+          <div class="bg-gray-900 text-white p-6">
+            <h2 class="text-2xl font-urban font-bold uppercase">Política de Devoluciones</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="bg-green-50 border-l-4 border-green-500 p-4">
+              <p class="font-bold text-green-800">30 días para devoluciones</p>
+              <p class="text-green-700 text-sm">Sin preguntas, sin complicaciones</p>
+            </div>
+
+            <h3 class="font-bold text-gray-900 mt-6">Condiciones:</h3>
+            <ul class="list-disc pl-5 space-y-2 text-gray-600">
+              <li>Los artículos deben estar sin usar y con sus etiquetas originales</li>
+              <li>El embalaje original debe estar incluido cuando sea posible</li>
+              <li>La ropa interior y los accesorios de higiene personal no son retornables</li>
+            </ul>
+
+            <h3 class="font-bold text-gray-900 mt-6">Proceso de devolución:</h3>
+            <ol class="list-decimal pl-5 space-y-2 text-gray-600">
+              <li>Accede a tu cuenta y selecciona el pedido</li>
+              <li>Indica los artículos que deseas devolver</li>
+              <li>Imprime la etiqueta de devolución</li>
+              <li>Deposita el paquete en cualquier punto de recogida</li>
+              <li>Recibirás el reembolso en 5-7 días laborables</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="text-center bg-gray-50 p-8 rounded-xl">
+          <h2 class="text-xl font-bold text-gray-900 mb-2">¿Necesitas ayuda?</h2>
+          <p class="text-gray-600 mb-4">Nuestro equipo está aquí para ayudarte</p>
+          <a 
+            href="/contact" 
+            class="inline-block px-6 py-3 bg-black text-white font-bold uppercase tracking-wider hover:bg-gray-800 transition-colors"
+          >
+            Contactar
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</PublicLayout>

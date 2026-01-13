@@ -1,0 +1,41 @@
+---
+interface Props {
+  images: string[];
+  productName: string;
+}
+
+const { images, productName } = Astro.props;
+const mainImage = images[0] || '/placeholder.jpg';
+---
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  {/* Main Image */}
+  <div class="aspect-[3/4] bg-cream-200 overflow-hidden lg:max-h-[700px] flex items-center justify-center">
+    <img 
+      id="main-image"
+      src={mainImage} 
+      alt={productName}
+      class="w-full h-full object-contain bg-gray-50"
+    />
+  </div>
+
+  {/* Thumbnail Grid */}
+  {images.length > 1 && (
+    <div class="grid grid-cols-2 gap-4">
+      {images.map((image, index) => (
+        <button
+          class="aspect-[3/4] bg-cream-200 overflow-hidden hover:opacity-75 transition-opacity cursor-pointer border-2 border-transparent hover:border-navy-600"
+          data-image={image}
+          onclick="document.getElementById('main-image').src = this.dataset.image"
+        >
+          <img 
+            src={image} 
+            alt={`${productName} - vista ${index + 1}`}
+            class="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </button>
+      ))}
+    </div>
+  )}
+</div>

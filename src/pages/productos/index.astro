@@ -1,0 +1,56 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import ProductCard from '@components/product/ProductCard.astro';
+import Sidebar from '@components/Sidebar.astro';
+import { supabase } from '@lib/supabase';
+
+import { mockProducts } from '@data/mockProducts';
+
+const { data: dbProducts } = await supabase
+  .from('products')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+const products = [...(dbProducts || []), ...mockProducts];
+
+const { data: categories } = await supabase
+  .from('categories')
+  .select('*');
+---
+
+<PublicLayout title="Todos los Productos">
+  <section class="container-custom py-8">
+    
+    <div class="flex flex-col lg:flex-row gap-8">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <div class="flex-1">
+        {/* Top Bar */}
+        <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+          <div class="flex items-center space-x-4 text-sm font-bold uppercase tracking-wide">
+             <span class="text-black border-b-2 border-brand-red">Men</span>
+          </div>
+          <div class="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer hover:text-black">
+             <span>filter (0)</span>
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </div>
+        </div>
+
+        {/* Products Grid */}
+        {products && products.length > 0 ? (
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+            {products.map((product) => (
+              <ProductCard product={product} />
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-20">
+            <p class="text-xl text-gray-500">No hay productos disponibles en este momento.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+</PublicLayout>

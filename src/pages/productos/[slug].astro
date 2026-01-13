@@ -1,0 +1,129 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import ProductGallery from '@components/product/ProductGallery.astro';
+import AddToCartButton from '@components/islands/AddToCartButton';
+import { supabase } from '@lib/supabase';
+import { formatPrice } from '@lib/utils';
+
+const { slug } = Astro.params;
+
+let product;
+
+// Fetch from DB
+const { data: dbProduct } = await supabase
+  .from('products')
+  .select('*')
+  .eq('slug', slug)
+  .single();
+
+product = dbProduct;
+
+// Add generic category object for breadcrumbs if missing relation but text exists
+if (product && product.category && !product.categories) {
+    product.categories = {
+        name: product.category.toUpperCase().replace(/-/g, ' '),
+        slug: product.category
+    };
+}
+
+if (!product) {
+  return Astro.redirect('/404');
+}
+
+const mainImage = product.images?.[0] || '/placeholder.jpg';
+---
+
+<PublicLayout title={product.name} description={product.description}>
+  <section class="container-custom py-12">
+    {/* Breadcrumbs */}
+    <nav class="mb-8 text-sm">
+      <ol class="flex items-center space-x-2 text-charcoal-600">
+        <li><a href="/" class="hover:text-navy-800">Inicio</a></li>
+        <li>/</li>
+        <li><a href="/productos" class="hover:text-navy-800">Productos</a></li>
+        {product.categories && (
+          <>
+            <li>/</li>
+            <li>
+            <a href={`/category/${product.category}`} class="hover:text-navy-800">
+                {product.categories.name}
+              </a>
+            </li>
+          </>
+        )}
+        <li>/</li>
+        <li class="text-navy-800 font-medium">{product.name}</li>
+      </ol>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      {/* Product Gallery */}
+      <ProductGallery images={product.images || [mainImage]} productName={product.name} />
+
+      {/* Product Info */}
+      <div>
+        <h1 class="text-4xl font-serif font-bold text-navy-900 mb-4">
+          {product.name}
+        </h1>
+
+        <p class="text-3xl font-bold text-charcoal-900 mb-6">
+          {formatPrice(product.price)}
+        </p>
+
+        {product.description && (
+          <div class="prose prose-lg mb-8 text-charcoal-700">
+            <p>{product.description}</p>
+          </div>
+        )}
+
+        {/* Stock Status */}
+        <div class="mb-6 p-4 bg-cream-200 rounded-lg">
+          {product.stock > 5 ? (
+            <p class="text-sm font-medium text-green-700">✓ En stock - Listo para enviar</p>
+          ) : product.stock > 0 ? (
+            <p class="text-sm font-medium text-gold-600">⚠ Solo quedan {product.stock} unidades</p>
+          ) : (
+            <p class="text-sm font-medium text-red-600">✗ Agotado</p>
+          )}
+        </div>
+
+        {/* Add to Cart */}
+        <AddToCartButton 
+          client:load
+          product={{
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: product.price,
+            image: mainImage,
+            sizes: product.sizes || [],
+            stock: product.stock,
+            stockBySizes: product.stockBySizes || undefined,
+          }}
+        />
+
+        {/* Additional Info */}
+        <div class="mt-8 pt-8 border-t border-charcoal-200 space-y-4">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-navy-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <div>
+              <p class="font-medium text-charcoal-900">Envío gratuito</p>
+              <p class="text-sm text-charcoal-600">En pedidos superiores a 50€</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 text-navy-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <div>
+              <p class="font-medium text-charcoal-900">Devoluciones fáciles</p>
+              <p class="text-sm text-charcoal-600">30 días para cambios y devoluciones</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</PublicLayout>

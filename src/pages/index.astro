@@ -1,0 +1,224 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import ProductCard from '@components/product/ProductCard.astro';
+import Button from '@components/ui/Button.astro';
+import { supabase } from '@lib/supabase';
+
+const { data: featuredProducts } = await supabase
+  .from('products')
+  .select('*')
+  .eq('featured', true)
+  .limit(4);
+
+const { data: categories } = await supabase
+  .from('categories')
+  .select('*');
+---
+
+<PublicLayout title="Inicio - Moda Masculina Premium">
+  {/* Hero Section */}
+  <section class="relative h-[80vh] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 bg-gray-900">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 z-10"></div>
+        <img 
+            src="https://images.unsplash.com/photo-1490481651871-ab68624d5517?q=80&w=2000&auto=format&fit=crop" 
+            alt="Hero Background" 
+            class="w-full h-full object-cover scale-105 animate-slow-zoom"
+            onerror="this.style.display='none';"
+        />
+    </div>
+    
+    <div class="relative z-20 text-center container-custom">
+      <h1 class="text-6xl md:text-8xl font-urban font-black mb-6 tracking-tighter uppercase text-white drop-shadow-2xl">
+        URBAN <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-white">COLLECTIVE</span>
+      </h1>
+      <p class="text-xl md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-medium tracking-wide">
+        Elevando el streetwear a una nueva dimensión de sofisticación y exclusividad.
+      </p>
+      <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+        <Button href="/category/all" variant="primary" size="lg" class="px-12 py-5 text-xl font-black italic">
+          SHOP NOW
+        </Button>
+        <Button href="/category/viral-trends" variant="secondary" size="lg" class="px-12 py-5 text-xl font-black italic border-4">
+          EXPLORE TRENDS
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  {/* Brand Manifesto */}
+  <section class="bg-white py-24 border-y border-gray-100">
+    <div class="container-custom flex flex-col md:flex-row items-center gap-16">
+        <div class="flex-1">
+            <h2 class="text-xs font-black tracking-[0.5em] text-gray-400 uppercase mb-4">The Manifesto</h2>
+            <h3 class="text-5xl font-urban font-black text-gray-900 mb-8 leading-tight">MÁS QUE MODA, <br/>UN ESTILO DE VIDA.</h3>
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                En CROMA creemos que la ropa es el lienzo de tu identidad. Cada pieza está diseñada con una atención obsesiva al detalle, mezclando la rudeza de la calle con la precisión de la alta costura.
+            </p>
+            <div class="flex gap-8">
+                <div class="flex flex-col">
+                    <span class="text-4xl font-black text-gray-900">10k+</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Original Styles</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-4xl font-black text-gray-900">100%</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Premium Quality</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 grid grid-cols-2 gap-4">
+            <div class="aspect-[3/4] bg-gray-100 rounded-sm overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" />
+            </div>
+            <div class="aspect-[3/4] bg-gray-100 rounded-sm overflow-hidden mt-12">
+                <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" />
+            </div>
+        </div>
+    </div>
+  </section>
+
+  {/* Featured Products */}
+  {featuredProducts && featuredProducts.length > 0 && (
+    <section class="container-custom py-24">
+      <div class="flex justify-between items-end mb-16 border-b-4 border-black pb-8">
+        <div>
+            <h2 class="text-6xl font-urban font-black text-gray-900 uppercase italic">
+                DROPS <span class="text-gray-300">/ 2026</span>
+            </h2>
+            <p class="text-xl font-bold text-gray-500 mt-2 uppercase tracking-widest">THE MOST WANTED PIECES</p>
+        </div>
+        <a href="/category/all" class="text-xl font-black hover:translate-x-4 transition-transform duration-300">SEE ALL →</a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {featuredProducts.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {/* Categories */}
+  <section class="bg-black py-24 text-white overflow-hidden">
+      <div class="container-custom relative">
+        <h2 class="text-8xl font-urban font-black text-white/5 absolute -top-12 -left-12 pointer-events-none uppercase italic">
+            CATEGORIES
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {[
+            { name: 'VIRAL TRENDS', image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?q=80&w=1000&auto=format&fit=crop', link: 'viral-trends' },
+            { name: 'SALE / OFF', image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=1000&auto=format&fit=crop', link: 'sale' },
+            { name: 'BESTSELLERS', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1000&auto=format&fit=crop', link: 'bestsellers' }
+          ].map((category) => (
+            <a 
+              href={`/category/${category.link}`}
+              class="group relative h-[500px] overflow-hidden transition-all duration-500 border border-white/10 hover:border-white/40"
+            >
+              <div class="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-colors z-10"></div>
+              <img src={category.image} alt={category.name} class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 grayscale group-hover:grayscale-0" />
+              <div class="absolute inset-0 flex flex-col items-center justify-center z-20 p-8 text-center">
+                <h3 class="text-4xl font-urban font-black text-white mb-4 uppercase italic tracking-tighter group-hover:scale-110 transition-transform drop-shadow-[0_4px_4px_rgba(0,0,0,1)]">
+                  {category.name}
+                </h3>
+                <div class="w-12 h-1 bg-white group-hover:w-24 transition-all duration-500"></div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+  </section>
+
+  {/* Newsletter Mockup */}
+  <section class="py-24 bg-gray-50">
+      <div class="container-custom text-center">
+          <div class="max-w-2xl mx-auto p-12 bg-white border-2 border-black relative">
+              <div class="absolute -top-4 -left-4 w-8 h-8 bg-black"></div>
+              <div class="absolute -bottom-4 -right-4 w-8 h-8 bg-black text-white flex items-center justify-center font-bold font-urban">!</div>
+              <h2 class="text-4xl font-urban font-black text-gray-900 mb-4 uppercase italic italic">Unete a la Resistencia</h2>
+              <p class="text-gray-500 mb-8 font-bold uppercase tracking-widest text-sm">Get exclusive access to the next drops and 15% off</p>
+              <form id="newsletter-form" class="flex flex-col sm:flex-row gap-2">
+                  <input type="email" id="newsletter-email" placeholder="YOUR@EMAIL.COM" class="flex-1 px-6 py-4 border-4 border-black font-black uppercase tracking-widest focus:outline-none" required />
+                  <button type="submit" id="newsletter-btn" class="px-8 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-gray-800 transition-colors">JOIN</button>
+              </form>
+              <p id="newsletter-message" class="mt-4 text-sm font-medium hidden"></p>
+          </div>
+      </div>
+  </section>
+
+  {/* Value Propositions */}
+  <section class="container-custom py-20">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+      <div>
+        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Calidad Premium</h3>
+        <p class="text-charcoal-600">Materiales de primera calidad seleccionados cuidadosamente.</p>
+      </div>
+      <div>
+        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Envío Rápido</h3>
+        <p class="text-charcoal-600">Entrega express en 24-48 horas en toda España.</p>
+      </div>
+      <div>
+        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Devolución Fácil</h3>
+        <p class="text-charcoal-600">30 días para devoluciones sin compromiso.</p>
+      </div>
+    </div>
+  </section>
+</PublicLayout>
+
+<script>
+  const form = document.getElementById('newsletter-form') as HTMLFormElement;
+  const emailInput = document.getElementById('newsletter-email') as HTMLInputElement;
+  const submitBtn = document.getElementById('newsletter-btn') as HTMLButtonElement;
+  const messageEl = document.getElementById('newsletter-message') as HTMLParagraphElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '...';
+
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      messageEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
+      
+      if (response.ok) {
+        messageEl.classList.add('text-green-600');
+        messageEl.textContent = data.message;
+        emailInput.value = '';
+      } else {
+        messageEl.classList.add('text-red-600');
+        messageEl.textContent = data.error;
+      }
+    } catch (error) {
+      messageEl.classList.remove('hidden');
+      messageEl.classList.add('text-red-600');
+      messageEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'JOIN';
+    }
+  });
+</script>

@@ -1,0 +1,268 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { supabase } from '@lib/supabase';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/auth/login');
+}
+
+// Fetch all products
+const { data: products, error } = await supabase
+  .from('products')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+const searchQuery = Astro.url.searchParams.get('search') || '';
+const categoryFilter = Astro.url.searchParams.get('category') || '';
+
+// Filter products
+let filteredProducts = products || [];
+if (searchQuery) {
+  filteredProducts = filteredProducts.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+}
+if (categoryFilter) {
+  filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
+}
+
+// Get unique categories
+const categories = [...new Set(products?.map(p => p.category) || [])];
+---
+
+<BaseLayout title="Gestión de Productos">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Admin Header -->
+    <header class="bg-white border-b border-gray-200">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
+            <p class="text-sm text-gray-600">{filteredProducts.length} productos en total</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <a href="/admin/dashboard" class="text-sm text-gray-600 hover:text-black">
+              Dashboard
+            </a>
+            <a href="/auth/logout" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
+              Cerrar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Admin Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+      <div class="container-custom">
+        <div class="flex gap-6">
+          <a href="/admin/dashboard" class="px-4 py-3 border-b-2 border-transparent font-medium text-gray-600 hover:text-black hover:border-gray-300 transition-colors">
+            Dashboard
+          </a>
+          <a href="/admin/products" class="px-4 py-3 border-b-2 border-black font-medium text-black">
+            Productos
+          </a>
+          <a href="/admin/orders" class="px-4 py-3 border-b-2 border-transparent font-medium text-gray-600 hover:text-black hover:border-gray-300 transition-colors">
+            Pedidos
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-custom py-8">
+      <!-- Actions Bar -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <!-- Search -->
+          <form method="get" class="flex-1 max-w-md">
+            <div class="relative">
+              <input
+                type="text"
+                name="search"
+                placeholder="Buscar productos..."
+                value={searchQuery}
+                class="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              />
+              <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+          </form>
+
+          <!-- Category Filter -->
+          <form method="get" class="flex gap-2 items-center">
+            <select
+              name="category"
+              class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+              onchange="this.form.submit()"
+            >
+              <option value="">Todas las categorías</option>
+              {categories.map(cat => (
+                <option value={cat} selected={categoryFilter === cat}>{cat}</option>
+              ))}
+            </select>
+          </form>
+
+          <!-- Add Product Button -->
+          <a
+            href="/admin/products/new"
+            class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+          >
+            + Añadir Producto
+          </a>
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Producto
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Categoría
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Precio
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Stock
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map(product => {
+                  const totalStock = product.stock_by_sizes 
+                    ? Object.values(product.stock_by_sizes as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0)
+                    : 0;
+                  const isLowStock = totalStock < 10;
+                  
+                  return (
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                          {product.images && product.images.length > 0 ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              class="w-12 h-12 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                              </svg>
+                            </div>
+                          )}
+                          <div>
+                            <p class="font-medium text-gray-900">{product.name}</p>
+                            <p class="text-sm text-gray-500">{product.slug}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                          {product.category}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class="font-medium text-gray-900">{Number(product.price).toFixed(2)}€</span>
+                      </td>
+                      <td class="px-6 py-4">
+                        <span class={`font-medium ${isLowStock ? 'text-orange-600' : 'text-gray-900'}`}>
+                          {totalStock} unidades
+                        </span>
+                      </td>
+                      <td class="px-6 py-4">
+                        {isLowStock ? (
+                          <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
+                            Stock bajo
+                          </span>
+                        ) : (
+                          <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                            En stock
+                          </span>
+                        )}
+                      </td>
+                      <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <a
+                            href={`/admin/products/${product.id}/edit`}
+                            class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Editar
+                          </a>
+                          <button
+                            data-product-id={product.id}
+                            data-product-name={product.name}
+                            class="delete-btn px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    No se encontraron productos
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    import { supabase } from '@lib/supabase';
+
+    // Delete product functionality
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const productId = btn.getAttribute('data-product-id');
+        const productName = btn.getAttribute('data-product-name');
+        
+        if (!confirm(`¿Estás seguro de que quieres eliminar "${productName}"?`)) {
+          return;
+        }
+
+        try {
+          const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', productId);
+
+          if (error) throw error;
+
+          alert('Producto eliminado exitosamente');
+          window.location.reload();
+        } catch (error: any) {
+          console.error('Error deleting product:', error);
+          alert('Error al eliminar el producto: ' + error.message);
+        }
+      });
+    });
+  </script>
+</BaseLayout>

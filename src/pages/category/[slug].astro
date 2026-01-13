@@ -1,0 +1,116 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import ProductCard from '@components/product/ProductCard.astro';
+import Sidebar from '@components/Sidebar.astro';
+import FavoritesGrid from '@components/islands/FavoritesGrid';
+import { supabase } from '@lib/supabase';
+
+const { slug } = Astro.params;
+
+// Normalize slug to handle double dashes or other variations
+const normalizedSlug = slug?.replace(/--+/g, '-') || slug || 'all';
+
+// Create readable name from slug
+const name = (normalizedSlug || 'COLLECTION').replace(/-/g, ' ').toUpperCase();
+
+// Check if user is authenticated
+const user = Astro.locals.user;
+
+// Fetch all products from Supabase
+let { data: allProducts } = await supabase
+  .from('products')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+// Ensure allProducts is an array
+allProducts = allProducts || [];
+
+let filteredProducts: any[] = [];
+let showLoginPrompt = false;
+
+if (normalizedSlug === 'all') {
+  filteredProducts = allProducts;
+} else if (normalizedSlug === 'viral-trends') {
+  // Show featured products or random selection
+  filteredProducts = allProducts.filter((p: any) => p.featured === true);
+  if (filteredProducts.length === 0) {
+    filteredProducts = allProducts.slice(0, 8);
+  }
+} else if (normalizedSlug === 'sale') {
+  // Show items with price < 50
+  filteredProducts = allProducts.filter((p: any) => p.price < 50);
+} else if (normalizedSlug === 'bestsellers') {
+  // Show items with featured or low stock
+  filteredProducts = allProducts.filter((p: any) => p.featured === true || p.stock < 20);
+} else if (normalizedSlug === 'coming-soon') {
+   // Empty or placeholders
+   filteredProducts = [];
+} else if (normalizedSlug === 'my-favorites') {
+   // Check if user is authenticated
+   if (!user) {
+     showLoginPrompt = true;
+     filteredProducts = [];
+   } else {
+     // Favorites handled client-side
+     filteredProducts = [];
+   }
+} else {
+  // Standard Category Filter
+  filteredProducts = allProducts.filter((p: any) => p.category === normalizedSlug);
+}
+---
+
+<PublicLayout title={name}>
+  <section class="container-custom py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <div class="flex-1">
+        
+        {/* Header */}
+        <div class="mb-8 pb-4 border-b border-gray-200">
+           <h1 class="text-4xl font-urban font-bold text-gray-900 mb-2 uppercase">{name}</h1>
+           <p class="text-gray-600">Browse our latest collection of {name.toLowerCase()}.</p>
+        </div>
+
+        {/* Login Prompt for My Favorites */}
+        {showLoginPrompt && (
+          <div class="text-center py-20">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Inicia sesión para ver tus favoritos</h2>
+            <p class="text-gray-600 mb-6">Guarda tus productos favoritos y accede a ellos en cualquier momento.</p>
+            <a href="/auth/login" class="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors">
+              Iniciar sesión
+            </a>
+          </div>
+        )}
+
+        {/* Favorites - Client Side Rendering */}
+        {normalizedSlug === 'my-favorites' && user && (
+          <FavoritesGrid client:load allProducts={allProducts} />
+        )}
+
+        {/* Products Grid */}
+        {!showLoginPrompt && normalizedSlug !== 'my-favorites' && (
+          <>
+            {filteredProducts && filteredProducts.length > 0 ? (
+              <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+                {filteredProducts.map((product) => (
+                  <ProductCard product={product} />
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-20">
+                <p class="text-xl text-gray-500">No products found for this category.</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  </section>
+</PublicLayout>

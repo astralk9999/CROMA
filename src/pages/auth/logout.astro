@@ -1,0 +1,16 @@
+---
+import { supabase } from '@lib/supabase';
+
+// Handle logout
+const { cookies } = Astro;
+
+// Clear session cookies
+cookies.delete('sb-access-token', { path: '/' });
+cookies.delete('sb-refresh-token', { path: '/' });
+
+// Sign out from Supabase
+await supabase.auth.signOut();
+
+// Redirect to home
+return Astro.redirect('/');
+---

@@ -66,36 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
                     console.error('Failed to update order:', updateError);
                 } else {
                     console.log(`✅ Order ${orderId} updated to 'processing'`);
-
-                    // Decrement stock for each item
-                    const { data: orderItems } = await supabaseAdmin
-                        .from('order_items')
-                        .select('product_id, size, quantity')
-                        .eq('order_id', orderId);
-
-                    if (orderItems) {
-                        for (const item of orderItems) {
-                            // Get current stock
-                            const { data: product } = await supabaseAdmin
-                                .from('products')
-                                .select('stock_by_sizes')
-                                .eq('id', item.product_id)
-                                .single();
-
-                            if (product?.stock_by_sizes) {
-                                const stockBySizes = product.stock_by_sizes as Record<string, number>;
-                                if (stockBySizes[item.size] !== undefined) {
-                                    stockBySizes[item.size] = Math.max(0, stockBySizes[item.size] - item.quantity);
-
-                                    await supabaseAdmin
-                                        .from('products')
-                                        .update({ stock_by_sizes: stockBySizes })
-                                        .eq('id', item.product_id);
-                                }
-                            }
-                        }
-                        console.log('✅ Stock decremented for order items');
-                    }
+                    // Note: Stock was already reserved at checkout.
                 }
             } else {
                 console.warn('No order_id in session metadata');
@@ -108,13 +79,18 @@ export const POST: APIRoute = async ({ request }) => {
             const orderId = session.metadata?.order_id;
 
             if (orderId) {
+                console.log(`⚠️ Order ${orderId} session expired. Restoring stock...`);
+
+                // Restore Stock
+                await supabaseAdmin.rpc('restore_stock', { p_order_id: orderId });
+
                 // Mark order as cancelled
                 await supabaseAdmin
                     .from('orders')
                     .update({ status: 'cancelled' })
                     .eq('id', orderId);
 
-                console.log(`⚠️ Order ${orderId} cancelled (session expired)`);
+                console.log(`⚠️ Order ${orderId} cancelled`);
             }
             break;
         }

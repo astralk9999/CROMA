@@ -3,9 +3,10 @@ import { supabase } from '@lib/supabase';
 
 interface UserMenuProps {
     initialProfile?: any;
+    currentPath?: string;
 }
 
-export default function UserMenu({ initialProfile }: UserMenuProps) {
+export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(initialProfile || null);
@@ -15,16 +16,23 @@ export default function UserMenu({ initialProfile }: UserMenuProps) {
         // Check current session
         const initSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
-            setUser(session?.user ?? null);
 
-            // Only fetch if we don't have an initial profile or if sesion user doesn't match
-            if (session?.user && !initialProfile) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                setProfile(data);
+            if (session?.user) {
+                setUser(session.user);
+                // Only fetch if we don't have an initial profile or if session user doesn't match
+                if (!initialProfile || initialProfile.id !== session.user.id) {
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+                    setProfile(data);
+                } else {
+                    setProfile(initialProfile);
+                }
+            } else {
+                setUser(null);
+                setProfile(null);
             }
             setLoading(false);
         };
@@ -130,13 +138,13 @@ export default function UserMenu({ initialProfile }: UserMenuProps) {
                         ) : (
                             <div className="py-2">
                                 <a
-                                    href="/auth/login"
+                                    href={`/auth/login?redirect=${encodeURIComponent(currentPath)}`}
                                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                 >
                                     Iniciar Sesión
                                 </a>
                                 <a
-                                    href="/auth/register"
+                                    href={`/auth/register?redirect=${encodeURIComponent(currentPath)}`}
                                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                 >
                                     Crear Cuenta

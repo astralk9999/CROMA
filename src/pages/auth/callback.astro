@@ -1,0 +1,104 @@
+---
+import PublicLayout from "@layouts/PublicLayout.astro";
+import BrandLogo from "@components/BrandLogo.astro";
+
+// Server-side check for PKCE code
+const authCode = Astro.url.searchParams.get("code");
+const nextParam = Astro.url.searchParams.get("next");
+const nextCookie = Astro.cookies.get("sb-redirect-next")?.value;
+const next = nextParam || nextCookie || "/account/profile";
+
+if (authCode) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
+    if (!error && data.session) {
+        Astro.cookies.set("sb-access-token", data.session.access_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
+        Astro.cookies.set("sb-refresh-token", data.session.refresh_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
+        Astro.cookies.delete("sb-redirect-next", { path: "/" });
+        return Astro.redirect(next);
+    }
+}
+---
+
+<PublicLayout title="Verificando Acceso - CROMA">
+    <section class="min-h-[80vh] flex items-center justify-center bg-white py-12 px-4">
+        <div class="max-w-md w-full text-center">
+            <!-- Premium Loading Animation -->
+            <div class="relative w-24 h-24 mx-auto mb-8">
+                <div class="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-black rounded-full animate-spin border-t-transparent shadow-lg"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <BrandLogo class="w-12 h-12 text-black" />
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-4 animate-pulse">
+                Validando acceso
+            </h1>
+            
+            <div class="space-y-3">
+                <p class="text-gray-500 font-medium">Estamos verificando tu identidad de forma segura...</p>
+                <div class="flex justify-center gap-1">
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+
+            <div id="error-display" class="hidden mt-8 p-4 bg-red-50 border-l-4 border-red-500 rounded text-left">
+                <p class="text-red-700 text-sm font-bold uppercase tracking-wider mb-1">¡Vaya! Algo ha fallado</p>
+                <p id="error-message" class="text-red-600 text-sm"></p>
+                <a href="/auth/login" class="inline-block mt-4 text-black font-black underline text-sm uppercase">Volver al inicio</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        import { supabase } from "@lib/supabase";
+
+        async function handleAuth() {
+            try {
+                // Look for sessions (Supabase client handles hash/fragments automatically)
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (session) {
+                    // Set secure cookies for server access
+                    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+                    document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+                    
+                    const nextMatch = document.cookie.match(/sb-redirect-next=([^;]+)/);
+                    const next = nextMatch ? decodeURIComponent(nextMatch[1]) : "/account/profile";
+                    
+                    document.cookie = "sb-redirect-next=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                    
+                    window.location.href = next;
+                } else {
+                    const params = new URLSearchParams(window.location.search);
+                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                    
+                    const errorMsg = params.get('error_description') || 
+                                   hashParams.get('error_description') || 
+                                   'No se ha podido validar la sesión. El enlace podría haber caducado.';
+                    
+                    const errorDisplay = document.getElementById('error-display');
+                    const errorMessageElement = document.getElementById('error-message');
+                    
+                    if (errorDisplay && errorMessageElement) {
+                        errorMessageElement.textContent = errorMsg;
+                        errorDisplay.classList.remove('hidden');
+                        document.querySelector('h1')?.classList.add('hidden');
+                        document.querySelector('.relative.w-24')?.classList.add('hidden');
+                        document.querySelector('.space-y-3')?.classList.add('hidden');
+                    } else {
+                        window.location.href = `/auth/login?error=${encodeURIComponent(errorMsg)}`;
+                    }
+                }
+            } catch (err) {
+                console.error("Auth process failed:", err);
+                window.location.href = '/auth/login?error=Error inesperado durante la autenticación';
+            }
+        }
+
+        // Slight delay to allow Supabase to parse the URL hash
+        setTimeout(handleAuth, 800);
+    </script>
+</PublicLayout>

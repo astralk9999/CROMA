@@ -1,12 +1,9 @@
 export function formatPrice(price: number): string {
-  // If price is already in decimal format (<1000 and has decimals), use it directly
-  // Otherwise, assume it's in cents and divide by 100
-  const amount = price < 1000 ? price : price / 100;
-
+  // Use the price directly as it comes from the DB in Euros (decimal format)
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
-  }).format(amount);
+  }).format(price);
 }
 
 export function generateSlug(text: string): string {

@@ -17,30 +17,29 @@ const { product } = Astro.props;
 const mainImage = product.images[0] || '/placeholder.jpg';
 ---
 
-<a 
-  href={`/productos/${product.slug}`}
-  class="group block relative"
->
-  <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative">
-    <img 
-      src={mainImage} 
-      alt={product.name}
-      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-      loading="lazy"
-    />
+<div class="group relative">
+  <div class="relative overflow-hidden bg-gray-100">
+    <a href={`/productos/${product.slug}`} class="block aspect-[3/4]">
+      <img 
+        src={mainImage} 
+        alt={product.name}
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        loading="lazy"
+      />
+    </a>
     
-    {/* Badges (Example logic) */}
+    {/* Badges */}
     {product.stock > 0 && (
-       <div class="absolute bottom-2 left-2 bg-black text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
+       <div class="absolute bottom-2 left-2 pointer-events-none bg-black text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
          New In
        </div>
     )}
     
-    {/* Favorite Icon */}
+    {/* Favorite Icon - Outside the anchor tag */}
     <FavoriteButton client:load productId={product.id} />
   </div>
   
-  <div class="pt-3">
+  <a href={`/productos/${product.slug}`} class="block pt-3">
     <h3 class="text-sm font-normal text-gray-600 mb-1 leading-tight group-hover:text-black transition-colors">
       {product.name}
     </h3>
@@ -48,12 +47,10 @@ const mainImage = product.images[0] || '/placeholder.jpg';
       <p class="text-sm font-bold text-black">
         {formatPrice(product.price)}
       </p>
-      {/* Optional: Logic for old price if on sale */}
     </div>
     
-    {/* Color options placeholder (dots) if needed, based on image */}
     <div class="flex items-center gap-1 mt-2 text-xs text-gray-400">
       <span>+1 Color</span>
     </div>
-  </div>
-</a>
+  </a>
+</div>

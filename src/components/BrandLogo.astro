@@ -1,0 +1,16 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class={className}>
+  <img 
+    src="/brand/logo_c_horns.png" 
+    alt="CROMA Logo" 
+    class="w-full h-auto object-contain"
+    loading="eager"
+  />
+</div>

@@ -1,16 +1,71 @@
 ---
+import PublicLayout from '@layouts/PublicLayout.astro';
+import BrandLogo from '@components/BrandLogo.astro';
 import { supabase } from '@lib/supabase';
 
-// Handle logout
+// Clear session cookies on server
 const { cookies } = Astro;
-
-// Clear session cookies
 cookies.delete('sb-access-token', { path: '/' });
 cookies.delete('sb-refresh-token', { path: '/' });
-
-// Sign out from Supabase
-await supabase.auth.signOut();
-
-// Redirect to home
-return Astro.redirect('/');
 ---
+
+<PublicLayout title="Cerrando Sesión - CROMA">
+    <section class="min-h-[80vh] flex items-center justify-center bg-white py-12 px-4">
+        <div class="max-w-md w-full text-center">
+            <!-- Premium Loading Animation -->
+            <div class="relative w-24 h-24 mx-auto mb-8">
+                <div class="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-black rounded-full animate-spin border-t-transparent shadow-lg"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <BrandLogo class="w-12 h-12 text-black" />
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-black uppercase tracking-tighter text-gray-900 mb-4 animate-pulse">
+                Cerrando sesión
+            </h1>
+            
+            <div class="space-y-3">
+                <p class="text-gray-500 font-medium">Limpiando tu sesión de forma segura...</p>
+                <div class="flex justify-center gap-1">
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-black rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        import { supabase } from '@lib/supabase';
+        
+        async function performLogout() {
+            try {
+                // 1. Clear Application Data
+                localStorage.removeItem('croma-favorites');
+                
+                // 2. Clear Supabase Local Session
+                // Iterate backwards to avoid index issues when removing
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('sb-')) {
+                        localStorage.removeItem(key);
+                    }
+                }
+
+                // 3. Attempt formal signout (best effort)
+                await supabase.auth.signOut();
+            } catch (err) {
+                console.warn("Logout cleanup warning:", err);
+            } finally {
+                // 4. Force hard redirect
+                setTimeout(() => {
+                    window.location.replace('/');
+                }, 800);
+            }
+        }
+        
+        // Execute immediately
+        performLogout();
+    </script>
+</PublicLayout>

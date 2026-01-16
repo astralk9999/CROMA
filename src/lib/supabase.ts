@@ -43,6 +43,7 @@ export type Database = {
           description: string | null;
           price: number;
           stock: number;
+          stock_by_sizes: Record<string, number> | null;
           category_id: string | null;
           images: string[];
           sizes: string[];
@@ -57,6 +58,7 @@ export type Database = {
           description?: string | null;
           price: number;
           stock?: number;
+          stock_by_sizes?: Record<string, number> | null;
           category_id?: string | null;
           images?: string[];
           sizes?: string[];
@@ -71,6 +73,7 @@ export type Database = {
           description?: string | null;
           price?: number;
           stock?: number;
+          stock_by_sizes?: Record<string, number> | null;
           category_id?: string | null;
           images?: string[];
           sizes?: string[];

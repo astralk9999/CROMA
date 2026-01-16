@@ -3,26 +3,30 @@ import { supabase } from '@lib/supabase';
 
 interface MobileMenuProps {
     initialProfile?: any;
+    currentPath?: string;
 }
 
-export default function MobileMenu({ initialProfile }: MobileMenuProps) {
+export default function MobileMenu({ initialProfile, currentPath = '/' }: MobileMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(initialProfile?.role === 'admin');
 
     // Check if user is admin
     useEffect(() => {
         const checkAdmin = async () => {
-            // If we have initial profile, skip immediate fetch
-            if (initialProfile) return;
-
             const { data: { session } } = await supabase.auth.getSession();
+
             if (session?.user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .single();
-                setIsAdmin(profile?.role === 'admin');
+                // If we have initial profile and it matches session user, trust it
+                if (initialProfile && initialProfile.id === session.user.id) {
+                    setIsAdmin(initialProfile.role === 'admin');
+                } else {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', session.user.id)
+                        .single();
+                    setIsAdmin(profile?.role === 'admin');
+                }
             } else {
                 setIsAdmin(false);
             }
@@ -137,7 +141,12 @@ export default function MobileMenu({ initialProfile }: MobileMenuProps) {
                                 <a href="/category/all" className="block text-xl font-urban font-bold text-gray-900 hover:text-brand-red uppercase">
                                     View All Products
                                 </a>
-                                <a href="/account/profile" className="block text-gray-600 hover:text-black font-medium">My Account</a>
+                                <a
+                                    href={`/account/profile?redirect=${encodeURIComponent(currentPath)}`}
+                                    className="block text-gray-600 hover:text-black font-medium"
+                                >
+                                    My Account
+                                </a>
                                 <a href="/contact" className="block text-gray-600 hover:text-black font-medium">Help & Contact</a>
 
                                 {/* Admin Panel Link - Only visible for admins */}

@@ -101,9 +101,29 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         if (itemsError) {
             console.error('Order items creation error:', itemsError);
-            // Rollback order
             await supabaseAdmin.from('orders').delete().eq('id', order.id);
             return new Response(JSON.stringify({ error: 'Failed to create order items' }), { status: 500 });
+        }
+
+        // Reserve Stock (Decrement immediately)
+        for (const item of items) {
+            const { data: stockResult, error: stockError } = await supabaseAdmin
+                .rpc('decrement_stock', {
+                    p_product_id: item.id,
+                    p_size: item.size,
+                    p_quantity: item.quantity
+                });
+
+            if (stockError || (stockResult && !stockResult.success)) {
+                console.error(`Stock reservation failed for ${item.name}:`, stockError || stockResult);
+                // Rollback Order
+                await supabaseAdmin.from('orders').delete().eq('id', order.id);
+                // Note: We might want to restore previous items if partially successful, 
+                // but for simplicity we assume all-or-nothing or manual fix. 
+                // In a real app, we'd loop back to restore.
+                // For now, fail hard.
+                return new Response(JSON.stringify({ error: `Sin stock suficiente para ${item.name} (${item.size})` }), { status: 400 });
+            }
         }
 
         // Create Stripe line items

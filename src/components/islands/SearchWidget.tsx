@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@lib/supabase';
+import { mockProducts } from '@data/mockProducts';
 
 interface Product {
     id: string;
@@ -33,14 +34,59 @@ export default function SearchWidget() {
         const timer = setTimeout(async () => {
             if (query.trim().length > 2) {
                 setLoading(true);
-                const { data, error } = await supabase
-                    .from('products')
-                    .select('id, name, slug, price, category, images')
-                    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-                    .range(0, 5); // Limit resultss
 
-                if (!error && data) {
-                    setResults(data);
+                // Dual Strategy: Try RPC first (optimized), fallback to Client Query (compatibility)
+                let dbProducts: Product[] = [];
+                let hasDbError = false;
+
+                // 1. Try RPC
+                const { data: rpcData, error: rpcError } = await supabase
+                    .rpc('search_products', { query_text: query });
+
+                if (!rpcError && rpcData) {
+                    dbProducts = rpcData as Product[];
+                } else {
+                    console.warn("Search RPC unavailable, using fallback:", rpcError?.message);
+
+                    // 2. Fallback to Client-Side Query
+                    const { data: clientData, error: clientError } = await supabase
+                        .from('products')
+                        .select('id, name, slug, price, category, images')
+                        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+                        .range(0, 5);
+
+                    if (!clientError && clientData) {
+                        dbProducts = clientData as Product[];
+                    } else {
+                        hasDbError = true;
+                    }
+                }
+
+                // Filter mock products locally (Hybrid)
+                const filteredMock = mockProducts.filter((p: any) =>
+                    p.name.toLowerCase().includes(query.toLowerCase()) ||
+                    p.category.toLowerCase().includes(query.toLowerCase()) ||
+                    (p.brand && p.brand.toLowerCase().includes(query.toLowerCase()))
+                ) as Product[];
+
+                if (!hasDbError) {
+                    // Universal Deduplicator: Priority to DB, then unique Mocks by slug
+                    const resultsMap = new Map<string, Product>();
+
+                    // Add DB products first (they win)
+                    dbProducts.forEach(p => {
+                        if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
+                    });
+
+                    // Add Mock products if slug not already present
+                    filteredMock.forEach(p => {
+                        if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
+                    });
+
+                    setResults(Array.from(resultsMap.values()).slice(0, 8));
+                } else {
+                    // DB totally failed (both methods), show Mocks
+                    setResults(filteredMock.slice(0, 6));
                 }
                 setLoading(false);
             } else {
@@ -55,10 +101,22 @@ export default function SearchWidget() {
         <div className="relative" ref={searchRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-center w-10 h-10 text-gray-900 hover:text-brand-red transition-colors"
+                className="flex items-center justify-center w-10 h-10 text-gray-900 hover:text-brand-red transition-all duration-300 hover:scale-110"
                 aria-label="Search"
             >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <svg
+                    className={`w-6 h-6 transition-transform duration-300 ${isOpen ? 'rotate-90 text-brand-red' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                </svg>
             </button>
 
             {/* Search Dropdown */}
@@ -74,15 +132,25 @@ export default function SearchWidget() {
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all"
                                 autoFocus
                             />
-                            <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <img
+                                src="/brand/logo_c_horns.png"
+                                alt=""
+                                className="absolute left-3 top-3.5 w-5 h-5 object-contain"
+                            />
                         </div>
                     </div>
 
                     <div className="max-h-[60vh] overflow-y-auto">
                         {loading ? (
                             <div className="p-8 text-center text-gray-400">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-black mb-2"></div>
-                                <p>Buscando...</p>
+                                <div className="relative w-12 h-12 mx-auto mb-4">
+                                    <div className="absolute inset-0 border-2 border-gray-100 rounded-full"></div>
+                                    <div className="absolute inset-0 border-2 border-black rounded-full animate-spin border-t-transparent"></div>
+                                    <div className="absolute inset-0 flex items-center justify-center p-2">
+                                        <img src="/brand/logo_c_horns.png" alt="Loading" className="w-full h-auto object-contain" />
+                                    </div>
+                                </div>
+                                <p className="font-medium text-gray-900">Buscando productos...</p>
                             </div>
                         ) : query.length > 2 && results.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">
@@ -94,7 +162,7 @@ export default function SearchWidget() {
                                 {results.map(product => (
                                     <a
                                         key={product.id}
-                                        href={`/products/${product.slug}`}
+                                        href={`/productos/${product.slug}`}
                                         className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                                     >
                                         <img

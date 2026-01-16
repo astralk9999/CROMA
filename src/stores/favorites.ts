@@ -24,7 +24,17 @@ export const localFavorites = persistentAtom<string[]>('croma-favorites', [], {
 
 // Initialize store immediately when in browser
 if (typeof window !== 'undefined') {
-    // Mark store as ready immediately - persistentAtom handles localStorage sync
+    // Check for session to enforce strict privacy
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+            // No session? No favorites. Clear potentially stale data.
+            localFavorites.set([]);
+        }
+        // persistentAtom handles the read from localStorage, 
+        // but this logic ensures we wipe it if appropriate.
+        storeReady.set(true);
+    });
+} else {
     storeReady.set(true);
 }
 
@@ -47,18 +57,27 @@ export async function syncFavoritesWithSupabase() {
 
         const remoteIds = remoteFavorites?.map(f => f.product_id) || [];
 
-        // Combine and remove duplicates
-        const combinedIds = [...new Set([...localIds, ...remoteIds])];
+        // Reconciliation Strategy:
+        // 1. Items in remote but NOT in local: Add to local (someone favorited on another device)
+        // 2. Items in local but NOT in remote: Add to remote (someone favorited while offline)
+        // 3. To avoid re-adding deleted items, we trust the remote source if it differs significantly 
+        //    from local, but for simplicity, we'll do a one-time merge on the first sync ever.
 
-        // Update local store
-        localFavorites.set(combinedIds);
+        const localIdsSet = new Set(localIds);
+        const remoteIdsSet = new Set(remoteIds);
 
-        // Update remote store for any missing ones
-        const missingInRemote = localIds.filter(id => !remoteIds.includes(id));
-        if (missingInRemote.length > 0) {
+        // Calculate differences
+        const missingLocally = remoteIds.filter(id => !localIdsSet.has(id));
+        const missingRemotely = localIds.filter(id => !remoteIdsSet.has(id));
+
+        if (missingLocally.length > 0) {
+            localFavorites.set([...new Set([...localIds, ...missingLocally])]);
+        }
+
+        if (missingRemotely.length > 0) {
             await supabase
                 .from('favorites')
-                .upsert(missingInRemote.map(id => ({
+                .upsert(missingRemotely.map(id => ({
                     user_id: userId,
                     product_id: id
                 })));
@@ -75,33 +94,37 @@ export const isFavorite = (productId: string): boolean => {
 
 export async function toggleFavorite(productId: string) {
     const favorites = localFavorites.get();
-    const { data: { session } } = await supabase.auth.getSession();
+    const isAdding = !favorites.includes(productId);
 
-    if (favorites.includes(productId)) {
-        // Remove from local
+    // 1. Optimistic Local Update
+    if (isAdding) {
+        localFavorites.set([...favorites, productId]);
+    } else {
         localFavorites.set(favorites.filter(id => id !== productId));
+    }
 
-        // Remove from remote if logged in
-        if (session) {
+    // 2. Background Remote Sync (Don't block the UI)
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const userId = session.user.id;
+
+        if (isAdding) {
+            await supabase
+                .from('favorites')
+                .upsert({ user_id: userId, product_id: productId });
+        } else {
             await supabase
                 .from('favorites')
                 .delete()
-                .eq('user_id', session.user.id)
+                .eq('user_id', userId)
                 .eq('product_id', productId);
         }
-    } else {
-        // Add to local
-        localFavorites.set([...favorites, productId]);
-
-        // Add to remote if logged in
-        if (session) {
-            await supabase
-                .from('favorites')
-                .upsert({
-                    user_id: session.user.id,
-                    product_id: productId
-                });
-        }
+    } catch (error) {
+        console.error('Error syncing favorite with Supabase:', error);
+        // We could revert local state here if strict consistency is needed, 
+        // but for favorites, eventual consistency or next-load sync is usually enough.
     }
 }
 

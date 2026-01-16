@@ -8,34 +8,145 @@ const { images, productName } = Astro.props;
 const mainImage = images[0] || '/placeholder.jpg';
 ---
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-  {/* Main Image */}
-  <div class="aspect-[3/4] bg-cream-200 overflow-hidden lg:max-h-[700px] flex items-center justify-center">
-    <img 
-      id="main-image"
-      src={mainImage} 
-      alt={productName}
-      class="w-full h-full object-contain bg-gray-50"
-    />
-  </div>
-
-  {/* Thumbnail Grid */}
+<div class="flex flex-col-reverse lg:flex-row gap-6">
+  {/* Thumbnails Sidebar */}
   {images.length > 1 && (
-    <div class="grid grid-cols-2 gap-4">
+    <div class="flex lg:flex-col gap-3 lg:w-24 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide">
       {images.map((image, index) => (
         <button
-          class="aspect-[3/4] bg-cream-200 overflow-hidden hover:opacity-75 transition-opacity cursor-pointer border-2 border-transparent hover:border-navy-600"
+          class={`thumbnail-btn flex-shrink-0 w-20 lg:w-full aspect-[3/4] bg-gray-50 border-2 transition-all overflow-hidden group ${index === 0 ? 'border-black' : 'border-transparent hover:border-black'}`}
           data-image={image}
-          onclick="document.getElementById('main-image').src = this.dataset.image"
+          onclick="document.querySelectorAll('.thumbnail-btn').forEach(b => b.classList.remove('border-black', 'border-transparent')); document.querySelectorAll('.thumbnail-btn').forEach(b => b.classList.add('border-transparent')); this.classList.remove('border-transparent'); this.classList.add('border-black'); document.getElementById('main-image').src = this.dataset.image; document.getElementById('zoom-image').src = this.dataset.image"
         >
           <img 
             src={image} 
             alt={`${productName} - vista ${index + 1}`}
-            class="w-full h-full object-cover"
+            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
         </button>
       ))}
     </div>
   )}
+
+  {/* Main Image Container with Manual Zoom Toggle */}
+  <div 
+    id="zoom-container"
+    class="flex-1 bg-gray-50 aspect-[3/4] overflow-hidden relative group shadow-inner rounded-sm border border-gray-100"
+  >
+    {/* Base Image */}
+    <img 
+      id="main-image"
+      src={mainImage} 
+      alt={productName}
+      class="w-full h-full object-cover transition-opacity duration-300"
+    />
+    
+    {/* Zoom Image Layer (Initially hidden) */}
+    <div 
+      id="zoom-layer"
+      class="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none flex items-center justify-center overflow-hidden"
+    >
+        <img 
+          id="zoom-image"
+          src={mainImage} 
+          alt={`${productName} zoom`}
+          class="absolute max-w-none w-[200%] h-[200%] object-cover transition-none"
+          style="transform-origin: center; display: none;"
+        />
+    </div>
+
+    {/* Zoom Toggle Button */}
+    <button 
+      id="zoom-toggle"
+      class="absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-100 text-black hover:bg-black hover:text-white transition-all duration-300"
+      title="Activar Zoom"
+    >
+        <svg id="zoom-icon-plus" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+        </svg>
+        <svg id="zoom-icon-minus" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 11h6" />
+        </svg>
+    </button>
+  </div>
 </div>
+
+<script>
+  function setupZoom() {
+    const container = document.getElementById('zoom-container');
+    const zoomLayer = document.getElementById('zoom-layer');
+    const zoomImg = document.getElementById('zoom-image') as HTMLImageElement;
+    const mainImg = document.getElementById('main-image') as HTMLImageElement;
+    const toggle = document.getElementById('zoom-toggle');
+    const iconPlus = document.getElementById('zoom-icon-plus');
+    const iconMinus = document.getElementById('zoom-icon-minus');
+
+    if (!container || !zoomImg || !toggle || !zoomLayer || !mainImg) return;
+
+    let isZoomActive = false;
+
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isZoomActive = !isZoomActive;
+        
+        if (isZoomActive) {
+            zoomLayer.style.opacity = '1';
+            zoomLayer.style.pointerEvents = 'auto';
+            zoomImg.style.display = 'block';
+            mainImg.style.opacity = '0';
+            iconPlus?.classList.add('hidden');
+            iconMinus?.classList.remove('hidden');
+            container.style.cursor = 'move';
+            toggle.title = "Desactivar Zoom";
+        } else {
+            zoomLayer.style.opacity = '0';
+            zoomLayer.style.pointerEvents = 'none';
+            zoomImg.style.display = 'none';
+            mainImg.style.opacity = '1';
+            iconPlus?.classList.remove('hidden');
+            iconMinus?.classList.add('hidden');
+            container.style.cursor = 'default';
+            toggle.title = "Activar Zoom";
+        }
+    });
+
+    container.addEventListener('mousemove', (e) => {
+        if (!isZoomActive) return;
+
+        const rect = container.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Follow the cursor
+        zoomImg.style.left = `${x}%`;
+        zoomImg.style.top = `${y}%`;
+        zoomImg.style.transform = `translate(${-x}%, ${-y}%) scale(1.5)`;
+    });
+
+    // Optional: Reset on mouse leave if we want to auto-disable or just pause
+    container.addEventListener('mouseleave', () => {
+        if (isZoomActive) {
+            // Keep it active but maybe center it? 
+            // Better to just leave it as is or auto-disable if wanted.
+            // User said "ya puedas hacer zoom", so it can stay active until toggled off.
+        }
+    });
+  }
+
+  // Initial setup
+  setupZoom();
+
+  // Re-setup on view transitions
+  document.addEventListener('astro:after-swap', setupZoom);
+</script>
+
+<style>
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>

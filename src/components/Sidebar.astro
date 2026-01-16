@@ -1,5 +1,5 @@
-<aside class="w-64 flex-shrink-0 pr-8 hidden lg:block">
-  <div class="sticky top-24 overflow-y-auto max-h-[calc(100vh-6rem)] scrollbar-hide">
+<aside class="w-64 flex-shrink-0 pr-8 hidden lg:block" transition:persist>
+  <div id="sidebar-scroll-container" class="sticky top-24 overflow-y-auto max-h-[calc(100vh-6rem)] scrollbar-hide animate-fade-in">
     
     {/* View All Section */}
     <div class="mb-8">
@@ -113,3 +113,28 @@
 
   </div>
 </aside>
+
+<script>
+  // Preserve scroll position of the sidebar across navigations
+  function setupSidebarScroll() {
+    const container = document.getElementById('sidebar-scroll-container');
+    if (!container) return;
+
+    // Restore position
+    const savedScrollPos = sessionStorage.getItem('sidebar-scroll-pos');
+    if (savedScrollPos) {
+      container.scrollTop = parseInt(savedScrollPos, 10);
+    }
+
+    // Save position on scroll
+    container.addEventListener('scroll', () => {
+      sessionStorage.setItem('sidebar-scroll-pos', container.scrollTop.toString());
+    }, { passive: true });
+  }
+
+  // Run on initial load
+  setupSidebarScroll();
+
+  // Run on View Transitions (if enabled)
+  document.addEventListener('astro:after-swap', setupSidebarScroll);
+</script>

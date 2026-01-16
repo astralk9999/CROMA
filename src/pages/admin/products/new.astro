@@ -134,17 +134,47 @@ if (existingBrands.length === 0) {
             <button type="button" id="add-color-btn" class="mt-2 text-sm text-black hover:underline font-medium">+ Añadir otro color</button>
             </div>
 
-            <!-- Stock -->
-            <div>
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Stock por Talla</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['S', 'M', 'L', 'XL'].map(size => (
-                    <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{size}</label>
-                    <input type="number" name={`stock_${size}`} min="0" value="0" class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
+            <!-- Stock & Sizes -->
+            <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Inventario y Tallas</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Tallaje</label>
+                    <select id="size-type-selector" class="w-full md:w-1/3 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+                        <option value="clothing">Ropa (S, M, L, XL)</option>
+                        <option value="footwear">Calzado (36 - 46)</option>
+                        <option value="onesize">Talla Única / Accesorios</option>
+                    </select>
+                </div>
+
+                <!-- Container: Clothing -->
+                <div id="stock-clothing" class="size-group grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{size}</label>
+                            <input type="number" name={`stock_${size}`} min="0" placeholder="0" class="stock-input w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black" />
+                        </div>
+                    ))}
+                </div>
+
+                <!-- Container: Footwear -->
+                <div id="stock-footwear" class="size-group hidden grid grid-cols-3 md:grid-cols-6 gap-4">
+                    {Array.from({length: 11}, (_, i) => i + 36).map(size => (
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{size}</label>
+                            <input type="number" name={`stock_${size}`} min="0" placeholder="0" class="stock-input w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black" />
+                        </div>
+                    ))}
+                </div>
+
+                <!-- Container: One Size -->
+                <div id="stock-onesize" class="size-group hidden">
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad Total (Talla Única)</label>
+                        <input type="number" name="stock_TU" min="0" placeholder="0" class="stock-input w-full md:w-1/4 px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black" />
+                        <p class="text-xs text-gray-500 mt-1">Se mostrará como "Talla Única" en la tienda.</p>
                     </div>
-                ))}
-            </div>
+                </div>
             </div>
 
             <!-- Images -->
@@ -212,6 +242,28 @@ if (existingBrands.length === 0) {
       newInput.querySelector('.remove-color')?.addEventListener('click', () => {
         newInput.remove();
       });
+    });
+
+    // Handle Size Type Switching
+    const sizeTypeSelector = document.getElementById('size-type-selector') as HTMLSelectElement;
+    const sizeGroups = document.querySelectorAll('.size-group');
+    
+    sizeTypeSelector?.addEventListener('change', (e) => {
+        const selected = (e.target as HTMLSelectElement).value;
+        
+        sizeGroups.forEach(group => {
+            const inputs = group.querySelectorAll('input');
+            
+            if (group.id === `stock-${selected}`) {
+                group.classList.remove('hidden');
+                group.classList.add(selected === 'footwear' ? 'grid' : (selected === 'clothing' ? 'grid' : 'block'));
+            } else {
+                group.classList.add('hidden');
+                group.classList.remove('grid');
+                // Clear values of hidden groups to prevent submitting mixed data
+                inputs.forEach(input => input.value = '');
+            }
+        });
     });
 
     // Handle image selection

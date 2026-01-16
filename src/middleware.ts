@@ -10,18 +10,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const refreshToken = cookies.get('sb-refresh-token')?.value;
 
   if (accessToken && refreshToken) {
-    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(accessToken);
 
-    if (!error && user) {
-      // Fetch user profile with role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      if (!error && user) {
+        // Fetch user profile with role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
 
-      context.locals.user = user;
-      context.locals.profile = profile;
+        context.locals.user = user;
+        context.locals.profile = profile;
+      }
+    } catch (error) {
+      console.error('Middleware auth connection error:', error);
+      // Determine if we should redirect or just continue as guest
+      // For now, continue as guest to avoid blocking the whole site on ephemeral network issues
     }
   }
 

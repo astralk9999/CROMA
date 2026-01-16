@@ -5,6 +5,7 @@ import CartSlideOver from '@components/islands/CartSlideOver';
 import UserMenu from '@components/islands/UserMenu';
 import MobileMenu from '@components/islands/MobileMenu';
 import SearchWidget from '@components/islands/SearchWidget';
+import NewsletterPopup from '@components/islands/NewsletterPopup';
 
 interface Props {
   title: string;
@@ -22,7 +23,7 @@ const { title, description } = Astro.props;
         
         {/* Left: Hamburger Menu */}
         <div class="flex items-center">
-           <MobileMenu client:load initialProfile={Astro.locals.profile} />
+            <MobileMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
         </div>
 
         {/* Center: Logo */}
@@ -45,7 +46,7 @@ const { title, description } = Astro.props;
           
           {/* User Menu Widget */}
           <div class="flex items-center justify-center w-10 h-10">
-            <UserMenu client:load initialProfile={Astro.locals.profile} />
+            <UserMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
           </div>
 
           {/* Cart Icon */}

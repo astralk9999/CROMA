@@ -12,32 +12,48 @@ if (!user) {
 // Handle form submission
 if (Astro.request.method === 'POST') {
   const formData = await Astro.request.formData();
-  const fullName = formData.get('full_name') as string;
-  const phone = formData.get('phone') as string;
+  const fullName = formData.get('full_name')?.toString() || '';
+  const phone = formData.get('phone')?.toString() || '';
 
-  let redirectUrl = '/account/profile';
+  // IMPORTANT: Use a stateless request with the access token
+  // This prevents consuming the Refresh Token on the server, which causes
+  // the client's session to be invalidated (Reuse Detection).
+  const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
-  if (user) {
-    const updates = {
-      full_name: fullName,
-      phone: phone,
-      updated_at: new Date(),
-    };
-
-    // Use RPC for robust update
-    const { data: result, error } = await supabase.rpc('update_own_profile', {
-      p_full_name: updates.full_name,
-      p_phone: updates.phone
-    });
-
-    if (error) {
-      console.error('Profile update error:', error);
-      redirectUrl += `?error=${encodeURIComponent(error.message)}`;
-    } else {
-      redirectUrl += '?success=true';
-    }
+  if (!accessToken) {
+    return Astro.redirect('/auth/login?redirect=/account/profile');
   }
-  return Astro.redirect(redirectUrl);
+
+  // Create a temporary stateless client for this request
+  const { createClient } = await import('@supabase/supabase-js');
+  const tempClient = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+
+  const { error } = await tempClient.rpc('update_own_profile', {
+    p_full_name: fullName,
+    p_phone: phone
+  });
+
+  if (error) {
+    console.error('Profile update error:', error);
+    return Astro.redirect(`/account/profile?error=${encodeURIComponent(error.message)}`);
+  }
+
+  return Astro.redirect('/account/profile?success=true');
 }
 
 const errorMsg = Astro.url.searchParams.get('error');

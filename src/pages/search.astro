@@ -2,6 +2,7 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductCard from '@components/product/ProductCard.astro';
 import { supabase } from '@lib/supabase';
+import { mockProducts } from '@data/mockProducts';
 
 const query = Astro.url.searchParams.get('q') || '';
 
@@ -10,15 +11,31 @@ let loading = false;
 
 if (query) {
   loading = true;
-  const { data, error } = await supabase
+  const { data: dbProducts, error } = await supabase
     .from('products')
     .select('*')
     .or(`name.ilike.%${query}%,description.ilike.%${query}%`) // Case insensitive search
     .order('created_at', { ascending: false });
   
-  if (!error && data) {
-    products = data;
-  }
+  const dbProductsSafe = dbProducts || [];
+  
+  // Universal Deduplicator: Priority to DB, then unique Mocks by slug
+  const productsMap = new Map<string, any>();
+  
+  // Add DB products first
+  dbProductsSafe.forEach(p => {
+    if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
+  });
+
+  // Add matching mock products if slug not already present
+  mockProducts.filter(p => 
+    p.name.toLowerCase().includes(query.toLowerCase()) || 
+    p.category.toLowerCase().includes(query.toLowerCase())
+  ).forEach(p => {
+    if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
+  });
+
+  products = Array.from(productsMap.values());
   loading = false;
 }
 
@@ -67,7 +84,7 @@ if (query) {
       <div class="text-center py-20 bg-gray-50 rounded-xl">
         <p class="text-xl text-gray-500 font-medium">No se encontraron productos que coincidan con tu búsqueda.</p>
         <p class="text-gray-400 mt-2">Intenta con otros términos o navega por las categorías.</p>
-        <a href="/productos" class="inline-block mt-6 text-black border-b-2 border-black hover:text-brand-red hover:border-brand-red transition-all font-bold">
+        <a href="/category/all" class="inline-block mt-6 text-black border-b-2 border-black hover:text-brand-red hover:border-brand-red transition-all font-bold">
             Ver todo el catálogo ->
         </a>
       </div>

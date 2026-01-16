@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   size: string;
   image: string;
+  maxStock: number;
 }
 
 export const cartItems = persistentMap<Record<string, CartItem>>('cart:', {}, {
@@ -26,22 +27,35 @@ export const cartTotal = computed(cartItems, (items) => {
   return Object.values(items).reduce((total, item) => total + (item.price * item.quantity), 0);
 });
 
-export function addToCart(product: Omit<CartItem, 'quantity'>) {
+export function addToCart(product: Omit<CartItem, 'quantity' | 'maxStock'>, maxStock: number) {
   const itemKey = `${product.id}-${product.size}`;
   const currentItems = cartItems.get();
-  
+
   if (currentItems[itemKey]) {
-    cartItems.setKey(itemKey, {
-      ...currentItems[itemKey],
-      quantity: currentItems[itemKey].quantity + 1,
-    });
+    const newQuantity = currentItems[itemKey].quantity + 1;
+    // Limit to maxStock
+    if (newQuantity <= maxStock) {
+      cartItems.setKey(itemKey, {
+        ...currentItems[itemKey],
+        quantity: newQuantity,
+        maxStock: maxStock // Ensure it's updated/synced
+      });
+    } else {
+      // Keep at maxStock if already reached
+      cartItems.setKey(itemKey, {
+        ...currentItems[itemKey],
+        quantity: maxStock,
+        maxStock: maxStock
+      });
+    }
   } else {
     cartItems.setKey(itemKey, {
       ...product,
       quantity: 1,
+      maxStock: maxStock
     });
   }
-  
+
   isCartOpen.set(true);
 }
 
@@ -51,17 +65,20 @@ export function removeFromCart(itemKey: string) {
   cartItems.set(currentItems);
 }
 
-export function updateQuantity(itemKey: string, quantity: number) {
+export function updateQuantity(itemKey: string, quantity: number, maxStock: number) {
   if (quantity <= 0) {
     removeFromCart(itemKey);
     return;
   }
-  
+
+  // Enforce maxStock limit
+  const finalQuantity = Math.min(quantity, maxStock);
+
   const currentItems = cartItems.get();
   if (currentItems[itemKey]) {
     cartItems.setKey(itemKey, {
       ...currentItems[itemKey],
-      quantity,
+      quantity: finalQuantity,
     });
   }
 }

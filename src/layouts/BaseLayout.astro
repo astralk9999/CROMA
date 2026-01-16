@@ -1,4 +1,6 @@
 ---
+import { ClientRouter } from 'astro:transitions';
+
 interface Props {
   title: string;
   description?: string;
@@ -11,8 +13,12 @@ const { title, description = 'CROMA - Premium urban fashion for the modern era' 
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <ClientRouter />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content={description}>
+  <link rel="icon" type="image/png" sizes="32x32" href="/brand/logo_c_horns.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/brand/logo_c_horns.png" />
+  <link rel="apple-touch-icon" href="/brand/logo_c_horns.png" />
   <title>{title} | CROMA</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,6 +29,16 @@ const { title, description = 'CROMA - Premium urban fashion for the modern era' 
     @tailwind base;
     @tailwind components;
     @tailwind utilities;
+
+    /* Global text selection fix - Extreme Priority */
+    ::selection {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+    }
+    ::-moz-selection {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+    }
 
     @layer base {
       body {

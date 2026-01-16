@@ -1,7 +1,7 @@
 ---
 import PublicLayout from '@layouts/PublicLayout.astro';
-import ProductCard from '@components/product/ProductCard.astro';
 import Sidebar from '@components/Sidebar.astro';
+import ProductGrid from '@components/islands/ProductGrid';
 import { supabase } from '@lib/supabase';
 
 const { slug } = Astro.params;
@@ -33,18 +33,16 @@ const filteredProducts = products || [];
            <p class="text-gray-600">Items available in {name.toLowerCase()}.</p>
         </div>
 
-        {/* Products Grid */}
-        {filteredProducts && filteredProducts.length > 0 ? (
-          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
-            {filteredProducts.map((product) => (
-              <ProductCard product={product} />
-            ))}
-          </div>
-        ) : (
-          <div class="text-center py-20">
-            <p class="text-xl text-gray-500">No products found for this color.</p>
-          </div>
-        )}
+        {/* Products Grid - React Island with Skeleton */}
+        <div class="min-h-[50vh]">
+          {filteredProducts && filteredProducts.length > 0 ? (
+            <ProductGrid client:load products={filteredProducts} />
+          ) : (
+            <div class="text-center py-20">
+              <p class="text-xl text-gray-500">No products found for this color.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   </section>

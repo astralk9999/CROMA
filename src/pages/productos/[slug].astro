@@ -3,6 +3,7 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductGallery from '@components/product/ProductGallery.astro';
 import AddToCartButton from '@components/islands/AddToCartButton';
 import Countdown from '@components/islands/Countdown';
+import StockStatus from '@components/islands/StockStatus';
 import { supabase } from '@lib/supabase';
 import { formatPrice } from '@lib/utils';
 
@@ -36,6 +37,13 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
 // Check if product is not yet available (Drop)
 const availableFrom = product.available_from ? new Date(product.available_from) : null;
 const isNotYetAvailable = availableFrom ? availableFrom > new Date() : false;
+
+// STRICT STOCK LOGIC:
+// We only count stock that is explicitly assigned to a size in stock_by_sizes.
+// Legacy 'stock' column is ignored to prevent phantom inventory.
+const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_sizes).length > 0)
+  ? Object.values(product.stock_by_sizes).reduce((sum: number, quantity: unknown) => sum + (quantity as number), 0)
+  : 0;
 ---
 
 <PublicLayout title={product.name} description={product.description}>
@@ -88,7 +96,7 @@ const isNotYetAvailable = availableFrom ? availableFrom > new Date() : false;
         </p>
 
         {product.description && (
-          <div class="prose prose-lg mb-8 text-charcoal-700">
+          <div class="prose prose-lg mb-8 text-gray-800 leading-relaxed font-medium">
             <p>{product.description}</p>
           </div>
         )}
@@ -104,18 +112,12 @@ const isNotYetAvailable = availableFrom ? availableFrom > new Date() : false;
           </div>
         )}
 
-        {/* Stock Status - Only show if available */}
-        {!isNotYetAvailable && (
-          <div class="mb-6 p-4 bg-cream-200 rounded-lg">
-            {product.stock > 5 ? (
-              <p class="text-sm font-medium text-green-700">✓ En stock - Listo para enviar</p>
-            ) : product.stock > 0 ? (
-              <p class="text-sm font-medium text-gold-600">⚠ Solo quedan {product.stock} unidades</p>
-            ) : (
-              <p class="text-sm font-medium text-red-600">✗ Agotado</p>
-            )}
-          </div>
-        )}
+        {/* Stock Status - React Island with Skeleton */}
+        <StockStatus 
+          client:load 
+          stock={effectiveStock} 
+          isNotYetAvailable={isNotYetAvailable} 
+        />
 
         {/* Add to Cart */}
         <AddToCartButton 
@@ -127,8 +129,8 @@ const isNotYetAvailable = availableFrom ? availableFrom > new Date() : false;
             price: product.price,
             image: mainImage,
             sizes: product.sizes || [],
-            stock: product.stock,
-            stockBySizes: product.stockBySizes || undefined,
+            stock: effectiveStock, // Pass calculated stock
+            stockBySizes: product.stock_by_sizes || undefined,
           }}
           isNotYetAvailable={isNotYetAvailable}
         />

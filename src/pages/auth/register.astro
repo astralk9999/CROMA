@@ -3,6 +3,7 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 
 const error = Astro.url.searchParams.get('error');
 const message = Astro.url.searchParams.get('message');
+const redirect = Astro.url.searchParams.get('redirect') || '/';
 ---
 
 <PublicLayout title="Crear Cuenta - CROMA">
@@ -38,6 +39,14 @@ const message = Astro.url.searchParams.get('message');
               </div>
             </div>
           )}
+
+          <!-- Client-side Message Container -->
+          <div id="status-message" class="hidden mb-6 p-4 rounded border-l-4">
+            <div class="flex items-center">
+              <div id="status-icon" class="mr-2"></div>
+              <p id="status-text" class="text-sm font-medium"></p>
+            </div>
+          </div>
 
           <!-- OAuth Buttons -->
           <div class="space-y-3 mb-6">
@@ -150,7 +159,7 @@ const message = Astro.url.searchParams.get('message');
         <div class="mt-6 text-center">
           <p class="text-gray-600">
             ¿Ya tienes cuenta?
-            <a href="/auth/login" class="text-black font-bold hover:underline ml-1">
+            <a href={`/auth/login?redirect=${encodeURIComponent(redirect)}`} class="text-black font-bold hover:underline ml-1">
               Inicia sesión
             </a>
           </p>
@@ -165,10 +174,34 @@ const message = Astro.url.searchParams.get('message');
     const form = document.getElementById('register-form') as HTMLFormElement;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
     const googleBtn = document.getElementById('google-btn') as HTMLButtonElement;
+    const statusContainer = document.getElementById('status-message') as HTMLDivElement;
+    const statusIcon = document.getElementById('status-icon') as HTMLDivElement;
+    const statusText = document.getElementById('status-text') as HTMLParagraphElement;
+
+    function showStatus(msg: string, isError: boolean) {
+      statusContainer.classList.remove('hidden', 'bg-red-50', 'border-red-500', 'text-red-700', 'bg-green-50', 'border-green-500', 'text-green-700');
+      
+      if (isError) {
+        statusContainer.classList.add('bg-red-50', 'border-red-500', 'text-red-700');
+        statusIcon.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+      } else {
+        statusContainer.classList.add('bg-green-50', 'border-green-500', 'text-green-700');
+        statusIcon.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`;
+      }
+      
+      statusText.textContent = msg;
+      statusContainer.classList.remove('hidden');
+    }
 
     // OAuth Sign In with Google only
     googleBtn.addEventListener('click', async () => {
+      statusContainer.classList.add('hidden');
       try {
+        // Guardamos el destino en una cookie para que el callback lo sepa después
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect') || '/';
+        document.cookie = `sb-redirect-next=${encodeURIComponent(redirect)}; path=/; max-age=3600; SameSite=Lax`;
+
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -179,7 +212,7 @@ const message = Astro.url.searchParams.get('message');
         if (error) throw error;
       } catch (error: any) {
         console.error('OAuth error:', error);
-        alert(error.message || 'Error al iniciar sesión con Google');
+        showStatus(error.message || 'Error al iniciar sesión con Google', true);
       }
     });
 
@@ -194,12 +227,13 @@ const message = Astro.url.searchParams.get('message');
       const confirmPassword = formData.get('confirmPassword') as string;
 
       if (password !== confirmPassword) {
-        alert('Las contraseñas no coinciden');
+        showStatus('Las contraseñas no coinciden', true);
         return;
       }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creando cuenta...';
+      statusContainer.classList.add('hidden');
 
       try {
         const { data, error } = await supabase.auth.signUp({
@@ -214,10 +248,15 @@ const message = Astro.url.searchParams.get('message');
 
         if (error) throw error;
 
-        window.location.href = '/auth/login?message=Cuenta creada exitosamente. Por favor inicia sesión.';
+        showStatus('Cuenta creada exitosamente. Redirigiendo...', false);
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect') || '/';
+        setTimeout(() => {
+          window.location.href = `/auth/login?message=Cuenta creada exitosamente. Por favor inicia sesión.&redirect=${encodeURIComponent(redirect)}`;
+        }, 2000);
       } catch (error: any) {
         console.error('Registration error:', error);
-        alert(error.message || 'Error al crear la cuenta');
+        showStatus(error.message || 'Error al crear la cuenta', true);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Crear Cuenta';
       }

@@ -78,15 +78,16 @@ export default function CartSlideOver() {
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2 mt-2">
                         <button
-                          onClick={() => updateQuantity(key, item.quantity - 1)}
+                          onClick={() => updateQuantity(key, item.quantity - 1, item.maxStock || 99)}
                           className="w-8 h-8 border-2 border-gray-300 hover:border-black hover:bg-gray-100 transition-colors font-bold"
                         >
                           -
                         </button>
                         <span className="w-8 text-center font-bold">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(key, item.quantity + 1)}
-                          className="w-8 h-8 border-2 border-gray-300 hover:border-black hover:bg-gray-100 transition-colors font-bold"
+                          onClick={() => updateQuantity(key, item.quantity + 1, item.maxStock || 99)}
+                          disabled={item.quantity >= (item.maxStock || 99)}
+                          className={`w-8 h-8 border-2 font-bold transition-colors ${item.quantity >= (item.maxStock || 99) ? 'border-gray-100 text-gray-200 cursor-not-allowed' : 'border-gray-300 hover:border-black hover:bg-gray-100'}`}
                         >
                           +
                         </button>

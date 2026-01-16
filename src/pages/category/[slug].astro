@@ -3,6 +3,7 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductCard from '@components/product/ProductCard.astro';
 import Sidebar from '@components/Sidebar.astro';
 import FavoritesGrid from '@components/islands/FavoritesGrid';
+import ProductGrid from '@components/islands/ProductGrid';
 import { supabase } from '@lib/supabase';
 
 const { slug } = Astro.params;
@@ -16,14 +17,31 @@ const name = (normalizedSlug || 'COLLECTION').replace(/-/g, ' ').toUpperCase();
 // Check if user is authenticated
 const user = Astro.locals.user;
 
+import { mockProducts } from '@data/mockProducts';
+
 // Fetch all products from Supabase
-let { data: allProducts } = await supabase
+let { data: dbProducts } = await supabase
   .from('products')
   .select('*')
   .order('created_at', { ascending: false });
 
-// Ensure allProducts is an array
-allProducts = allProducts || [];
+const dbProductsSafe = dbProducts || [];
+
+// Universal Deduplicator: Priority to DB, then unique Mocks by slug
+const productsMap = new Map<string, any>();
+
+// Add DB products first
+dbProductsSafe.forEach(p => {
+  if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
+});
+
+// Add Mock products if slug not already present
+mockProducts.forEach(p => {
+  if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
+});
+
+// Convert back to array
+const allProducts = Array.from(productsMap.values());
 
 let filteredProducts: any[] = [];
 let showLoginPrompt = false;
@@ -94,21 +112,17 @@ if (normalizedSlug === 'all') {
           <FavoritesGrid client:load allProducts={allProducts} />
         )}
 
-        {/* Products Grid */}
+        {/* Products Grid - React Island with Skeleton */}
         {!showLoginPrompt && normalizedSlug !== 'my-favorites' && (
-          <>
+          <div class="min-h-[50vh]">
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
-                {filteredProducts.map((product) => (
-                  <ProductCard product={product} />
-                ))}
-              </div>
+              <ProductGrid client:load products={filteredProducts} />
             ) : (
               <div class="text-center py-20">
                 <p class="text-xl text-gray-500">No products found for this category.</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

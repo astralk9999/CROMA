@@ -10,12 +10,19 @@ const nextCookie = Astro.cookies.get("sb-redirect-next")?.value;
 const next = nextParam || nextCookie || "/account/profile";
 
 if (authCode) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
-    if (!error && data.session) {
-        Astro.cookies.set("sb-access-token", data.session.access_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
-        Astro.cookies.set("sb-refresh-token", data.session.refresh_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
-        Astro.cookies.delete("sb-redirect-next", { path: "/" });
-        return Astro.redirect(next);
+    try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(authCode);
+        if (error) throw error;
+        
+        if (data.session) {
+            Astro.cookies.set("sb-access-token", data.session.access_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
+            Astro.cookies.set("sb-refresh-token", data.session.refresh_token, { path: "/", sameSite: "lax", secure: import.meta.env.PROD });
+            Astro.cookies.delete("sb-redirect-next", { path: "/" });
+            return Astro.redirect(next);
+        }
+    } catch (e: any) {
+        console.error("Server-side auth exchange error:", e);
+        // Don't return yet, let the client-side script try to handle hash-based fallback or show error
     }
 }
 ---
@@ -58,13 +65,25 @@ if (authCode) {
 
         async function handleAuth() {
             try {
-                // Look for sessions (Supabase client handles hash/fragments automatically)
+                // 1. Check for URL error parameters (e.g. from Google or Supabase)
+                const params = new URLSearchParams(window.location.search);
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                
+                const errorDescription = params.get('error_description') || hashParams.get('error_description');
+                if (errorDescription) {
+                    throw new Error(errorDescription);
+                }
+
+                // 2. Look for sessions (Supabase client handles hash/fragments automatically)
                 const { data: { session }, error } = await supabase.auth.getSession();
                 
+                if (error) throw error;
+
                 if (session) {
                     // Set secure cookies for server access
-                    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
-                    document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+                    const isSecure = window.location.protocol === 'https:';
+                    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax; ${isSecure ? 'Secure;' : ''}`;
+                    document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${isSecure ? 'Secure;' : ''}`;
                     
                     const nextMatch = document.cookie.match(/sb-redirect-next=([^;]+)/);
                     const next = nextMatch ? decodeURIComponent(nextMatch[1]) : "/account/profile";
@@ -73,33 +92,48 @@ if (authCode) {
                     
                     window.location.href = next;
                 } else {
-                    const params = new URLSearchParams(window.location.search);
-                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                    
-                    const errorMsg = params.get('error_description') || 
-                                   hashParams.get('error_description') || 
-                                   'No se ha podido validar la sesión. El enlace podría haber caducado.';
-                    
-                    const errorDisplay = document.getElementById('error-display');
-                    const errorMessageElement = document.getElementById('error-message');
-                    
-                    if (errorDisplay && errorMessageElement) {
-                        errorMessageElement.textContent = errorMsg;
-                        errorDisplay.classList.remove('hidden');
-                        document.querySelector('h1')?.classList.add('hidden');
-                        document.querySelector('.relative.w-24')?.classList.add('hidden');
-                        document.querySelector('.space-y-3')?.classList.add('hidden');
+                    // If no session and no error in URL, wait a bit more for Supabase to process
+                    // But if we already waited or have certain params, fail now.
+                    if (params.has('code') || window.location.hash.includes('access_token')) {
+                         // We are in the middle of a flow but no session yet... wait one last time
+                         setTimeout(async () => {
+                             const { data: { session: secondTry } } = await supabase.auth.getSession();
+                             if (secondTry) {
+                                 window.location.reload();
+                             } else {
+                                 showError('No se ha podido validar la sesión. Por favor, intenta de nuevo.');
+                             }
+                         }, 1500);
                     } else {
-                        window.location.href = `/auth/login?error=${encodeURIComponent(errorMsg)}`;
+                         showError('Enlace de autenticación vacío o caducado.');
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Auth process failed:", err);
-                window.location.href = '/auth/login?error=Error inesperado durante la autenticación';
+                showError(err.message || 'Error inesperado durante la autenticación');
             }
         }
 
-        // Slight delay to allow Supabase to parse the URL hash
-        setTimeout(handleAuth, 800);
+        function showError(msg: string) {
+            const errorDisplay = document.getElementById('error-display');
+            const errorMessageElement = document.getElementById('error-message');
+            
+            if (errorDisplay && errorMessageElement) {
+                errorMessageElement.textContent = msg;
+                errorDisplay.classList.remove('hidden');
+                document.querySelector('h1')?.classList.add('hidden');
+                document.querySelector('.relative.w-24')?.classList.add('hidden');
+                document.querySelector('.space-y-3')?.classList.add('hidden');
+            } else {
+                window.location.href = `/auth/login?error=${encodeURIComponent(msg)}`;
+            }
+        }
+
+        // Reduced delay to start processing
+        if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+            setTimeout(handleAuth, 500);
+        } else {
+            handleAuth();
+        }
     </script>
 </PublicLayout>

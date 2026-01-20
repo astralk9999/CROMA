@@ -40,38 +40,44 @@ cookies.delete('sb-refresh-token', { path: '/' });
         import { supabase } from '@lib/supabase';
         
         async function performLogout() {
+            // Safety timeout to ensure we ALWAYS redirect within 3 seconds
+            const safetyTimeout = setTimeout(() => {
+                window.location.href = '/?logout=timeout';
+            }, 3000);
+
             try {
-                // 1. Clear Application Data
+                // 1. Explicitly clear cookies in JS as well
+                document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+                document.cookie = 'sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+
+                // 2. Clear Application Data
                 localStorage.removeItem('croma-favorites');
                 
-                // 2. Clear Supabase Local Session
+                // 3. Clear Supabase Local Session
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('sb-')) {
+                    if (key && (key.startsWith('sb-') || key.includes('supabase.auth.token'))) {
                         localStorage.removeItem(key);
                     }
                 }
 
-                // 3. Attempt formal signout
+                // 4. Attempt formal signout
                 await supabase.auth.signOut();
             } catch (err) {
                 console.warn("Logout cleanup warning:", err);
             } finally {
-                // 4. Force hard redirect to home
+                clearTimeout(safetyTimeout);
+                // 5. Force hard redirect to home
                 window.location.href = '/';
             }
         }
         
-        // Execute on page load (supports Astro ClientRouter)
+        // Execute immediately and on astro:page-load
+        performLogout();
         document.addEventListener('astro:page-load', () => {
             if (window.location.pathname === '/auth/logout') {
                 performLogout();
             }
         });
-
-        // Fallback for initial load
-        if (window.location.pathname === '/auth/logout') {
-            performLogout();
-        }
     </script>
 </PublicLayout>

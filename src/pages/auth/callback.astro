@@ -63,9 +63,10 @@ if (authCode) {
     <script>
         import { supabase } from "@lib/supabase";
 
+        let retries = 0;
         async function handleAuth() {
             try {
-                // 1. Check for URL error parameters (e.g. from Google or Supabase)
+                // 1. Check for URL error parameters
                 const params = new URLSearchParams(window.location.search);
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 
@@ -74,13 +75,20 @@ if (authCode) {
                     throw new Error(errorDescription);
                 }
 
-                // 2. Look for sessions (Supabase client handles hash/fragments automatically)
+                // 2. Look for sessions
                 const { data: { session }, error } = await supabase.auth.getSession();
                 
-                if (error) throw error;
+                if (error) {
+                    // If it's an abort error, retry once after a delay
+                    if (error.name === 'AbortError' && retries < 1) {
+                        retries++;
+                        setTimeout(handleAuth, 1000);
+                        return;
+                    }
+                    throw error;
+                }
 
                 if (session) {
-                    // Set secure cookies for server access
                     const isSecure = window.location.protocol === 'https:';
                     document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax; ${isSecure ? 'Secure;' : ''}`;
                     document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${isSecure ? 'Secure;' : ''}`;
@@ -90,27 +98,28 @@ if (authCode) {
                     
                     document.cookie = "sb-redirect-next=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
                     
-                    window.location.href = next;
+                    // Small delay to ensure cookies are written before redirect
+                    setTimeout(() => { window.location.href = next; }, 100);
                 } else {
-                    // If no session and no error in URL, wait a bit more for Supabase to process
-                    // But if we already waited or have certain params, fail now.
-                    if (params.has('code') || window.location.hash.includes('access_token')) {
-                         // We are in the middle of a flow but no session yet... wait one last time
-                         setTimeout(async () => {
-                             const { data: { session: secondTry } } = await supabase.auth.getSession();
-                             if (secondTry) {
-                                 window.location.reload();
-                             } else {
-                                 showError('No se ha podido validar la sesión. Por favor, intenta de nuevo.');
-                             }
-                         }, 1500);
+                    // If no session yet, wait bit for background processing
+                    if ((params.has('code') || window.location.hash.includes('access_token')) && retries < 2) {
+                         retries++;
+                         setTimeout(handleAuth, 1500);
                     } else {
-                         showError('Enlace de autenticación vacío o caducado.');
+                         showError('No se ha encontrado una sesión válida. Por favor, intenta iniciar sesión de nuevo.');
                     }
                 }
             } catch (err: any) {
                 console.error("Auth process failed:", err);
-                showError(err.message || 'Error inesperado durante la autenticación');
+                if (err.name === 'AbortError') {
+                    // Silent retry for aborts
+                    if (retries < 1) {
+                        retries++;
+                        setTimeout(handleAuth, 1000);
+                    }
+                } else {
+                    showError(err.message || 'Error inesperado durante la autenticación');
+                }
             }
         }
 
@@ -129,9 +138,9 @@ if (authCode) {
             }
         }
 
-        // Reduced delay to start processing
-        if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
-            setTimeout(handleAuth, 500);
+        // Start immediately but wait for DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleAuth);
         } else {
             handleAuth();
         }

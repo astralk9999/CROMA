@@ -50,14 +50,17 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
                             .single();
                         if (data) setProfile(data);
                     }
-                } else {
-                    // Session is null, clear state even if server thought we were logged in
+                } else if (!initialProfile && !profile) {
+                    // Only clear if we have absolutely nothing from server or local state
                     setUser(null);
                     setProfile(null);
                     syncCookies(null);
                 }
-            } catch (err) {
-                console.error("Session init error:", err);
+            } catch (err: any) {
+                // Ignore abort errors which are common during navigation/hydration
+                if (err.name !== 'AbortError') {
+                    console.error("Session init error:", err);
+                }
             } finally {
                 setLoading(false);
             }
@@ -130,9 +133,9 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
                             <div className="py-2">
                                 <div className="px-4 py-3 border-b border-gray-200">
                                     <p className="text-sm font-semibold text-gray-900">
-                                        {profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario'}
+                                        {profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuario'}
                                     </p>
-                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user?.email || profile?.email}</p>
                                     {profile?.role === 'admin' && (
                                         <span className="inline-block mt-1 px-2 py-0.5 bg-black text-white text-xs font-medium rounded-full">
                                             Admin

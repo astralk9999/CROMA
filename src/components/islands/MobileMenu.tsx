@@ -31,7 +31,7 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                         .eq('id', session.user.id)
                         .single();
                     if (profile) setIsAdmin(profile.role === 'admin');
-                } else if (!initialProfile) {
+                } else {
                     setIsAdmin(false);
                 }
             } catch (err) {

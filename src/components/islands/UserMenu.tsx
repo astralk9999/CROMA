@@ -50,9 +50,11 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
                             .single();
                         if (data) setProfile(data);
                     }
-                } else if (!initialProfile) {
+                } else {
+                    // Session is null, clear state even if server thought we were logged in
                     setUser(null);
                     setProfile(null);
+                    syncCookies(null);
                 }
             } catch (err) {
                 console.error("Session init error:", err);
@@ -61,11 +63,8 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
             }
         };
 
-        // Only run initSession if we don't have an initial profile from SSR
-        // or if we need to verify the session
-        if (!initialProfile) {
-            initSession();
-        }
+        // Always run initSession on mount to sync client state with server data
+        initSession();
 
         // Listen for auth changes (works across tabs in Supabase)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -127,7 +126,7 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
                         onClick={() => setIsOpen(false)}
                     ></div>
                     <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                        {user ? (
+                        {(user || profile) ? (
                             <div className="py-2">
                                 <div className="px-4 py-3 border-b border-gray-200">
                                     <p className="text-sm font-semibold text-gray-900">

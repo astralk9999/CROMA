@@ -4,145 +4,186 @@ import { createClient } from '@supabase/supabase-js';
 import OrderActions from '@components/islands/OrderActions';
 
 const user = Astro.locals.user;
-const profile = Astro.locals.profile;
 
 if (!user) {
   return Astro.redirect('/auth/login?redirect=/account/orders');
 }
 
-// Get the access token to authenticate the request against RLS policies
+// Get the access token
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
 if (!accessToken) {
    return Astro.redirect('/auth/login?redirect=/account/orders');
 }
 
-// Create a scoped client with the user's token
+// Create scoped client
 const supabaseAuth = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL,
   import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
   {
     global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
     },
   }
 );
 
-// Fetch user's orders using the authenticated client
+// Fetch orders
 const { data: orders, error } = await supabaseAuth
   .from('orders')
   .select(`
     *,
     order_items (
       *,
-      product:products (name, images)
+      product:products (name, images, slug)
     )
   `)
-  .eq('user_id', user.id) // Redundant with RLS but good practice
+  .eq('user_id', user.id)
   .order('created_at', { ascending: false });
+
+const activeOrders = orders?.filter(o => ['pending', 'processing', 'shipped'].includes(o.status)) || [];
+const historyOrders = orders?.filter(o => ['delivered', 'cancelled'].includes(o.status)) || [];
+
+const formatDate = (date: string) => new Date(date).toLocaleDateString('es-ES', { 
+    day: 'numeric', month: 'long', year: 'numeric' 
+});
 ---
 
 <PublicLayout title="Mis Pedidos">
-  <section class="container-custom py-12">
-    <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">Mis Pedidos</h1>
+  <section class="container-custom py-12 min-h-screen">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-end justify-between mb-10">
+          <div>
+              <h1 class="text-4xl font-black text-gray-900 tracking-tight uppercase">Mis Pedidos</h1>
+              <p class="text-gray-500 mt-2">Gestiona tus compras, devoluciones y facturas.</p>
+          </div>
+      </div>
 
-      {orders && orders.length > 0 ? (
-        <div class="space-y-6">
-          {orders.map(order => (
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 class="text-lg font-bold text-gray-900">Pedido #{order.id.slice(0, 8)}</h3>
-                    <p class="text-sm text-gray-500">
-                      {new Date(order.created_at).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <p className="text-lg font-bold text-gray-900">{Number(order.total_amount).toFixed(2)}€</p>
-                    
-                    {/* Status Badge (Static Server-Side) */}
-                    <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
-                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                      order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                      order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {order.status === 'processing' ? 'Pagado / Procesando' : 
-                       order.status === 'pending' ? 'Pendiente de Pago' :
-                       order.status}
-                    </span>
-
-                    {/* Interactive Actions (Cancel/Return) */}
-                     <OrderActions 
-                        client:load 
-                        orderId={order.id} 
-                        initialStatus={order.status} 
-                     />
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div class="border-t border-gray-200 pt-4 mt-4">
-                  <div class="space-y-3">
-                    {order.order_items?.map((item: any) => (
-                      <div class="flex items-center gap-4">
-                        {item.product?.images?.[0] ? (
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product_name}
-                            class="w-16 h-16 object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div class="w-16 h-16 bg-gray-200 rounded-lg"></div>
-                        )}
-                        <div class="flex-1">
-                          <p class="font-medium text-gray-900">{item.product_name}</p>
-                          <p class="text-sm text-gray-600">Talla: {item.size} | Cantidad: {item.quantity}</p>
-                        </div>
-                        <p class="font-medium text-gray-900">{Number(item.price).toFixed(2)}€</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
-                {order.shipping_address && typeof order.shipping_address === 'object' && (
-                  <div class="border-t border-gray-200 mt-4 pt-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Dirección de Envío</h4>
-                    <div class="text-sm text-gray-600">
-                      <p>{order.shipping_address.name}</p>
-                      <p>{order.shipping_address.address}</p>
-                      <p>{order.shipping_address.city}, {order.shipping_address.postal_code}</p>
-                      <p>{order.shipping_address.country}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+      {!orders || orders.length === 0 ? (
+        <div class="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
+             <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+             </div>
+             <h2 class="text-xl font-bold text-gray-900 mb-2">Aún no has realizado pedidos</h2>
+             <a href="/category/all" class="mt-4 inline-block px-8 py-3 bg-black text-white font-bold uppercase tracking-wide rounded-lg hover:bg-gray-800 transition-colors">
+                Explorar Colección
+             </a>
         </div>
       ) : (
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-          <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-          </svg>
-          <h2 class="text-xl font-bold text-gray-900 mb-2">No tienes pedidos todavía</h2>
-          <p class="text-gray-600 mb-6">Explora nuestra tienda y realiza tu primer pedido</p>
-          <a
-            href="/category/all"
-            class="inline-block px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-          >
-            Ver Productos
-          </a>
+        <div class="space-y-16">
+            
+            {/* Active Orders Section */}
+            {activeOrders.length > 0 && (
+                <div>
+                    <h2 class="flex items-center gap-3 text-xl font-bold text-gray-900 mb-6 uppercase tracking-wide border-b border-gray-200 pb-4">
+                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                        Pedidos en Curso ({activeOrders.length})
+                    </h2>
+                    <div class="grid gap-6">
+                        {activeOrders.map(order => (
+                            <article class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all hover:scale-[1.01] duration-300">
+                                {/* Header */}
+                                <div class="bg-gray-50 px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-gray-100">
+                                    <div class="flex gap-6 text-sm">
+                                        <div>
+                                            <p class="text-gray-500 font-medium text-xs uppercase">Fecha</p>
+                                            <p class="font-bold text-gray-900">{formatDate(order.created_at)}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 font-medium text-xs uppercase">Total</p>
+                                            <p class="font-bold text-gray-900">{Number(order.total_amount).toFixed(2)}€</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 font-medium text-xs uppercase">Pedido #</p>
+                                            <p class="font-mono text-gray-700">{order.id.slice(0,8)}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3">
+                                         <a 
+                                            href={`/invoices/${order.id}`} 
+                                            target="_blank"
+                                            class="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-black uppercase tracking-wide border border-gray-300 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                         >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                            Recibo
+                                         </a>
+                                         <OrderActions client:load orderId={order.id} initialStatus={order.status} />
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div class="p-6">
+                                     {/* Progress Bar */}
+                                     <div class="mb-8 relative">
+                                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-100">
+                                            <div style={{ width: order.status === 'shipped' ? '75%' : order.status === 'processing' ? '50%' : '25%' }} class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-black transition-all duration-1000"></div>
+                                        </div>
+                                        <div class="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                            <span class={order.status === 'pending' ? 'text-black' : ''}>Pago</span>
+                                            <span class={order.status === 'processing' ? 'text-black' : ''}>Procesando</span>
+                                            <span class={order.status === 'shipped' ? 'text-black' : ''}>Enviado</span>
+                                            <span>Entregado</span>
+                                        </div>
+                                     </div>
+
+                                     <div class="flex flex-col gap-4">
+                                        {order.order_items.map((item: any) => (
+                                            <div class="flex items-center gap-4">
+                                                <div class="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                                    {item.product?.images?.[0] && (
+                                                        <img src={item.product.images[0]} class="w-full h-full object-cover" />
+                                                    )}
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-bold text-gray-900">{item.product_name}</h4>
+                                                    <p class="text-sm text-gray-500">Talla: {item.size} | Cant.: {item.quantity}</p>
+                                                </div>
+                                                <div class="font-bold text-gray-900">{Number(item.price).toFixed(2)}€</div>
+                                            </div>
+                                        ))}
+                                     </div>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* History Orders Section */}
+            {historyOrders.length > 0 && (
+                <div>
+                     <h2 class="text-xl font-bold text-gray-400 mb-6 uppercase tracking-wide border-b border-gray-100 pb-4">
+                        Historial de Pedidos
+                    </h2>
+                    <div class="grid gap-4 opacity-80 hover:opacity-100 transition-opacity">
+                         {historyOrders.map(order => (
+                            <div class="bg-white rounded-lg border border-gray-200 p-6 flex flex-wrap items-center justify-between gap-6">
+                                <div>
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="font-bold text-gray-900">Pedido #{order.id.slice(0,8)}</h3>
+                                        <span class={`px-2 py-0.5 rounded text-xs font-bold uppercase ${order.status === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                                            {order.status === 'cancelled' ? 'Cancelado' : 'Entregado'}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">{formatDate(order.created_at)} • {Number(order.total_amount).toFixed(2)}€</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <a 
+                                        href={`/invoices/${order.id}`} 
+                                        target="_blank"
+                                        class="text-sm font-medium text-gray-600 hover:text-black underline underline-offset-4"
+                                    >
+                                        Ver Factura
+                                    </a>
+                                    {order.status === 'delivered' && (
+                                         <OrderActions client:load orderId={order.id} initialStatus={order.status} />
+                                    )}
+                                </div>
+                            </div>
+                         ))}
+                    </div>
+                </div>
+            )}
         </div>
       )}
     </div>

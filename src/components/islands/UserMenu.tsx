@@ -10,52 +10,99 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
     const [isOpen, setIsOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(initialProfile || null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialProfile);
+
+    // Helper to sync cookies with Supabase session
+    const syncCookies = (session: any) => {
+        const maxAge = 604800; // 7 days
+        if (session) {
+            document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        } else {
+            document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax`;
+            document.cookie = `sb-refresh-token=; path=/; max-age=0; SameSite=Lax`;
+        }
+    };
 
     useEffect(() => {
-        // Check current session
-        const initSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+        // Update local profile if props change (Astro View Transitions)
+        if (initialProfile) {
+            setProfile(initialProfile);
+            setLoading(false);
+        }
 
-            if (session?.user) {
-                setUser(session.user);
-                // Only fetch if we don't have an initial profile or if session user doesn't match
-                if (!initialProfile || initialProfile.id !== session.user.id) {
+        const initSession = async () => {
+            try {
+                // If we don't have an initial profile, we might still have a session in Supabase client
+                // that hasn't been synced to cookies or Astro locals yet.
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session?.user) {
+                    setUser(session.user);
+                    syncCookies(session);
+
+                    // Only fetch profile if we don't have one or it's for a different user
+                    if (!profile || profile.id !== session.user.id) {
+                        const { data } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single();
+                        if (data) setProfile(data);
+                    }
+                } else if (!initialProfile) {
+                    setUser(null);
+                    setProfile(null);
+                }
+            } catch (err) {
+                console.error("Session init error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Only run initSession if we don't have an initial profile from SSR
+        // or if we need to verify the session
+        if (!initialProfile) {
+            initSession();
+        }
+
+        // Listen for auth changes (works across tabs in Supabase)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+                syncCookies(session);
+                setUser(session?.user ?? null);
+                if (session?.user) {
                     const { data } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
-                    setProfile(data);
-                } else {
-                    setProfile(initialProfile);
+                    if (data) setProfile(data);
+                    // Claim guest orders
+                    fetch('/api/auth/claim-orders', { method: 'POST' }).catch(console.error);
                 }
-            } else {
+            } else if (event === 'SIGNED_OUT') {
+                syncCookies(null);
                 setUser(null);
                 setProfile(null);
-            }
-            setLoading(false);
-        };
-
-        initSession();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                setProfile(data);
-            } else {
-                setProfile(null);
+                setIsOpen(false);
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, []);
+        // Nudge session on window focus (handle tab switching)
+        const handleFocus = () => {
+            initSession();
+        };
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, [initialProfile]); // Run when initialProfile changes (navigation)
 
     // Always render the button, don't block on loading
     // The user state will update shortly after hydration

@@ -1,6 +1,7 @@
 ---
 import PublicLayout from "@layouts/PublicLayout.astro";
 import BrandLogo from "@components/BrandLogo.astro";
+import { supabase } from "@lib/supabase";
 
 // Server-side check for PKCE code
 const authCode = Astro.url.searchParams.get("code");
@@ -62,7 +63,7 @@ if (authCode) {
                 
                 if (session) {
                     // Set secure cookies for server access
-                    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+                    document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
                     document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=604800; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
                     
                     const nextMatch = document.cookie.match(/sb-redirect-next=([^;]+)/);

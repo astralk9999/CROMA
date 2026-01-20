@@ -1,0 +1,167 @@
+---
+import { createClient } from '@supabase/supabase-js';
+
+const { id } = Astro.params;
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+
+if (!id) {
+    return Astro.redirect('/');
+}
+
+// Privileged client to allow guest access via UUID link
+const supabase = createClient(
+  import.meta.env.PUBLIC_SUPABASE_URL,
+  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Fetch order
+const { data: order, error } = await supabase
+    .from('orders')
+    .select(`*, order_items(*, product:products(name))`)
+    .eq('id', id)
+    .single();
+
+if (error || !order) {
+    return Astro.redirect('/account/orders'); // Or 404
+}
+
+const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+};
+
+const subtotal = order.total_amount / 1.21; // Assuming 21% VAT included
+const vat = order.total_amount - subtotal;
+---
+
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura #{order.id.slice(0,8)} - CROMA</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; color: #111; line-height: 1.5; }
+        .invoice-container { max-width: 800px; margin: 0 auto; padding: 40px; background: white; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
+        .invoice-details { text-align: right; }
+        .section { margin-bottom: 30px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .label { font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600; margin-bottom: 4px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th { text-align: left; border-bottom: 2px solid #eee; padding: 10px 0; font-size: 12px; text-transform: uppercase; }
+        td { padding: 12px 0; border-bottom: 1px solid #eee; }
+        .text-right { text-align: right; }
+        .total-row { font-weight: bold; font-size: 18px; border-top: 2px solid #000; }
+        .print-btn { 
+            position: fixed; bottom: 20px; right: 20px; 
+            padding: 12px 24px; background: black; color: white; 
+            border-radius: 8px; cursor: pointer; border: none; font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        @media print {
+            .print-btn { display: none; }
+            body { background: white; }
+            .invoice-container { padding: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+
+    <div class="invoice-container shadow-xl">
+        <header class="header">
+            <div>
+                <div class="logo">
+                   <img src="/chromakopia_logo.png" alt="CROMA" style="height: 160px; object-fit: contain; display: block;" />
+                </div>
+                <div style="font-size: 14px; margin-top: 0px; color: #666; line-height: 1.2;">
+                    Calle de la Moda Urban 123<br>
+                    28000, Madrid - España<br>
+                    NIF: B-12345678
+                </div>
+            </div>
+            <div class="invoice-details">
+                <h1 style="font-size: 32px; font-weight: 900; margin: 0;">FACTURA</h1>
+                <p>#{order.id.slice(0,8).toUpperCase()}</p>
+                <p style="color: #666; font-size: 14px;">{formatDate(order.created_at)}</p>
+                <div style="margin-top: 8px; display: inline-block; padding: 4px 8px; background: #eee; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                    {order.status.toUpperCase()}
+                </div>
+            </div>
+        </header>
+
+        <div class="grid-2 section">
+            <div>
+                <div class="label">Facturar a:</div>
+                <div><strong>{order.shipping_address?.name}</strong></div>
+                <div>{order.shipping_address?.address}</div>
+                <div>{order.shipping_address?.city}, {order.shipping_address?.postal_code}</div>
+                <div>{order.shipping_address?.country}</div>
+                <div style="margin-top: 8px; font-size: 14px; color: #666;">{order.shipping_address?.email}</div>
+            </div>
+            <div class="text-right">
+                <div class="label">Método de Pago</div>
+                <div>Tarjeta / Stripe</div>
+                <div style="font-size: 12px; color: #999;">ID: {JSON.parse(order.notes || '{}').stripe_payment_intent || 'N/A'}</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Producto</th>
+                    <th style="width: 15%;">Talla</th>
+                    <th class="text-right">Cant.</th>
+                    <th class="text-right">Precio Unit.</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {order.order_items.map((item: any) => (
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">{item.product_name}</div>
+                            <!-- <div style="font-size: 12px; color: #999;">Ref: {item.product_id.slice(0,6)}</div> -->
+                        </td>
+                        <td>{item.size}</td>
+                        <td class="text-right">{item.quantity}</td>
+                        <td class="text-right">{Number(item.price).toFixed(2)}€</td>
+                        <td class="text-right font-medium">{(item.price * item.quantity).toFixed(2)}€</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 40px; display: flex; justify-content: flex-end;">
+            <div style="width: 250px;">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span>Subtotal</span>
+                    <span>{subtotal.toFixed(2)}€</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span>IVA (21%)</span>
+                    <span>{vat.toFixed(2)}€</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span>Envío</span>
+                    <span>0.00€</span>
+                </div>
+                <div class="flex justify-between py-4 total-row">
+                    <span>Total</span>
+                    <span>{Number(order.total_amount).toFixed(2)}€</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 12px;">
+            <p>Gracias por tu compra en CROMA. Para cualquier duda contacta con support@croma.com</p>
+        </div>
+    </div>
+
+    <button onclick="window.print()" class="print-btn">
+        Imprimir / Descargar PDF
+    </button>
+
+</body>
+</html>

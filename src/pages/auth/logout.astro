@@ -45,7 +45,6 @@ cookies.delete('sb-refresh-token', { path: '/' });
                 localStorage.removeItem('croma-favorites');
                 
                 // 2. Clear Supabase Local Session
-                // Iterate backwards to avoid index issues when removing
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i);
                     if (key && key.startsWith('sb-')) {
@@ -53,19 +52,26 @@ cookies.delete('sb-refresh-token', { path: '/' });
                     }
                 }
 
-                // 3. Attempt formal signout (best effort)
+                // 3. Attempt formal signout
                 await supabase.auth.signOut();
             } catch (err) {
                 console.warn("Logout cleanup warning:", err);
             } finally {
-                // 4. Force hard redirect
-                setTimeout(() => {
-                    window.location.replace('/');
-                }, 800);
+                // 4. Force hard redirect to home
+                window.location.href = '/';
             }
         }
         
-        // Execute immediately
-        performLogout();
+        // Execute on page load (supports Astro ClientRouter)
+        document.addEventListener('astro:page-load', () => {
+            if (window.location.pathname === '/auth/logout') {
+                performLogout();
+            }
+        });
+
+        // Fallback for initial load
+        if (window.location.pathname === '/auth/logout') {
+            performLogout();
+        }
     </script>
 </PublicLayout>

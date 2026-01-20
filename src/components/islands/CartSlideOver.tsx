@@ -114,6 +114,7 @@ export default function CartSlideOver() {
               </div>
               <a
                 href="/checkout"
+                onClick={closeCart}
                 className="block w-full py-4 bg-black text-white font-black uppercase tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
                 Proceder al Pago

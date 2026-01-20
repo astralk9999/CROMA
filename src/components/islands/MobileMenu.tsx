@@ -12,43 +12,66 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
 
     // Check if user is admin
     useEffect(() => {
-        const checkAdmin = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+        // Initialize from props immediately
+        if (initialProfile) {
+            setIsAdmin(initialProfile.role === 'admin');
+        } else {
+            setIsAdmin(false);
+        }
 
-            if (session?.user) {
-                // If we have initial profile and it matches session user, trust it
-                if (initialProfile && initialProfile.id === session.user.id) {
-                    setIsAdmin(initialProfile.role === 'admin');
-                } else {
+        const checkAdmin = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session?.user) {
+                    // Fetch profile if missing or different
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('role')
                         .eq('id', session.user.id)
                         .single();
-                    setIsAdmin(profile?.role === 'admin');
+                    if (profile) setIsAdmin(profile.role === 'admin');
+                } else if (!initialProfile) {
+                    setIsAdmin(false);
                 }
-            } else {
-                setIsAdmin(false);
+            } catch (err) {
+                console.error("Admin check error:", err);
             }
         };
+
         checkAdmin();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT') {
+                setIsAdmin(false);
+                return;
+            }
+
             if (session?.user) {
-                // If initialProfile exists, we might trust it, but on auth change we should verify
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('role')
                     .eq('id', session.user.id)
                     .single();
-                setIsAdmin(profile?.role === 'admin');
+                if (profile) setIsAdmin(profile.role === 'admin');
             } else {
                 setIsAdmin(false);
             }
         });
 
-        return () => subscription.unsubscribe();
-    }, [initialProfile]);
+        // Nudge on window focus (handle tab switching)
+        const handleFocus = () => {
+            checkAdmin();
+        };
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, [initialProfile]); // Run when initialProfile changes (navigation)
 
     // Prevent scrolling when menu is open
     useEffect(() => {

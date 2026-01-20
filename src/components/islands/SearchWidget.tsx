@@ -34,61 +34,98 @@ export default function SearchWidget() {
         const timer = setTimeout(async () => {
             if (query.trim().length > 2) {
                 setLoading(true);
+                try {
+                    // Hybrid Strategy: Show mocks IMMEDIATELY for instant UI feedback
+                    const filteredMock = mockProducts.filter((p: any) =>
+                        p.name.toLowerCase().includes(query.toLowerCase()) ||
+                        p.category.toLowerCase().includes(query.toLowerCase()) ||
+                        (p.brand && p.brand.toLowerCase().includes(query.toLowerCase()))
+                    ) as Product[];
 
-                // Dual Strategy: Try RPC first (optimized), fallback to Client Query (compatibility)
-                let dbProducts: Product[] = [];
-                let hasDbError = false;
-
-                // 1. Try RPC
-                const { data: rpcData, error: rpcError } = await supabase
-                    .rpc('search_products', { query_text: query });
-
-                if (!rpcError && rpcData) {
-                    dbProducts = rpcData as Product[];
-                } else {
-                    console.warn("Search RPC unavailable, using fallback:", rpcError?.message);
-
-                    // 2. Fallback to Client-Side Query
-                    const { data: clientData, error: clientError } = await supabase
-                        .from('products')
-                        .select('id, name, slug, price, category, images')
-                        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-                        .range(0, 5);
-
-                    if (!clientError && clientData) {
-                        dbProducts = clientData as Product[];
-                    } else {
-                        hasDbError = true;
-                    }
-                }
-
-                // Filter mock products locally (Hybrid)
-                const filteredMock = mockProducts.filter((p: any) =>
-                    p.name.toLowerCase().includes(query.toLowerCase()) ||
-                    p.category.toLowerCase().includes(query.toLowerCase()) ||
-                    (p.brand && p.brand.toLowerCase().includes(query.toLowerCase()))
-                ) as Product[];
-
-                if (!hasDbError) {
-                    // Universal Deduplicator: Priority to DB, then unique Mocks by slug
-                    const resultsMap = new Map<string, Product>();
-
-                    // Add DB products first (they win)
-                    dbProducts.forEach(p => {
-                        if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
-                    });
-
-                    // Add Mock products if slug not already present
-                    filteredMock.forEach(p => {
-                        if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
-                    });
-
-                    setResults(Array.from(resultsMap.values()).slice(0, 8));
-                } else {
-                    // DB totally failed (both methods), show Mocks
+                    // Initial results (fast)
                     setResults(filteredMock.slice(0, 6));
+                    setLoading(true);
+
+                    // Dual Strategy: Try RPC first, fallback to Client Query
+                    let dbProducts: Product[] = [];
+                    let hasDbError = false;
+
+                    // Helper for fetching with timeout
+                    const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
+                        return Promise.race([
+                            promise,
+                            new Promise((_, reject) =>
+                                setTimeout(() => reject(new Error('Timeout')), timeoutMs)
+                            )
+                        ]);
+                    };
+
+                    try {
+                        // 1. Try RPC with 2s timeout
+                        const { data: rpcData, error: rpcError } = await withTimeout(
+                            (async () => await supabase.rpc('search_products', { query_text: query }))(),
+                            2000
+                        ) as any;
+
+                        if (!rpcError && rpcData) {
+                            dbProducts = (rpcData as any[]).map(p => ({
+                                id: p.id,
+                                name: p.name,
+                                slug: p.slug,
+                                price: p.price,
+                                category: p.category || p.category_id || '',
+                                images: p.images || []
+                            }));
+                        } else {
+                            throw rpcError || new Error('No data');
+                        }
+                    } catch (rpcError: any) {
+                        console.warn("Search RPC fast-fallback:", rpcError?.message || rpcError);
+
+                        try {
+                            // 2. Fallback to Client-Side Query with 2s timeout
+                            const { data: clientData, error: clientError } = await withTimeout(
+                                (async () => await supabase
+                                    .from('products')
+                                    .select('id, name, slug, price, category, images')
+                                    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+                                    .range(0, 5))(),
+                                2000
+                            ) as any;
+
+                            if (!clientError && clientData) {
+                                dbProducts = clientData as Product[];
+                            } else {
+                                throw clientError || new Error('No data');
+                            }
+                        } catch (clientError: any) {
+                            console.error("Search Client Query error:", clientError?.message || clientError);
+                            hasDbError = true;
+                        }
+                    }
+
+                    if (!hasDbError && dbProducts.length > 0) {
+                        // Universal Deduplicator: Priority to DB, then unique Mocks by slug
+                        const resultsMap = new Map<string, Product>();
+
+                        // Add DB products first (they win)
+                        dbProducts.forEach(p => {
+                            if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
+                        });
+
+                        // Add Mock products if slug not already present
+                        filteredMock.forEach(p => {
+                            if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
+                        });
+
+                        setResults(Array.from(resultsMap.values()).slice(0, 8));
+                    }
+                } catch (err) {
+                    console.error("Critical search processing error:", err);
+                    // On complete failure, we already showed mocks so we are safe
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             } else {
                 setResults([]);
             }

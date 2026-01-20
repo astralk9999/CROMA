@@ -35,10 +35,11 @@ interface ShippingAddress {
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {
         const body = await request.json();
-        const { items, shippingAddress, origin } = body as {
+        const { items, shippingAddress, origin, guestEmail } = body as {
             items: CartItem[];
             shippingAddress: ShippingAddress;
             origin: string;
+            guestEmail?: string;
         };
 
         if (!items || items.length === 0) {
@@ -51,17 +52,57 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         // Get user from session
         const accessToken = cookies.get('sb-access-token')?.value;
-        const refreshToken = cookies.get('sb-refresh-token')?.value;
+        let userId: string | null = null;
+        let customerEmail = shippingAddress.email;
 
-        if (!accessToken || !refreshToken) {
-            return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 });
+        if (accessToken) {
+            const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
+            if (!authError && user) {
+                userId = user.id;
+            }
         }
 
-        // Verify user session
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
+        // Validate Guest vs User
+        if (!userId) {
+            if (guestEmail) {
+                customerEmail = guestEmail;
 
-        if (authError || !user) {
-            return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401 });
+                // WORKAROUND: Since schema 'user_id' might be NOT NULL, use a placeholder Guest User
+                const GUEST_ACCOUNT_EMAIL = 'guest@croma.shop';
+                const GUEST_PASSWORD = 'GuestPassword123!@#';
+
+                // 1. Try to sign in to get ID
+                const { data: signInData } = await supabaseAdmin.auth.signInWithPassword({
+                    email: GUEST_ACCOUNT_EMAIL,
+                    password: GUEST_PASSWORD
+                });
+
+                if (signInData.user) {
+                    userId = signInData.user.id;
+                } else {
+                    // 2. Create if not exists
+                    const { data: createUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                        email: GUEST_ACCOUNT_EMAIL,
+                        password: GUEST_PASSWORD,
+                        email_confirm: true,
+                        user_metadata: { full_name: 'Guest User' }
+                    });
+
+                    if (createUser?.user) {
+                        userId = createUser.user.id;
+                    } else if (createError?.message?.includes('already registered')) {
+                        // Retry sign in? Should have worked. 
+                        // Maybe rate limit?
+                        console.error('Guest fallback error:', createError);
+                        return new Response(JSON.stringify({ error: 'Error initializing guest system.' }), { status: 500 });
+                    } else {
+                        console.error('Guest creation error:', createError);
+                        return new Response(JSON.stringify({ error: 'Guest system error' }), { status: 500 });
+                    }
+                }
+            } else {
+                return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 });
+            }
         }
 
         // Calculate total
@@ -71,17 +112,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         const { data: order, error: orderError } = await supabaseAdmin
             .from('orders')
             .insert({
-                user_id: user.id,
+                user_id: userId, // Can be null now
                 status: 'pending',
                 total_amount: totalAmount,
-                shipping_address: shippingAddress,
+                shipping_address: { ...shippingAddress, email: customerEmail },
             })
             .select()
             .single();
 
         if (orderError) {
             console.error('Order creation error:', orderError);
-            return new Response(JSON.stringify({ error: 'Failed to create order' }), { status: 500 });
+            return new Response(JSON.stringify({ error: `Failed to create order: ${orderError.message} - ${orderError.details || ''}` }), { status: 500 });
         }
 
         // Create order items
@@ -146,10 +187,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             mode: 'payment',
             success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/checkout/cancel`,
-            customer_email: shippingAddress.email,
+            customer_email: customerEmail,
             metadata: {
                 order_id: order.id,
-                user_id: user.id,
+                user_id: userId || 'guest',
             },
             shipping_address_collection: undefined, // We already collected it
         });

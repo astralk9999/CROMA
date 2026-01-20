@@ -104,8 +104,17 @@ const { title, description } = Astro.props;
 
   <script>
     import { syncFavoritesWithSupabase } from '@stores/favorites';
+    import { supabase } from '@lib/supabase';
     
     // Sync favorites on load
     syncFavoritesWithSupabase();
+
+    // Nudge session on page load/transition to ensure client-side sync
+    document.addEventListener('astro:page-load', async () => {
+      // Small delay to ensure cookies are processed if they were just set
+      setTimeout(async () => {
+        await supabase.auth.getSession();
+      }, 100);
+    });
   </script>
 </BaseLayout>

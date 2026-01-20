@@ -24,15 +24,14 @@ export const localFavorites = persistentAtom<string[]>('croma-favorites', [], {
 
 // Initialize store immediately when in browser
 if (typeof window !== 'undefined') {
-    // Check for session to enforce strict privacy
+    // Just mark as ready. persistentAtom handles the read from localStorage.
+    storeReady.set(true);
+
+    // Sync if we have a session
     supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-            // No session? No favorites. Clear potentially stale data.
-            localFavorites.set([]);
+        if (session) {
+            syncFavoritesWithSupabase();
         }
-        // persistentAtom handles the read from localStorage, 
-        // but this logic ensures we wipe it if appropriate.
-        storeReady.set(true);
     });
 } else {
     storeReady.set(true);

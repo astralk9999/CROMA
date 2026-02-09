@@ -1,0 +1,48 @@
+---
+import { supabaseAdmin } from '@lib/supabase-admin';
+
+const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+const isKeyPresent = !!serviceKey;
+const keyLength = serviceKey ? serviceKey.length : 0;
+
+let dbStatus = 'Unknown';
+let rowCount = 0;
+let errorMsg = '';
+let recentReturns = [];
+
+try {
+    const { count, error, data } = await supabaseAdmin
+        .from('return_requests')
+        .select('*', { count: 'exact' })
+        .limit(5);
+
+    if (error) {
+        dbStatus = 'Error';
+        errorMsg = error.message;
+    } else {
+        dbStatus = 'Connected';
+        rowCount = count || 0;
+        recentReturns = data || [];
+    }
+} catch (e: any) {
+    dbStatus = 'Exception';
+    errorMsg = e.message;
+}
+---
+
+<html>
+<body>
+    <h1>Debug Returns (Public)</h1>
+    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px;">
+        <h3>Configuration</h3>
+        <p>Service Role Key: <strong>{isKeyPresent ? `Present (Length: ${keyLength})` : 'MISSING'}</strong></p>
+        <p>DB Status: <strong>{dbStatus}</strong></p>
+        {errorMsg && <p style="color: red;">Error: {errorMsg}</p>}
+    </div>
+
+    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px;">
+        <h3>Table Data ({rowCount} rows)</h3>
+        <pre>{JSON.stringify(recentReturns, null, 2)}</pre>
+    </div>
+</body>
+</html>

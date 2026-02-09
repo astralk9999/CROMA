@@ -8,11 +8,7 @@ const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placehol
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || '';
 
-// Create supabase client with service role
-const supabaseAdmin = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 export const POST: APIRoute = async ({ request }) => {
     const signature = request.headers.get('stripe-signature');

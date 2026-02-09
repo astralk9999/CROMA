@@ -164,6 +164,12 @@ export default function UserMenu({ initialProfile, currentPath = '/' }: UserMenu
                                     Mis Pedidos
                                 </a>
                                 <a
+                                    href="/account/returns"
+                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                >
+                                    Mis Devoluciones
+                                </a>
+                                <a
                                     href="/category/my-favorites"
                                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                                 >

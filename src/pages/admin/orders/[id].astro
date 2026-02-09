@@ -1,0 +1,280 @@
+---
+import AdminLayout from '@layouts/AdminLayout.astro';
+import { supabaseAdmin } from '@lib/supabase-admin';
+
+const { id } = Astro.params;
+
+// Fetch order with its items and product data
+const { data: order, error } = await supabaseAdmin
+  .from('orders')
+  .select(`
+    *,
+    items:order_items (
+      *,
+      product:products (id, name, images, brand)
+    )
+  `)
+  .eq('id', id)
+  .single();
+
+if (error || !order) {
+  console.error('[Admin Order Detail] Fetch Error:', error);
+  return Astro.redirect('/admin/orders');
+}
+
+// Fetch user profile for the order if user_id exists
+let customerProfile = null;
+if (order.user_id) {
+    const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', order.user_id)
+        .single();
+    customerProfile = profile;
+}
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'delivered': return 'bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]';
+    case 'shipped': return 'bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]';
+    case 'processing': return 'bg-amber-500 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]';
+    case 'cancelled': return 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]';
+    default: return 'bg-zinc-800 text-white';
+  }
+};
+
+const statusLabels = {
+  pending: 'Pendiente',
+  processing: 'En Proceso',
+  shipped: 'Enviado',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado'
+};
+---
+
+<AdminLayout title={`Expediente: ${order.id.slice(0, 8)}`} activeSection="orders">
+  <div class="px-8 pt-12 pb-24 max-w-7xl mx-auto">
+    <!-- Navigation Header -->
+    <div class="flex items-center gap-6 mb-16 animate-fade-in">
+        <a href="/admin/orders" class="w-12 h-12 bg-white border border-black/5 rounded-2xl flex items-center justify-center text-zinc-400 hover:text-black hover:border-black transition-all group">
+            <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-[9px] font-black text-white bg-zinc-900 px-3 py-1 rounded-full tracking-[0.2em] uppercase">Orden Registrada</span>
+                <span class="w-1 h-1 bg-zinc-200 rounded-full"></span>
+                <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{new Date(order.created_at).toLocaleString('es-ES')}</span>
+            </div>
+            <h1 class="text-4xl font-black text-zinc-900 tracking-tighter uppercase leading-none">
+                Protocolo {order.id.slice(0, 8)}
+            </h1>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- Main Content (Items) -->
+        <div class="lg:col-span-2 space-y-12">
+            <!-- Items Manifest -->
+            <section class="bg-white rounded-[2.5rem] border border-black/5 p-10 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
+                    <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </div>
+
+                <h2 class="text-xs font-black text-zinc-400 uppercase tracking-[0.4em] mb-10 flex items-center gap-4">
+                    <span class="w-8 h-px bg-zinc-100"></span>
+                    Desglose de Carga
+                </h2>
+
+                <div class="space-y-8">
+                    {order.items.map((item) => (
+                        <div class="flex items-center gap-8 p-6 bg-zinc-50/50 rounded-3xl group hover:bg-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 border border-transparent hover:border-black/5">
+                            <div class="w-24 h-32 bg-white rounded-2xl overflow-hidden border border-black/[0.03] flex-shrink-0 shadow-sm">
+                                {item.product?.images?.[0] ? (
+                                    <img src={item.product.images[0]} alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                ) : (
+                                    <div class="w-full h-full flex items-center justify-center bg-zinc-100">
+                                        <svg class="w-10 h-10 text-zinc-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </div>
+                                )}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-4 mb-2">
+                                    <div>
+                                        <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">{item.product?.brand || 'MARCA_GENÉRICA'}</p>
+                                        <p class="text-sm font-black text-black uppercase tracking-tight leading-tight">{item.product_name}</p>
+                                    </div>
+                                    <p class="text-lg font-black text-black tracking-tight">{Number(item.price).toLocaleString()}€</p>
+                                </div>
+                                <div class="flex items-center gap-4 mt-4">
+                                    <div class="px-3 py-1 bg-zinc-200 text-[8px] font-black uppercase tracking-widest rounded-lg">Talla: {item.size}</div>
+                                    <div class="px-3 py-1 bg-zinc-900 text-white text-[8px] font-black uppercase tracking-widest rounded-lg">Cant: {item.quantity}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div class="mt-12 pt-12 border-t border-dashed border-zinc-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Subtotal de Operación</span>
+                        <span class="text-xl font-black text-zinc-900">{Number(order.total_amount).toLocaleString()}€</span>
+                    </div>
+                    {/* Add discount line if available in notes */}
+                    {order.notes && order.notes.includes('discount_amount') && (
+                        <div class="flex items-center justify-between mb-4 text-emerald-600">
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em]">Cupón Aplicado</span>
+                            <span class="text-xl font-black">-{JSON.parse(order.notes).discount_amount}€</span>
+                        </div>
+                    )}
+                    <div class="flex items-center justify-between pt-6 border-t-2 border-zinc-900">
+                        <span class="text-xs font-black text-zinc-900 uppercase tracking-[0.5em]">TOTAL CONSOLIDADO</span>
+                        <span class="text-4xl font-black text-black tracking-tighter">{Number(order.total_amount).toLocaleString()}€</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs / Notes -->
+            {order.notes && (
+                <section class="bg-zinc-900 rounded-[2rem] p-10 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    
+                    <p class="text-[8px] font-black text-white/40 uppercase tracking-[0.4em] mb-8">Auditoría y Metadatos</p>
+                    
+                    <div class="space-y-6">
+                        {(() => {
+                            try {
+                                const notesObj = JSON.parse(order.notes);
+                                return Object.entries(notesObj).map(([key, value]) => (
+                                    <div class="flex flex-col gap-1 border-l-2 border-white/10 pl-4 py-1">
+                                        <span class="text-[7px] font-black text-emerald-400 uppercase tracking-widest">{key.replace(/_/g, ' ')}</span>
+                                        <span class="text-[10px] font-mono text-zinc-300 break-all">{String(value)}</span>
+                                    </div>
+                                ));
+                            } catch (e) {
+                                return <p class="text-[10px] font-mono text-zinc-400 leading-relaxed">{order.notes}</p>;
+                            }
+                        })()}
+                    </div>
+                </section>
+            )}
+        </div>
+
+        <!-- Sidebar (User & Shipping) -->
+        <div class="space-y-8">
+            <!-- User Status Card -->
+            <section class="bg-white rounded-[2rem] border border-black/5 p-8 shadow-sm">
+                <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.4em] mb-6">Estado de Ejecución</p>
+                <div class={`w-full py-6 rounded-2xl flex flex-col items-center justify-center gap-2 mb-8 ${getStatusColor(order.status)} transition-all`}>
+                    <span class="text-[10px] font-black uppercase tracking-[0.5em]">{statusLabels[order.status] || order.status}</span>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-4">Reconfigurar Protocolo</p>
+                    {Object.entries(statusLabels).map(([val, label]) => (
+                        <button 
+                            class={`w-full py-4 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border-2 text-left flex items-center justify-between group
+                                ${order.status === val 
+                                    ? 'bg-zinc-900 border-zinc-900 text-white' 
+                                    : 'bg-zinc-50 border-zinc-50 text-zinc-400 hover:border-zinc-200 hover:bg-white'}`}
+                            data-status={val}
+                            id={`status-btn-${val}`}
+                        >
+                            {label}
+                            {order.status === val && <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>}
+                        </button>
+                    ))}
+                </div>
+            </section>
+
+            <!-- Shipping Hub -->
+            <section class="bg-white rounded-[2rem] border border-black/5 p-8 shadow-sm relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.4em] mb-8 flex items-center justify-between">
+                        DIRECCIÓN DE ENTREGA
+                        <svg class="w-4 h-4 text-zinc-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </p>
+                    
+                    {order.shipping_address && (
+                        <div class="space-y-6">
+                            <div>
+                                <span class="text-[8px] font-black text-zinc-300 uppercase block mb-1">Responsable</span>
+                                <p class="text-sm font-black text-black uppercase">{order.shipping_address.name}</p>
+                            </div>
+                            <div>
+                                <span class="text-[8px] font-black text-zinc-300 uppercase block mb-1">Contacto</span>
+                                <p class="text-[11px] font-bold text-black">{order.shipping_address.email}</p>
+                                <p class="text-[11px] font-bold text-zinc-500 mt-1">{order.shipping_address.phone}</p>
+                            </div>
+                            <div class="pt-6 border-t border-zinc-100">
+                                <span class="text-[8px] font-black text-zinc-300 uppercase block mb-2">Destino</span>
+                                <p class="text-[11px] font-bold text-zinc-600 uppercase leading-relaxed">{order.shipping_address.address}</p>
+                                <p class="text-[11px] font-black text-black uppercase mt-1">
+                                    {order.shipping_address.postal_code} • {order.shipping_address.city}
+                                </p>
+                                <div class="mt-4 inline-block px-3 py-1 bg-zinc-900 text-white text-[8px] font-black rounded-lg">
+                                    {order.shipping_address.country?.toUpperCase()}
+                                </div>
+                            </div>
+
+                            {customerProfile && (
+                                <div class="pt-6 border-t border-zinc-100">
+                                    <a href={`/admin/users/${customerProfile.id}/activity`} class="group flex items-center justify-between p-4 bg-zinc-50 rounded-2xl hover:bg-black hover:text-white transition-all">
+                                        <div>
+                                            <p class="text-[8px] font-black opacity-40 uppercase tracking-widest mb-1">Sujeto Vinculado</p>
+                                            <p class="text-[10px] font-black uppercase text-inherit">{customerProfile.full_name}</p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-inherit opacity-20 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </section>
+        </div>
+    </div>
+  </div>
+
+  <style>
+    .animate-fade-in {
+        animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <script define:vars={{ orderId: order.id }}>
+    const buttons = document.querySelectorAll('[id^="status-btn-"]');
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const newStatus = button.getAttribute('data-status');
+            
+            if (!confirm(`¿RECONFIGURAR ESTADO A: ${newStatus?.toUpperCase()}?`)) return;
+
+            button.disabled = true;
+            button.style.opacity = '0.5';
+
+            try {
+                const response = await fetch('/api/admin/update-order-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, status: newStatus })
+                });
+
+                if (!response.ok) throw new Error('Error en la sincronización del protocolo');
+                
+                window.location.reload();
+            } catch (err) {
+                alert('FALLO EN PROTOCOLO: ' + err.message);
+                button.disabled = false;
+                button.style.opacity = '1';
+            }
+        });
+    });
+  </script>
+</AdminLayout>

@@ -14,43 +14,97 @@ interface Props {
 }
 
 const { product } = Astro.props;
-const mainImage = product.images[0] || '/placeholder.jpg';
+const mainImage = product.images?.[0] || '/placeholder.jpg';
 ---
 
 <div class="group relative">
-  <div class="relative overflow-hidden bg-gray-100">
-    <a href={`/productos/${product.slug}`} class="block aspect-[3/4]">
+  <div class="relative overflow-hidden bg-gray-100 bg-zinc-50 rounded-none">
+    <a href={`/productos/${product.slug}`} class="block aspect-[3/4] relative">
       <img 
         src={mainImage} 
         alt={product.name}
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        class={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${product.launch_date && new Date(product.launch_date) > new Date() ? 'grayscale opacity-80' : ''}`}
         loading="lazy"
       />
+      
+      {/* Launch Overlay */}
+      {product.launch_date && new Date(product.launch_date) > new Date() && (
+          <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+              <div class="bg-black text-white px-4 py-2 rounded-xl border border-white/20 shadow-2xl transform rotate-[-2deg]">
+                  <span class="text-[10px] font-black uppercase tracking-[0.2em]">Próximamente</span>
+              </div>
+          </div>
+      )}
     </a>
     
-    {/* Badges */}
-    {product.stock > 0 && (
-       <div class="absolute bottom-2 left-2 pointer-events-none bg-black text-white text-xs font-bold px-2 py-1 uppercase tracking-wider">
-         New In
-       </div>
-    )}
-    
-    {/* Favorite Icon - Outside the anchor tag */}
+    {/* Badges Stack - Bottom Left */}
+    <div class="absolute bottom-3 left-3 flex flex-col gap-1 pointer-events-none z-10">
+       {/* Discount / Sale / New In Badge (Black Box Style) */}
+       {(product.discount_active || (product.sale_price && product.sale_price < product.price)) && (
+           <div class="bg-black text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
+               {product.discount_active && product.discount_percent ? `-${product.discount_percent}%` : 'SALE'}
+           </div>
+       )}
+       
+       {/* Limited Drop */}
+       {product.is_limited_drop && (
+           <div class="bg-brand-red text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider animate-pulse inline-block">
+               LIMITED DROP
+           </div>
+       )}
+
+       {/* Viral */}
+       {product.is_viral_trend && (
+           <div class="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
+               VIRAL
+           </div>
+       )}
+       
+       {/* Default New In context */}
+       {!product.is_limited_drop && !product.discount_active && product.stock > 0 && (
+           <div class="bg-black text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
+               NEW IN
+           </div>
+       )}
+    </div>
+
+    {/* Favorite Icon - Top Right (Default style for consistency) */}
     <FavoriteButton client:load productId={product.id} />
   </div>
   
-  <a href={`/productos/${product.slug}`} class="block pt-3">
-    <h3 class="text-sm font-normal text-gray-600 mb-1 leading-tight group-hover:text-black transition-colors">
+  <a href={`/productos/${product.slug}`} class="block pt-3 text-left">
+    <h3 class="text-[10px] font-medium text-zinc-800 uppercase tracking-wide leading-tight group-hover:underline decoration-1 underline-offset-4">
       {product.name}
     </h3>
-    <div class="flex items-center space-x-2">
-      <p class="text-sm font-bold text-black">
-        {formatPrice(product.price)}
-      </p>
-    </div>
     
-    <div class="flex items-center gap-1 mt-2 text-xs text-gray-400">
-      <span>+1 Color</span>
+    <div class="mt-2 flex flex-col items-center gap-1">
+        {(product.discount_active && product.discount_percent) || (product.sale_price && product.sale_price < product.price) ? (
+            <>
+                <div class="flex items-center gap-2">
+                     <span class="text-[10px] font-normal text-zinc-400 line-through decoration-zinc-400">
+                        {formatPrice(product.price)}
+                    </span>
+                    <span class="text-sm font-bold text-brand-red">
+                        {formatPrice(
+                            product.discount_active 
+                            ? product.price * (1 - (product.discount_percent || 0)/100) 
+                            : (product.sale_price || product.price)
+                        )}
+                    </span>
+                </div>
+                {/* Visual Black Badge for Discount - Centered below price */}
+                <div class="bg-black text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider inline-block transform -skew-x-6">
+                    {(product.discount_active && product.discount_percent) 
+                        ? `${product.discount_percent}% OFF` 
+                        : `${Math.round((1 - (product.sale_price || 0) / product.price) * 100)}% OFF`
+                    }
+                </div>
+            </>
+        ) : (
+            <span class="text-xs font-bold text-zinc-900">
+                {formatPrice(product.price)}
+            </span>
+        )}
     </div>
   </a>
 </div>

@@ -2,7 +2,6 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductCard from '@components/product/ProductCard.astro';
 import { supabase } from '@lib/supabase';
-import { mockProducts } from '@data/mockProducts';
 
 const query = Astro.url.searchParams.get('q') || '';
 
@@ -20,35 +19,14 @@ if (query) {
     
     if (error) throw error;
 
-    const dbProductsSafe = (dbProducts || []).map(p => ({
+    products = (dbProducts || []).map(p => ({
       ...p,
       category: p.category || p.category_id || p.category?.name || '' // Handle potential schema variations
     }));
     
-    // Universal Deduplicator: Priority to DB, then unique Mocks by slug
-    const productsMap = new Map<string, any>();
-    
-    // Add DB products first
-    dbProductsSafe.forEach(p => {
-      if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
-    });
-
-    // Add matching mock products if slug not already present
-    mockProducts.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase()) || 
-      p.category.toLowerCase().includes(query.toLowerCase())
-    ).forEach(p => {
-      if (!productsMap.has(p.slug)) productsMap.set(p.slug, p);
-    });
-
-    products = Array.from(productsMap.values());
   } catch (err) {
     console.error("Search page error:", err);
-    // Fallback to mocks
-    products = mockProducts.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase()) || 
-      p.category.toLowerCase().includes(query.toLowerCase())
-    );
+    products = [];
   } finally {
     loading = false;
   }

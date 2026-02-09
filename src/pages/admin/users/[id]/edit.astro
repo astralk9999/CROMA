@@ -1,0 +1,187 @@
+---
+import AdminLayout from '@layouts/AdminLayout.astro';
+import { supabaseAdmin } from '@lib/supabase-admin';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/auth/login');
+}
+
+const { id } = Astro.params;
+
+// Fetch user profile
+const { data: targetProfile, error } = await supabaseAdmin
+  .from('profiles')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !targetProfile) {
+  return Astro.redirect('/admin/users');
+}
+---
+
+<AdminLayout title="Configuración de Sujeto" activeSection="users">
+  <div class="max-w-5xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-[9px] font-black text-black bg-zinc-100 px-2 py-0.5 rounded border border-black/5 tracking-widest uppercase">UUID: {targetProfile.id.slice(0, 8)}</span>
+                <span class="w-1 h-1 bg-zinc-200 rounded-full"></span>
+                <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Estado: Activo</span>
+            </div>
+            <h2 class="text-3xl font-black tracking-tighter text-black uppercase">Editar Perfil</h2>
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] mt-2 italic">Modificación de parámetros de cuenta y privilegios</p>
+        </div>
+        <a href="/admin/users" class="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">
+            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+            Volver a la Lista
+        </a>
+    </div>
+
+    <form id="edit-user-form" class="space-y-10 mb-20">
+        <input type="hidden" name="userId" value={targetProfile.id} />
+
+        <!-- Section 1: Account Info -->
+        <div class="bg-white rounded-2xl border border-black/5 shadow-sm p-10 md:p-12 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-zinc-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0 opacity-50"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-zinc-700 text-white rounded-lg flex items-center justify-center font-black text-xs shadow-xl">01</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-black">Identidad de la Cuenta</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Correo Electrónico (No editable)</label>
+                        <input type="email" value={targetProfile.email} disabled
+                            class="w-full bg-zinc-100 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black text-zinc-400 cursor-not-allowed" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="role" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Nivel de Privilegios <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <select id="role" name="role" required 
+                                class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-black focus:bg-white transition-all appearance-none cursor-pointer">
+                                <option value="customer" selected={targetProfile.role === 'customer'}>CLIENTE / ESTÁNDAR</option>
+                                <option value="admin" selected={targetProfile.role === 'admin'}>ADMINISTRADOR / CONTROL TOTAL</option>
+                            </select>
+                            <svg class="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="full_name" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Nombre Completo</label>
+                        <input type="text" id="full_name" name="full_name" value={targetProfile.full_name || ''}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all shadow-inner" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="phone" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Terminal de Contacto (Teléfono)</label>
+                        <input type="text" id="phone" name="phone" value={targetProfile.phone || ''}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all shadow-inner" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Account Metadata -->
+        <div class="bg-zinc-800 rounded-2xl shadow-2xl p-10 md:p-12 relative overflow-hidden group">
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-white text-black rounded-lg flex items-center justify-center font-black text-xs shadow-xl">02</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-white">Metadatos del Sistema</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+                        <p class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Fecha de Alta</p>
+                        <p class="text-white font-black text-sm uppercase">{new Date(targetProfile.created_at).toLocaleString()}</p>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+                        <p class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Última Sincronización</p>
+                        <p class="text-white font-black text-sm uppercase">{new Date(targetProfile.updated_at).toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-6 pt-10 border-t border-black/[0.05]">
+            <a href="/admin/users" class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-black transition-colors px-10 py-5">Abortar Misión</a>
+            <button type="submit" id="submit-btn" 
+                class="w-full sm:w-auto bg-zinc-800 text-white px-16 py-6 rounded-xl text-[11px] font-black uppercase tracking-[0.5em] hover:scale-105 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.2)] active:scale-95 group">
+                <span class="group-hover:tracking-[0.6em] transition-all">Consolidar Perfil</span>
+            </button>
+        </div>
+    </form>
+  </div>
+</AdminLayout>
+
+<script>
+    function initPage() {
+        const form = document.getElementById('edit-user-form') as HTMLFormElement;
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = submitBtn as HTMLButtonElement;
+            if (btn.disabled) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-pulse">SINCRONIZANDO...</span>';
+
+            const formData = new FormData(form);
+            const userId = formData.get('userId');
+            const role = formData.get('role');
+            const full_name = formData.get('full_name');
+            const phone = formData.get('phone');
+
+            try {
+                const response = await fetch('/api/admin/update-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        updates: { role, full_name, phone }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('[Admin Edit User] API Error Response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: errorText
+                    });
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    (window as any).showIndustrialAlert('PERFIL SINCRONIZADO CORRECTAMENTE', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/users';
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || 'Error desconocido');
+                }
+            } catch (err: any) {
+                console.error('[Admin Edit User] Error:', err);
+                (window as any).showIndustrialAlert('ERROR DE PROTOCOLO: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'REINTENTAR CONSOLIDACIÓN';
+            }
+        });
+    }
+
+    document.addEventListener('astro:page-load', initPage);
+</script>

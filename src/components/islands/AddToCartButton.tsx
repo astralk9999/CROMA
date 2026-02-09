@@ -12,6 +12,9 @@ interface AddToCartButtonProps {
     sizes?: string[];
     stock: number;
     stockBySizes?: Record<string, number>;
+    discount_active?: boolean;
+    discount_percent?: number;
+    sale_price?: number;
   };
   isNotYetAvailable?: boolean;
 }
@@ -74,11 +77,16 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
 
     setIsAdding(true);
 
+    // Calculate final price based on discount
+    const finalPrice = product.discount_active
+      ? product.price * (1 - (product.discount_percent || 0) / 100)
+      : (product.sale_price || product.price);
+
     addToCart({
       id: product.id,
       name: product.name,
       slug: product.slug,
-      price: product.price,
+      price: finalPrice, // Use discounted price
       size: selectedSize,
       image: product.image,
     }, selectedSizeStock);

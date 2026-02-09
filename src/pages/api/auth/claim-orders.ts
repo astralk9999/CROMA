@@ -1,11 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@supabase/supabase-js';
-
-// Service role client to bypass RLS and update different users' orders
-const supabaseAdmin = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 export const POST: APIRoute = async ({ cookies }) => {
     try {

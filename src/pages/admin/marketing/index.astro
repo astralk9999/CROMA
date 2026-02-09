@@ -1,0 +1,794 @@
+---
+import AdminLayout from '@layouts/AdminLayout.astro';
+import { supabaseAdmin } from '../../../lib/supabase-admin';
+
+// Get counts for dashboard
+const { count: subscriberCount } = await supabaseAdmin
+  .from('newsletter_subscribers')
+  .select('*', { count: 'exact', head: true });
+
+const { count: userCount } = await supabaseAdmin
+  .from('profiles')
+  .select('*', { count: 'exact', head: true });
+
+// Fetch all products for selection
+const { data: allProducts } = await supabaseAdmin
+  .from('products')
+  .select('id, name, price, stock, images')
+  .order('created_at', { ascending: false });
+
+// Fetch campaign history
+const { data: history } = await supabaseAdmin
+    .from('marketing_campaigns')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+// Fetch active coupons
+const { data: coupons } = await supabaseAdmin
+    .from('coupons')
+    .select('id, code, discount_type, value')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+const safeProducts = allProducts || [];
+const safeCoupons = coupons || [];
+---
+
+<AdminLayout title="Marketing Protocol 2.0" activeSection="marketing">
+  <div class="max-w-[1600px] mx-auto px-4 lg:px-10 pb-20">
+    
+    <!-- Header Architecture -->
+    <div class="mb-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 overflow-hidden">
+        <div class="animate-in fade-in slide-in-from-left duration-700 min-w-0 flex-1">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 tracking-[0.2em] uppercase flex-shrink-0">SYSTEM_ACTIVE</span>
+                <div class="flex gap-1.5">
+                    <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                    <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                </div>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-black tracking-tighter text-black uppercase leading-[0.85] truncate">Marketing<br/><span class="text-zinc-300">HUB 2.0</span></h2>
+            <p class="text-[11px] font-bold text-zinc-500 uppercase tracking-[0.4em] mt-6 flex items-center gap-3 truncate">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Protocolo de Comunicación de Alto Impacto
+            </p>
+        </div>
+        
+        <div class="flex flex-row gap-4 w-full lg:w-auto animate-in fade-in slide-in-from-right duration-700 flex-shrink-0">
+            <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-inner min-w-[170px] flex-1 lg:flex-none">
+                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Audience</p>
+                <div class="flex items-baseline gap-1">
+                    <p class="text-3xl md:text-4xl font-black text-black tabular-nums">{(subscriberCount || 0) + (userCount || 0)}</p>
+                    <span class="text-[10px] font-black text-zinc-300 uppercase tracking-tighter">REACH</span>
+                </div>
+                <div class="h-1 w-full bg-zinc-50 rounded-full mt-4 overflow-hidden">
+                    <div class="h-full bg-zinc-800 w-2/3"></div>
+                </div>
+            </div>
+            <div class="bg-zinc-900 p-6 rounded-3xl shadow-2xl min-w-[170px] relative overflow-hidden group flex-1 lg:flex-none">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1 relative z-10">Live Status</p>
+                <p class="text-3xl md:text-4xl font-black text-emerald-400 uppercase tracking-tighter relative z-10">READY</p>
+                <div class="flex items-center gap-2 mt-3 relative z-10">
+                    <div class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </div>
+                    <span class="text-[9px] font-black text-emerald-500/80 uppercase tracking-widest truncate">SMTP_SECURE_LINK</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        <!-- Sidebar Controls (3 cols) -->
+        <div class="xl:col-span-3 space-y-6 min-w-0">
+            <div class="bg-white rounded-3xl border border-black/5 p-8 shadow-sm">
+                <h3 class="text-[11px] font-black text-black uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                    <span class="w-4 h-px bg-black"></span> 01. Plantillas
+                </h3>
+                
+                <div class="space-y-4">
+                    <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="new-collection">
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">NEW DROP</span>
+                        <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Lanzamiento Colección</span>
+                    </button>
+                    
+                    <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="discount-code">
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">SECRET CODE</span>
+                        <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Cupón Descuento</span>
+                    </button>
+                    
+                    <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="custom">
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">RAW_MSG</span>
+                        <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Contenido Manual</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 rounded-3xl p-8 shadow-2xl text-white overflow-hidden relative">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+                <h3 class="text-[11px] font-black uppercase tracking-[0.3em] mb-8 flex items-center gap-2 text-zinc-500">
+                    <span class="w-4 h-px bg-zinc-500"></span> 02. Parámetros
+                </h3>
+                
+                <div class="space-y-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between group">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">Stock Status</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="show-stock-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:bg-emerald-500 transition-all duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                            </label>
+                        </div>
+                        <p class="text-[9px] text-zinc-600 font-bold uppercase leading-relaxed">Muestra indicadores de escasez en las prendas seleccionadas.</p>
+                    </div>
+
+                    <div class="pt-6 border-t border-zinc-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Personalización</span>
+                            <span class="text-[8px] bg-white/10 px-2 py-1 rounded text-zinc-500 font-black tracking-widest uppercase">PRO</span>
+                        </div>
+                        <p class="text-[9px] text-zinc-600 font-bold uppercase leading-relaxed">Usa <code class="text-zinc-300 bg-white/5 px-1 rounded">{"{{name}}"}</code> para insertar el nombre del cliente automáticamente.</p>
+                    </div>
+
+                    <div class="pt-6 border-t border-zinc-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Selected</span>
+                            <span id="selected-count" class="text-xl font-black text-white tabular-nums">0</span>
+                        </div>
+                        <div id="selected-products-preview" class="flex flex-wrap gap-2 min-h-[40px]">
+                            <p id="no-products-msg" class="text-[10px] italic text-zinc-700 uppercase tracking-widest">Nada seleccionado todavía</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Compact View -->
+            {history && history.length > 0 && (
+                <div class="bg-white rounded-3xl border border-black/5 p-8 shadow-sm">
+                    <h3 class="text-[11px] font-black text-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                        <span class="w-4 h-px bg-black"></span> Historial Reciente
+                    </h3>
+                    <div class="space-y-4">
+                        {history.map(campaign => (
+                            <div class="group border-b border-zinc-50 pb-4 last:border-0 last:pb-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-[10px] font-black uppercase truncate group-hover:text-emerald-600 transition-colors">{campaign.subject}</p>
+                                        <span class="text-[8px] text-zinc-400 font-bold uppercase tracking-tighter">
+                                            {new Date(campaign.created_at).toLocaleDateString()} • {campaign.total_recipients} RECIPIENTS
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button 
+                                            class="history-reuse-btn p-1.5 bg-zinc-100 hover:bg-zinc-900 hover:text-white rounded-lg transition-all" 
+                                            title="Reutilizar Contenido"
+                                            data-campaign={JSON.stringify(campaign)}
+                                        >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <div class="h-1 flex-1 bg-zinc-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-500" style={`width: ${(campaign.success_count / campaign.total_recipients) * 100 || 0}%`}></div>
+                                    </div>
+                                    <span class="text-[8px] font-black text-zinc-900 tabular-nums">
+                                        {Math.round((campaign.success_count / campaign.total_recipients) * 100 || 0)}%
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+
+        <!-- Editor Central (5 cols) -->
+        <div class="xl:col-span-5 min-w-0">
+            <form id="marketing-form" class="bg-white rounded-[40px] border border-black/5 shadow-2xl p-10 md:p-14 relative overflow-hidden transition-all duration-500 hover:shadow-emerald-500/5">
+                <div class="absolute -top-20 -left-20 w-80 h-80 bg-zinc-50 rounded-full -z-0 blur-3xl opacity-50"></div>
+                
+                <div class="relative z-10 space-y-12">
+                    <!-- Fields UI -->
+                    <div class="space-y-10">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Custom Target Selector -->
+                            <div class="space-y-4">
+                                <label class="text-[11px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3 px-2">
+                                    <span class="w-1.5 h-1.5 bg-black rounded-full"></span> 01. Destinatarios
+                                </label>
+                                <div class="relative group/select min-w-0">
+                                    <input type="hidden" name="target" id="target-hidden-input" value="subscribers" />
+                                    <button type="button" id="target-custom-trigger" class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-black uppercase tracking-widest flex items-center justify-between hover:border-zinc-900 transition-all shadow-inner group-active:scale-[0.98] min-w-0">
+                                        <span id="target-display-value" class="truncate mr-2">Suscriptores Newsletter</span>
+                                        <svg class="w-4 h-4 text-zinc-400 group-hover/select:text-black transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                    
+                                    <!-- Popover technical -->
+                                    <div id="target-popover" class="absolute top-full left-0 w-full mt-2 bg-zinc-900 rounded-3xl p-2 shadow-2xl z-50 opacity-0 invisible translate-y-2 transition-all duration-300 border border-white/10 backdrop-blur-xl">
+                                        <div class="flex flex-col gap-1">
+                                            <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="subscribers">
+                                                <span class="opacity-30 mr-2 tabular-nums">01</span> Newsletter_Recipients
+                                            </button>
+                                            <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="users">
+                                                <span class="opacity-30 mr-2 tabular-nums Promo-02">02</span> Registered_Users_DB
+                                            </button>
+                                            <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="all">
+                                                <span class="opacity-30 mr-2 tabular-nums">03</span> Force_Transmission_All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-zinc-400 font-bold uppercase px-2 tracking-tighter flex items-center gap-2">
+                                    <span class="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    Selección de segmento de audiencia
+                                </p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <label class="text-[11px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3 px-2">
+                                    <span class="w-1.5 h-1.5 bg-black rounded-full"></span> 02. Asunto del Email
+                                </label>
+                                <input type="text" name="subject" id="subject-input" required placeholder="NUEVO DROP DISPONIBLE 🏴" 
+                                    class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-black uppercase tracking-tight focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
+                                <p class="text-[9px] text-zinc-400 font-bold uppercase px-2 tracking-tighter">Identificador de transmisión externa</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[11px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3 px-2">
+                                <span class="w-1.5 h-1.5 bg-black rounded-full"></span> 03. Título Hero
+                            </label>
+                            <input type="text" name="title" id="title-input" required placeholder="THE FUTURE OF UTILITY" 
+                                class="w-full bg-zinc-900 text-white rounded-[2rem] px-10 py-6 text-xl font-black uppercase tracking-tighter focus:scale-[1.02] transition-all text-center placeholder:text-zinc-700 border-4 border-zinc-800" />
+                            <p class="text-[9px] text-zinc-400 font-bold uppercase text-center tracking-widest">El mensaje principal con alto contraste.</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[11px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-3 px-2">
+                                <span class="w-1.5 h-1.5 bg-black rounded-full"></span> 04. Cuerpo del Mensaje
+                            </label>
+                            <textarea name="body" id="body-input" rows="8" required placeholder="Redacta el contenido de tu mensaje... Usa {{name}} para saludar."
+                                class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-[2.5rem] px-10 py-10 text-[13px] font-medium leading-relaxed tracking-tight focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner"></textarea>
+                        </div>
+                        
+                        <!-- Product GRID Selector -->
+                        <div class="space-y-6 pt-6 border-t border-black/[0.03]">
+                            <div class="flex items-center justify-between px-2">
+                                <div class="flex flex-col">
+                                    <label class="text-[11px] font-black text-black uppercase tracking-widest">Prendas Destacadas</label>
+                                    <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tighter">MAX_SELECT: 06</span>
+                                </div>
+                                <div class="relative">
+                                    <input type="text" id="product-search" placeholder="FILTRAR_CATÁLOGO" class="bg-transparent border-b border-zinc-100 text-[9px] font-black uppercase focus:border-black focus:outline-none w-40 pb-1.5 transition-all text-right placeholder:opacity-30" />
+                                    <span class="absolute right-0 -bottom-3 text-[7px] font-black text-zinc-300">SEARCH_ENGINE_V1</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-4 md:grid-cols-6 gap-4 max-h-56 overflow-y-auto pr-4 custom-scrollbar">
+                                {safeProducts.map(product => (
+                                    <div 
+                                        class="product-choice group relative cursor-pointer aspect-square bg-zinc-50 rounded-2xl overflow-hidden border-2 border-zinc-100 hover:border-zinc-900 transition-all flex-shrink-0"
+                                        data-id={product.id}
+                                        data-name={product.name}
+                                        data-image={product.images?.[0]}
+                                        data-price={product.price}
+                                        data-stock={product.stock}
+                                    >
+                                        <img src={product.images?.[0]} class="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110" />
+                                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                        <div class="selected-overlay absolute inset-0 bg-black/80 hidden items-center justify-center z-20 backdrop-blur-[2px]">
+                                            <svg class="w-6 h-6 text-emerald-400 animate-in zoom-in duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <!-- NEW: Coupon Strategy Section -->
+                        <div class="space-y-6 pt-8 border-t border-black/[0.03] min-w-0">
+                            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 px-2">
+                                <div class="flex flex-col min-w-0 flex-1">
+                                    <label class="text-[11px] font-black text-black uppercase tracking-widest flex items-center gap-2 truncate">
+                                        Fidelización (Cupones)
+                                        <div class="group relative inline-block">
+                                            <svg class="w-3.5 h-3.5 text-zinc-400 cursor-help hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-black text-white text-[9px] font-bold leading-relaxed rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-2xl z-50">
+                                                Selecciona un cupón activo para incluir un bloque de descuento en el correo. ¡Ideal para recuperar carritos o fidelizar!
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tighter">OPCIONAL_RECOMPENSA</span>
+                                </div>
+                                
+                                <div class="relative group/select w-full md:w-56 min-w-0">
+                                    <input type="hidden" name="couponId" id="coupon-id-input" value="" />
+                                    <button type="button" id="coupon-custom-trigger" class="w-full bg-zinc-50 border-b-2 border-zinc-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest flex items-center justify-between hover:border-zinc-900 transition-all group-active:scale-[0.98] min-w-0">
+                                        <span id="coupon-display-value" class="opacity-40 truncate mr-2">SIN_CUPÓN_ACTIVO</span>
+                                        <svg class="w-3.5 h-3.5 text-zinc-400 group-hover/select:text-black transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                    
+                                    <!-- Popover Technical Coupons -->
+                                    <div id="coupon-popover" class="absolute bottom-full right-0 w-64 mb-2 bg-zinc-900 rounded-3xl p-3 shadow-2xl z-50 opacity-0 invisible translate-y-2 transition-all duration-300 border border-white/10 backdrop-blur-xl max-h-64 overflow-y-auto custom-scrollbar-light">
+                                        <div class="flex flex-col gap-1.5">
+                                            <button type="button" class="coupon-option w-full py-3 px-5 rounded-xl text-[9px] font-black uppercase tracking-[2px] text-left transition-all hover:bg-emerald-500 hover:text-black text-zinc-500" data-value="" data-code="SIN_CUPÓN" data-discount="">
+                                                NONE <span class="float-right opacity-20">00</span>
+                                            </button>
+                                            {safeCoupons.map((coupon, i) => (
+                                                <button 
+                                                    type="button" 
+                                                    class="coupon-option w-full py-3 px-5 rounded-xl text-[9px] font-black uppercase tracking-[2px] text-left transition-all hover:bg-white hover:text-black text-zinc-400 flex items-center justify-between" 
+                                                    data-value={coupon.id} 
+                                                    data-code={coupon.code} 
+                                                    data-discount={coupon.discount_type === 'percentage' ? `${coupon.value}%` : `${coupon.value}€`}
+                                                >
+                                                    <span>{coupon.code}</span>
+                                                    <span class="bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded text-[8px]">{coupon.discount_type === 'percentage' ? `${coupon.value}%` : `${coupon.value}€`}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CTA & Links -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-black/[0.03]">
+                            <div class="space-y-4 min-w-0">
+                                <label class="text-[11px] font-black text-black uppercase tracking-widest flex items-center gap-3 px-2 truncate">
+                                    <span class="w-1.5 h-1.5 bg-black rounded-full flex-shrink-0"></span> Texto del Botón
+                                    <div class="group relative inline-block">
+                                        <svg class="w-3 h-3 text-zinc-300 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 p-2 bg-black text-white text-[8px] font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                                            Ejemplo: "COMPRAR AHORA" o "VER COLECCIÓN"
+                                        </div>
+                                    </div>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" name="ctaText" id="cta-text-input" placeholder="EXPLORAR COLECCIÓN" 
+                                        class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">CALL_TO_ACTION</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <label class="text-[11px] font-black text-black uppercase tracking-widest flex items-center gap-3 px-2">
+                                    <span class="w-1.5 h-1.5 bg-black rounded-full"></span> Enlace de Destino
+                                </label>
+                                <div class="relative">
+                                    <input type="text" name="ctaLink" id="cta-link-input" placeholder="https://croma.shop/..." 
+                                        class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-bold focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">REDIRECT_URL</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-end gap-6 pt-10 border-t border-black/[0.03]">
+                            <button type="submit" id="submit-btn" 
+                                class="w-full group bg-zinc-900 text-white px-10 py-7 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.6em] hover:scale-[1.02] transition-all shadow-2xl relative overflow-hidden active:scale-95">
+                                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-1000"></div>
+                                <span class="relative z-10 group-hover:text-emerald-400 transition-colors">Ejecutar Lanzamiento</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Live Preview (4 cols) -->
+        <div class="xl:col-span-4 lg:sticky lg:top-10 h-fit min-w-0">
+            <div class="bg-zinc-950 border-4 border-zinc-800 rounded-[3.5rem] p-5 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative">
+                <div class="absolute -top-1 -right-1 w-4 h-4 bg-zinc-700 rounded-full border-2 border-zinc-950"></div>
+                <div class="absolute -bottom-1 -left-1 w-4 h-4 bg-zinc-700 rounded-full border-2 border-zinc-950"></div>
+                
+                <div class="bg-white rounded-[2.5rem] overflow-hidden min-h-[750px] flex flex-col shadow-inner relative">
+                    <!-- Email Header Mock -->
+                    <div class="p-5 flex items-center justify-between border-b border-black/[0.03] bg-zinc-50/50 backdrop-blur-md">
+                         <div class="flex gap-2">
+                             <div class="w-2.5 h-2.5 rounded-full bg-zinc-200"></div>
+                             <div class="w-2.5 h-2.5 rounded-full bg-zinc-200"></div>
+                             <div class="w-2.5 h-2.5 rounded-full bg-zinc-200"></div>
+                         </div>
+                         <div class="flex items-center gap-2">
+                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em]">Live_Render v2.1</span>
+                            <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                         </div>
+                    </div>
+                    
+                    <!-- Content Window -->
+                    <div id="email-preview-content" class="flex-1 overflow-y-auto custom-scrollbar-light bg-white p-8 transition-all duration-500">
+                        <!-- Dynamic content injected here -->
+                    </div>
+
+                    <!-- Browser Footer Mock -->
+                    <div class="p-4 bg-zinc-50 border-t border-black/[0.02] flex justify-center">
+                        <div class="w-20 h-1 bg-zinc-200 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-center mt-6 text-[9px] font-black text-zinc-400 uppercase tracking-widest opacity-50">Vista Previa Certificada ⚡ 2026</p>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    function initPage() {
+        const form = document.getElementById('marketing-form') as HTMLFormElement;
+        const templateBtns = document.querySelectorAll('.template-btn');
+        const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+        const previewEl = document.getElementById('email-preview-content');
+        
+        // Form controls
+        const subjectInput = document.getElementById('subject-input') as HTMLInputElement;
+        const titleInput = document.getElementById('title-input') as HTMLInputElement;
+        const bodyInput = document.getElementById('body-input') as HTMLTextAreaElement;
+        const showStockToggle = document.getElementById('show-stock-toggle') as HTMLInputElement;
+        const productSearch = document.getElementById('product-search') as HTMLInputElement;
+        const productChoices = document.querySelectorAll('.product-choice');
+        const selectedCountEl = document.getElementById('selected-count');
+        const selectedPreview = document.getElementById('selected-products-preview');
+        const noProductsMsg = document.getElementById('no-products-msg');
+
+        const ctaTextInput = document.getElementById('cta-text-input') as HTMLInputElement;
+        const ctaLinkInput = document.getElementById('cta-link-input') as HTMLInputElement;
+        
+        // Custom Selector Elements
+        const targetHiddenInput = document.getElementById('target-hidden-input') as HTMLInputElement;
+        const targetTrigger = document.getElementById('target-custom-trigger');
+        const targetPopover = document.getElementById('target-popover');
+        const targetDisplayValue = document.getElementById('target-display-value');
+        const targetOptions = document.querySelectorAll('.target-option');
+
+        const couponHiddenId = document.getElementById('coupon-id-input') as HTMLInputElement;
+        const couponTrigger = document.getElementById('coupon-custom-trigger');
+        const couponPopover = document.getElementById('coupon-popover');
+        const couponDisplayValue = document.getElementById('coupon-display-value');
+        const couponOptions = document.querySelectorAll('.coupon-option');
+
+        const historyReuseBtns = document.querySelectorAll('.history-reuse-btn');
+
+        let selectedProducts: any[] = [];
+        let activeCoupon: { code: string, discount: string } | null = null;
+
+        // Custom Selection Logic
+        function setupCustomSelector(trigger: HTMLElement | null, popover: HTMLElement | null, hiddenInput: HTMLInputElement | null, displayEl: HTMLElement | null, options: NodeListOf<Element>, onSelect?: (val: string, label: string, data?: any) => void) {
+            if (!trigger || !popover) return;
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = !popover.classList.contains('invisible');
+                
+                // Close others
+                document.querySelectorAll('[id$="-popover"]').forEach(p => {
+                    p.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                });
+
+                if (!isVisible) {
+                    popover.classList.remove('invisible', 'opacity-0', 'translate-y-2');
+                }
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const val = opt.getAttribute('data-value') || '';
+                    const label = opt.textContent?.trim() || '';
+                    
+                    if (hiddenInput) hiddenInput.value = val;
+                    if (displayEl) {
+                        displayEl.textContent = label.replace(/^\d+\s+/, ''); // Remove the 01/02 prefix for display
+                        displayEl.classList.remove('opacity-40');
+                    }
+
+                    popover.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                    
+                    if (onSelect) {
+                        const code = opt.getAttribute('data-code');
+                        const discount = opt.getAttribute('data-discount');
+                        onSelect(val, label, { code, discount });
+                    }
+                    updatePreview();
+                });
+            });
+        }
+
+        setupCustomSelector(targetTrigger, targetPopover, targetHiddenInput, targetDisplayValue, targetOptions);
+        setupCustomSelector(couponTrigger, couponPopover, couponHiddenId, couponDisplayValue, couponOptions, (val, label, data) => {
+            if (val) {
+                activeCoupon = { code: data.code, discount: data.discount };
+            } else {
+                activeCoupon = null;
+                if (couponDisplayValue) {
+                    couponDisplayValue.textContent = 'SIN_CUPÓN_ACTIVO';
+                    couponDisplayValue.classList.add('opacity-40');
+                }
+            }
+        });
+
+        // Close popovers on outside click
+        document.addEventListener('click', () => {
+            document.querySelectorAll('[id$="-popover"]').forEach(p => {
+                p.classList.add('invisible', 'opacity-0', 'translate-y-2');
+            });
+        });
+
+        // Real-time Preview Engine
+        function updatePreview() {
+            if (!previewEl) return;
+
+            const title = titleInput.value || 'EL TÍTULO IRÁ AQUÍ';
+            const body = bodyInput.value || 'Redacte aquí el mensaje de su campaña. Este panel muestra una previsualización aproximada del resultado final...';
+            const ctaText = ctaTextInput.value || 'IR A LA WEB';
+            const showStock = showStockToggle.checked;
+
+            // Coupon preview logic
+            let couponHtml = '';
+            if (activeCoupon) {
+                couponHtml = `
+                    <div style="margin: 30px 0; padding: 20px; border: 2px dashed #000; background-color: #f9f9f9; text-align: center;">
+                        <p style="margin: 0 0 5px 0; font-size: 8px; font-weight: 900; color: #888; text-transform: uppercase; letter-spacing: 1.5px;">Protocolo de Descuento</p>
+                        <h3 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 900; color: #000;">${activeCoupon.discount} OFF</h3>
+                        <div style="display: inline-block; background-color: #000; color: #fff; padding: 8px 16px; font-size: 14px; font-weight: 900; letter-spacing: 3px;">
+                            ${activeCoupon.code}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let productsHtml = '';
+            if (selectedProducts.length > 0) {
+                productsHtml = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 35px;">
+                        ${selectedProducts.map(p => `
+                            <div style="border: 1px solid #e5e5e5; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                                <div style="aspect-ratio: 1/1; background: #f3f3f3;">
+                                    <img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;" />
+                                </div>
+                                <div style="padding: 12px; text-align: left;">
+                                    <p style="margin: 0; font-size: 10px; font-weight: 900; color: #000; text-transform: uppercase;">${p.name}</p>
+                                    <p style="margin: 4px 0 0 0; font-size: 11px; color: #111; font-weight: 700;">${Number(p.price).toFixed(2)}€</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            previewEl.innerHTML = `
+                <div style="text-align: center; font-family: 'Inter', system-ui, sans-serif; max-width: 100%; margin: 0 auto;">
+                    <img src="https://res.cloudinary.com/dqjtkdoni/image/upload/v1770122707/brand/logo_c_horns.png" style="width: 45px; margin: 0 auto 32px auto; display: block;" />
+                    
+                    <div style="background-color: #000; display: inline-block; padding: 4px 12px; margin-bottom: 24px;">
+                        <p style="margin: 0; font-size: 8px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 3px;">CROMA_DROP</p>
+                    </div>
+
+                    <h2 style="margin: 0 0 32px 0; font-size: 24px; font-weight: 900; color: #000; text-transform: uppercase; line-height: 1.1; letter-spacing: -0.5px;">${title.replace(/\{\{name\}\}/g, 'Cliente')}</h2>
+                    
+                    <div style="font-size: 14px; line-height: 1.8; color: #333; text-align: left; padding: 0 10px;">
+                        ${body.replace(/\n/g, '<br/>').replace(/\{\{name\}\}/g, '<strong>Cliente</strong>')}
+                    </div>
+
+                    ${couponHtml}
+
+                    ${productsHtml}
+
+                    <div style="margin-top: 48px; border-top: 2px solid #000; padding-top: 48px;">
+                        <div style="background: #000; color: #fff; padding: 20px 40px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; display: inline-block; cursor: pointer;">
+                            ${ctaText}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // History Reuse Logic
+        historyReuseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const campaign = JSON.parse(btn.getAttribute('data-campaign') || '{}');
+                if (!campaign.subject) return;
+
+                subjectInput.value = campaign.subject;
+                titleInput.value = campaign.title;
+                bodyInput.value = campaign.body;
+                ctaTextInput.value = campaign.cta_text || '';
+                ctaLinkInput.value = campaign.cta_link || '';
+                
+                // Visual feedback
+                (window as any).showIndustrialAlert('CAMPAÑA CARGADA EN EL EDITOR', 'success');
+                updatePreview();
+                
+                // Scroll to top of form
+                form.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Event listeners for live update
+        [titleInput, bodyInput, ctaTextInput].forEach(el => el?.addEventListener('input', updatePreview));
+        [titleInput, bodyInput, ctaTextInput].forEach(el => el?.addEventListener('change', updatePreview));
+        showStockToggle?.addEventListener('change', updatePreview);
+
+        // Product selection with enhanced UI logic
+        productChoices.forEach(choice => {
+            choice.addEventListener('click', () => {
+                const id = choice.getAttribute('data-id');
+                const name = choice.getAttribute('data-name');
+                const image = choice.getAttribute('data-image');
+                const price = choice.getAttribute('data-price');
+                const stock = choice.getAttribute('data-stock');
+                if (!id) return;
+
+                const index = selectedProducts.findIndex(p => p.id === id);
+                if (index > -1) {
+                    selectedProducts.splice(index, 1);
+                    choice.querySelector('.selected-overlay')?.classList.replace('flex', 'hidden');
+                } else {
+                    if (selectedProducts.length >= 6) {
+                        (window as any).showIndustrialAlert('SISTEMA BLOQUEADO: MÁXIMO 6 PRENDAS', 'warning');
+                        return;
+                    }
+                    selectedProducts.push({ id, name, image, price, stock: parseInt(stock || '0') });
+                    choice.querySelector('.selected-overlay')?.classList.replace('hidden', 'flex');
+                }
+
+                updateSelectedUI();
+                updatePreview();
+            });
+        });
+
+        function updateSelectedUI() {
+            if (selectedCountEl) selectedCountEl.textContent = selectedProducts.length.toString();
+            if (selectedPreview) {
+                selectedPreview.innerHTML = '';
+                if (selectedProducts.length === 0) {
+                    if (noProductsMsg) selectedPreview.appendChild(noProductsMsg);
+                } else {
+                    selectedProducts.forEach(p => {
+                        const chip = document.createElement('div');
+                        chip.className = 'px-3 py-1.5 bg-zinc-800 text-white text-[8px] font-black uppercase rounded-lg shadow-sm flex items-center gap-2 group cursor-default';
+                        chip.innerHTML = `<span>${p.name.substring(0, 10)}...</span><button type="button" class="remove-p text-zinc-500 hover:text-white" data-id="${p.id}">×</button>`;
+                        
+                        chip.querySelector('.remove-p')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedProducts = selectedProducts.filter(item => item.id !== p.id);
+                            const choice = Array.from(productChoices).find(c => c.getAttribute('data-id') === p.id);
+                            choice?.querySelector('.selected-overlay')?.classList.replace('flex', 'hidden');
+                            updateSelectedUI();
+                            updatePreview();
+                        });
+                        selectedPreview.appendChild(chip);
+                    });
+                }
+            }
+        }
+
+        // Template Logic 2.0
+        templateBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-type');
+                
+                templateBtns.forEach(b => (b as HTMLElement).classList.remove('border-zinc-900', 'bg-zinc-900'));
+                btn.classList.add('border-zinc-900', 'bg-zinc-900');
+
+                if (type === 'new-collection') {
+                    subjectInput.value = 'ACCESO EXCLUSIVO: NUEVO DROP 🏳️';
+                    titleInput.value = 'THE MODULAR FUTURE DROP';
+                    bodyInput.value = 'Hola {{name}},\n\nUna nueva cápsula ha aterrizado en nuestro almacén. Diseños brutalistas y materiales técnicos de alta resistencia.\n\nHemos bloqueado estas unidades para ti durante las próximas 24 horas.';
+                    if (couponHiddenId) couponHiddenId.value = '';
+                    if (couponDisplayValue) {
+                        couponDisplayValue.textContent = 'SIN_CUPÓN_ACTIVO';
+                        couponDisplayValue.classList.add('opacity-40');
+                    }
+                } else if (type === 'discount-code') {
+                    subjectInput.value = 'CÓDIGO SECRETO DETECTADO 🖤';
+                    titleInput.value = '{{name}}, TIENES UN -15% EXTRA';
+                    bodyInput.value = 'Hemos detectado que el colectivo requiere un incentivo. Usa el protocolo de descuento CROMA-OVERRIDE en tu siguiente compra.\n\nAplicable a toda la plataforma.';
+                } else {
+                    subjectInput.value = '';
+                    titleInput.value = '';
+                    bodyInput.value = '';
+                }
+                updatePreview();
+            });
+        });
+
+        // Product search 2.0
+        productSearch?.addEventListener('input', (e) => {
+            const val = (e.target as HTMLInputElement).value.toLowerCase();
+            productChoices.forEach(choice => {
+                const name = choice.getAttribute('data-name')?.toLowerCase() || '';
+                (choice as HTMLElement).style.display = name.includes(val) ? 'block' : 'none';
+            });
+        });
+
+        // Form Submit with Protocol Effect
+        form?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            (data as any).productIds = selectedProducts.map(p => p.id);
+            (data as any).showStock = showStockToggle.checked;
+            (data as any).couponId = couponHiddenId?.value || '';
+            (data as any).target = targetHiddenInput?.value || 'subscribers';
+
+            const confirmed = await customConfirm(
+                'EJECUTAR PROTOCOLO',
+                `¿Deseas iniciar la transmisión de esta campaña a un total de ${selectedProducts.length} productos y toda la audiencia de CROMA?`,
+                'info'
+            );
+
+            if (!confirmed) return;
+
+            submitBtn.disabled = true;
+            submitBtn.classList.replace('bg-zinc-900', 'bg-emerald-600');
+            submitBtn.innerHTML = '<span class="animate-pulse tracking-[0.8em]">ENVIANDO...</span>';
+
+            try {
+                const response = await fetch('/api/admin/send-marketing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Error sistémico');
+
+                (window as any).showIndustrialAlert(result.message, 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } catch (err: any) {
+                (window as any).showIndustrialAlert('FALLO EN LA TRANSMISIÓN: ' + err.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.classList.replace('bg-emerald-600', 'bg-zinc-900');
+                submitBtn.innerHTML = 'REINTENTAR ENVÍO';
+            }
+        });
+
+        function customConfirm(title: string, message: string, variant: 'danger' | 'warning' | 'info' = 'info'): Promise<boolean> {
+            return new Promise((resolve) => {
+                const event = new CustomEvent('open-confirm-modal', {
+                    detail: {
+                        title, message, variant,
+                        confirmText: 'SÍ, TRANSMITIR',
+                        cancelText: 'ABORTAR',
+                        onConfirm: () => resolve(true),
+                        onCancel: () => resolve(false)
+                    }
+                });
+                window.dispatchEvent(event);
+            });
+        }
+
+        // Initial preview
+        updatePreview();
+    }
+
+    document.addEventListener('astro:page-load', initPage);
+  </script>
+
+  <style is:global>
+    .custom-scrollbar-light::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar-light::-webkit-scrollbar-track {
+        background: #fdfdfd;
+    }
+    .custom-scrollbar-light::-webkit-scrollbar-thumb {
+        background: #e5e5e5;
+        border-radius: 10px;
+        border: 2px solid #fdfdfd;
+    }
+    .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+        background: #d4d4d4;
+    }
+
+    /* Selection override for preview */
+    #email-preview-content ::selection {
+        background-color: #000 !important;
+        color: #fff !important;
+    }
+  </style>
+</AdminLayout>

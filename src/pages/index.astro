@@ -10,9 +10,17 @@ const { data: featuredProducts } = await supabase
   .eq('featured', true)
   .limit(4);
 
+const { data: randomProductsPool } = await supabase
+  .from('products')
+  .select('*')
+  .limit(12);
+
 const { data: categories } = await supabase
   .from('categories')
   .select('*');
+
+// Shuffle local pool for randomness on каждый load
+const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5);
 ---
 
 <PublicLayout title="Urban Collective">
@@ -45,6 +53,22 @@ const { data: categories } = await supabase
       </div>
     </div>
   </section>
+
+  {/* NEW: Infinite Technical Marquee (Raw Industrial Style) */}
+  <div class="bg-black border-y-[3px] border-black py-4 overflow-hidden whitespace-nowrap relative z-30">
+    <div class="flex animate-marquee">
+        {[...Array(6)].map(() => (
+            <div class="flex items-center gap-12 px-6 text-[10px] font-mono font-black text-white uppercase tracking-[0.4em]">
+                <span>CROMA_RAW_UTILITY</span>
+                <span class="text-white/20">/</span>
+                <span>SYSTEM_ID:{(Math.random()*10000).toFixed(0)}</span>
+                <span class="text-white/20">/</span>
+                <span>STOCK_ACTIVE</span>
+                <span class="w-16 h-[2px] bg-white/30"></span>
+            </div>
+        ))}
+    </div>
+  </div>
 
   {/* Brand Manifesto */}
   <section class="bg-white py-24 border-y border-gray-100">
@@ -80,14 +104,14 @@ const { data: categories } = await supabase
   {/* Featured Products */}
   {featuredProducts && featuredProducts.length > 0 && (
     <section class="container-custom py-12 md:py-24">
-      <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 md:mb-16 border-b-4 border-black pb-6 md:pb-8 gap-4">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 md:mb-12 border-b-[3px] border-black pb-4 gap-4">
         <div>
-            <h2 class="text-3xl md:text-6xl font-urban font-black text-gray-900 uppercase italic">
-                DROPS <span class="text-gray-300">/ 2026</span>
+            <h2 class="text-5xl md:text-8xl font-urban font-black text-gray-900 uppercase italic tracking-tighter leading-none">
+                DROPS <span class="text-gray-200">/ 2026</span>
             </h2>
-            <p class="text-sm md:text-xl font-bold text-gray-500 mt-1 md:mt-2 uppercase tracking-widest">THE MOST WANTED PIECES</p>
+            <p class="text-sm md:text-base font-bold text-gray-400 mt-2 uppercase tracking-[0.2em]">THE MOST WANTED PIECES</p>
         </div>
-        <a href="/category/all" class="text-base md:text-xl font-black hover:translate-x-4 transition-transform duration-300 self-start md:self-auto">SEE ALL →</a>
+        <a href="/category/all" class="text-sm font-black uppercase tracking-widest hover:underline transition-all duration-300 self-start md:self-end md:mb-2">SEE ALL →</a>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
         {featuredProducts.map((product) => (
@@ -100,7 +124,7 @@ const { data: categories } = await supabase
   {/* Categories */}
   <section class="bg-black py-12 md:py-24 text-white overflow-hidden">
       <div class="container-custom relative">
-        <h2 class="hidden md:block text-6xl md:text-8xl font-urban font-black text-white/10 absolute -top-8 md:-top-12 -left-4 md:-left-12 pointer-events-none uppercase italic leading-none z-20">
+        <h2 class="hidden md:block text-6xl md:text-8xl font-urban font-black text-white absolute -top-8 md:-top-12 -left-4 md:-left-12 pointer-events-none uppercase italic leading-none z-20">
             CATEGORIES
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 relative z-10">
@@ -127,6 +151,160 @@ const { data: categories } = await supabase
       </div>
   </section>
 
+  {/* NEW: Auto-Rotating Random Product Carousel (Full-width, Full-color, Raw Style) */}
+  <section class="bg-white py-24 overflow-hidden border-t border-gray-100 relative w-full">
+      <div class="px-6 md:px-12 lg:px-24">
+          <div class="flex items-center justify-between mb-16 border-l-8 border-black pl-6">
+              <div>
+                  <h3 class="text-4xl font-urban font-black text-black uppercase italic italic tracking-tighter leading-none">RAW_INVENTORY</h3>
+                  <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-[0.4em]">LIVE_POOL_TRANSMISSION</p>
+              </div>
+          </div>
+
+          <div class="relative group">
+              <div id="random-carousel-track" class="flex gap-4 overflow-x-hidden cursor-grab active:cursor-grabbing py-4">
+                  {randomProducts.map((product: any) => {
+                      const hasDiscount = product.discount_active || (product.sale_price && product.sale_price < product.price);
+                      const finalPrice = product.discount_active 
+                          ? product.price * (1 - (product.discount_percent || 0)/100) 
+                          : (product.sale_price || product.price);
+                      
+                      const isUpcoming = product.launch_date && new Date(product.launch_date) > new Date();
+                      const isLimited = product.is_limited_drop;
+                      const isViral = product.is_viral_trend;
+
+                      return (
+                      <div class="flex-shrink-0 w-[280px] md:w-[320px] group/item relative border-2 border-black bg-white transition-all hover:-translate-y-2">
+                          <a href={`/productos/${product.slug}`} class="block">
+                              <div class="aspect-[3/4] bg-gray-50 overflow-hidden relative border-b-2 border-black">
+                                  <img 
+                                    src={product.images?.[0]} 
+                                    alt={product.name} 
+                                    class={`w-full h-full object-cover transition-all duration-500 group-hover/item:scale-105 ${isUpcoming ? 'grayscale opacity-60 blur-[1px]' : ''}`} 
+                                  />
+                                  
+                                  {/* Badges Overlay */}
+                                  <div class="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
+                                      {isUpcoming && (
+                                          <div class="bg-black text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] border border-white/20">
+                                              PRÓXIMAMENTE
+                                          </div>
+                                      )}
+                                      {hasDiscount && !isUpcoming && (
+                                          <div class="bg-black text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] transform rotate-3 shadow-lg border border-white/20">
+                                              SALE_OFF
+                                          </div>
+                                      )}
+                                      {isLimited && (
+                                          <div class="bg-brand-red text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] animate-pulse">
+                                              LIMITED_DROP
+                                          </div>
+                                      )}
+                                      {isViral && (
+                                          <div class="bg-purple-600 text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em]">
+                                              VIRAL_TREND
+                                          </div>
+                                      )}
+                                  </div>
+
+                                  <div class="absolute bottom-0 left-0 bg-black text-white text-[9px] font-black px-4 py-2 uppercase tracking-widest translate-y-full group-hover/item:translate-y-0 transition-transform">
+                                      VIEW_ITEM
+                                  </div>
+                              </div>
+                              <div class="p-6 flex flex-col justify-between">
+                                  <h4 class="text-xs font-black uppercase tracking-widest text-black mb-2 truncate">{product.name}</h4>
+                                  <div class="flex items-end justify-between mt-auto">
+                                      <div class="flex flex-col">
+                                          {hasDiscount && (
+                                              <span class="text-[10px] font-black text-gray-300 line-through decoration-black/30 tracking-widest">
+                                                  €{Number(product.price).toFixed(2)}
+                                              </span>
+                                          )}
+                                          <span class="text-2xl font-urban font-black text-black italic leading-none">
+                                              €{Number(finalPrice).toFixed(2)}
+                                          </span>
+                                      </div>
+                                      <span class="text-[9px] font-black text-gray-300">#{product.id.substring(0,6)}</span>
+                                  </div>
+                              </div>
+                          </a>
+                      </div>
+                      );
+                  })}
+                  {/* Duplicate for infinite effect */}
+                  {randomProducts.map((product: any) => {
+                      const hasDiscount = product.discount_active || (product.sale_price && product.sale_price < product.price);
+                      const finalPrice = product.discount_active 
+                          ? product.price * (1 - (product.discount_percent || 0)/100) 
+                          : (product.sale_price || product.price);
+                      
+                      const isUpcoming = product.launch_date && new Date(product.launch_date) > new Date();
+                      const isLimited = product.is_limited_drop;
+                      const isViral = product.is_viral_trend;
+
+                      return (
+                      <div class="flex-shrink-0 w-[280px] md:w-[320px] group/item relative border-2 border-black bg-white transition-all hover:-translate-y-2 hidden xl:flex flex-col">
+                          <a href={`/productos/${product.slug}`} class="block h-full">
+                              <div class="aspect-[3/4] bg-gray-50 overflow-hidden relative border-b-2 border-black">
+                                  <img 
+                                    src={product.images?.[0]} 
+                                    alt={product.name} 
+                                    class={`w-full h-full object-cover transition-all duration-500 group-hover/item:scale-105 ${isUpcoming ? 'grayscale opacity-60 blur-[1px]' : ''}`} 
+                                  />
+                                  
+                                  {/* Badges Overlay */}
+                                  <div class="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
+                                      {isUpcoming && (
+                                          <div class="bg-black text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] border border-white/20">
+                                              PRÓXIMAMENTE
+                                          </div>
+                                      )}
+                                      {hasDiscount && !isUpcoming && (
+                                          <div class="bg-black text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] transform rotate-3 shadow-lg border border-white/20">
+                                              SALE_OFF
+                                          </div>
+                                      )}
+                                      {isLimited && (
+                                          <div class="bg-brand-red text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] animate-pulse">
+                                              LIMITED_DROP
+                                          </div>
+                                      )}
+                                      {isViral && (
+                                          <div class="bg-purple-600 text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em]">
+                                              VIRAL_TREND
+                                          </div>
+                                      )}
+                                  </div>
+
+                                  <div class="absolute bottom-0 left-0 bg-black text-white text-[9px] font-black px-4 py-2 uppercase tracking-widest translate-y-full group-hover/item:translate-y-0 transition-transform">
+                                      VIEW_ITEM
+                                  </div>
+                              </div>
+                              <div class="p-6 flex flex-col justify-between">
+                                  <h4 class="text-xs font-black uppercase tracking-widest text-black mb-2 truncate">{product.name}</h4>
+                                  <div class="flex items-end justify-between mt-auto">
+                                      <div class="flex flex-col">
+                                          {hasDiscount && (
+                                              <span class="text-[10px] font-black text-gray-300 line-through decoration-black/30 tracking-widest">
+                                                  €{Number(product.price).toFixed(2)}
+                                              </span>
+                                          )}
+                                          <span class="text-2xl font-urban font-black text-black italic leading-none">
+                                              €{Number(finalPrice).toFixed(2)}
+                                          </span>
+                                      </div>
+                                      <span class="text-[9px] font-black text-gray-300">#{product.id.substring(0,6)}</span>
+                                  </div>
+                              </div>
+                          </a>
+                      </div>
+                      );
+                  })}
+              </div>
+          </div>
+      </div>
+  </section>
+
   {/* Newsletter Mockup */}
   <section class="py-24 bg-gray-50">
       <div class="container-custom text-center">
@@ -136,89 +314,170 @@ const { data: categories } = await supabase
               <h2 class="text-4xl font-urban font-black text-gray-900 mb-4 uppercase italic italic">Unete a la Resistencia</h2>
               <p class="text-gray-500 mb-8 font-bold uppercase tracking-widest text-sm">Get exclusive access to the next drops and 15% off</p>
               <form id="newsletter-form" class="flex flex-col sm:flex-row gap-2">
-                  <input type="email" id="newsletter-email" placeholder="YOUR@EMAIL.COM" class="flex-1 px-6 py-4 border-4 border-black font-black uppercase tracking-widest focus:outline-none" required />
-                  <button type="submit" id="newsletter-btn" class="px-8 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-gray-800 transition-colors">JOIN</button>
+                  <input type="email" id="footer-newsletter-email" placeholder="YOUR@EMAIL.COM" class="flex-1 px-6 py-4 border-4 border-black font-black uppercase tracking-widest focus:outline-none" required />
+                  <button type="submit" id="footer-newsletter-btn" class="px-8 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-gray-800 transition-colors">JOIN</button>
               </form>
               <p id="newsletter-message" class="mt-4 text-sm font-medium hidden"></p>
           </div>
       </div>
   </section>
 
-  {/* Value Propositions */}
-  <section class="container-custom py-20">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-      <div>
-        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
+  {/* NEW: Value Propositions (Technical Utility / Service Protocol) */}
+  <section class="container-custom py-24">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-black divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
+      <div class="p-12 transition-colors hover:bg-black hover:text-white group relative overflow-hidden">
+        <div class="flex items-center gap-4 mb-6 relative z-10">
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-black text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_01</span>
+            <div class="h-[2px] flex-1 bg-black group-hover:bg-white/20 transition-colors"></div>
+            <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
         </div>
-        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Calidad Premium</h3>
-        <p class="text-charcoal-600">Materiales de primera calidad seleccionados cuidadosamente.</p>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Calidad Premium</h3>
+        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
+            Materiales de grado industrial seleccionados bajo protocolos de máxima precisión.
+        </p>
       </div>
-      <div>
-        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+      
+      <div class="p-12 transition-colors hover:bg-black hover:text-white group relative overflow-hidden">
+        <div class="flex items-center gap-4 mb-6 relative z-10">
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-black text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_02</span>
+            <div class="h-[2px] flex-1 bg-black group-hover:bg-white/20 transition-colors"></div>
+            <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
         </div>
-        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Envío Rápido</h3>
-        <p class="text-charcoal-600">Entrega express en 24-48 horas en toda España.</p>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Envío Rápido</h3>
+        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
+            Logística optimizada: entrega express en 24-48 horas en todo el territorio nacional.
+        </p>
       </div>
-      <div>
-        <div class="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-navy-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
+
+      <div class="p-12 transition-colors hover:bg-black hover:text-white group relative overflow-hidden">
+        <div class="flex items-center gap-4 mb-6 relative z-10">
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-black text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_03</span>
+            <div class="h-[2px] flex-1 bg-black group-hover:bg-white/20 transition-colors"></div>
+            <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
         </div>
-        <h3 class="text-xl font-serif font-semibold text-navy-900 mb-2">Devolución Fácil</h3>
-        <p class="text-charcoal-600">30 días para devoluciones sin compromiso.</p>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Devolución Fácil</h3>
+        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
+            Protocolo de retorno simplificado: 30 días para devoluciones sin compromiso.
+        </p>
       </div>
     </div>
   </section>
 </PublicLayout>
 
-<script>
-  const form = document.getElementById('newsletter-form') as HTMLFormElement;
-  const emailInput = document.getElementById('newsletter-email') as HTMLInputElement;
-  const submitBtn = document.getElementById('newsletter-btn') as HTMLButtonElement;
-  const messageEl = document.getElementById('newsletter-message') as HTMLParagraphElement;
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = emailInput.value.trim();
-    if (!email) return;
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = '...';
-
-    try {
-      const response = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-
-      messageEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
-      
-      if (response.ok) {
-        messageEl.classList.add('text-green-600');
-        messageEl.textContent = data.message;
-        emailInput.value = '';
-      } else {
-        messageEl.classList.add('text-red-600');
-        messageEl.textContent = data.error;
-      }
-    } catch (error) {
-      messageEl.classList.remove('hidden');
-      messageEl.classList.add('text-red-600');
-      messageEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'JOIN';
+  <style is:global>
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
     }
-  });
-</script>
+    .animate-marquee {
+        animation: marquee 30s linear infinite;
+        width: max-content;
+    }
+  </style>
+
+  <script>
+    function initLanding() {
+        const track = document.getElementById('random-carousel-track');
+        if (!track) return;
+
+        let isDown = false;
+        let startX: number;
+        let scrollLeft: number;
+
+        track.addEventListener('mousedown', (e) => {
+            isDown = (e as MouseEvent).button === 0;
+            if (!isDown) return;
+            track.classList.add('active');
+            startX = (e as MouseEvent).pageX - track.offsetLeft;
+            scrollLeft = track.scrollLeft;
+        });
+
+        track.addEventListener('mouseleave', () => {
+            isDown = false;
+        });
+
+        track.addEventListener('mouseup', () => {
+            isDown = false;
+        });
+
+        track.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = (e as MouseEvent).pageX - track.offsetLeft;
+            const walk = (x - startX) * 2;
+            track.scrollLeft = scrollLeft - walk;
+        });
+
+        // Auto-rotation logic
+        let autoScrollInterval = setInterval(() => {
+            if (!isDown) {
+                track.scrollLeft += 1;
+                if (track.scrollLeft >= track.scrollWidth / 2) {
+                    track.scrollLeft = 0;
+                }
+            }
+        }, 30);
+
+        track.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
+        track.addEventListener('mouseleave', () => {
+             autoScrollInterval = setInterval(() => {
+                if (!isDown) {
+                    track.scrollLeft += 1;
+                    if (track.scrollLeft >= track.scrollWidth / 2) {
+                        track.scrollLeft = 0;
+                    }
+                }
+            }, 30);
+        });
+
+        // Newsletter script
+        const form = document.getElementById('newsletter-form') as HTMLFormElement;
+        const emailInput = document.getElementById('footer-newsletter-email') as HTMLInputElement;
+        const submitBtn = document.getElementById('footer-newsletter-btn') as HTMLButtonElement;
+        const messageEl = document.getElementById('newsletter-message') as HTMLParagraphElement;
+
+        form?.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = emailInput.value.trim();
+          if (!email) return;
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = '...';
+
+          try {
+            const response = await fetch('/api/newsletter', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+            messageEl.classList.remove('hidden', 'text-red-600', 'text-green-600');
+            
+            if (response.ok) {
+              messageEl.classList.add('text-green-600');
+              messageEl.textContent = data.message;
+              emailInput.value = '';
+            } else {
+              messageEl.classList.add('text-red-600');
+              messageEl.textContent = data.error;
+            }
+          } catch (error) {
+            messageEl.classList.remove('hidden');
+            messageEl.classList.add('text-red-600');
+            messageEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'JOIN';
+          }
+        });
+    }
+
+    document.addEventListener('astro:page-load', initLanding);
+  </script>

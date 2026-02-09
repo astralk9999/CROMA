@@ -44,29 +44,66 @@ export default function OrderActions({ orderId, initialStatus }: OrderActionsPro
         }
     };
 
+    const handleResumePayment = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/checkout/resume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderId,
+                    origin: window.location.origin
+                })
+            });
+
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Error al regenerar sesión de pago: ' + data.error);
+            }
+        } catch (err: any) {
+            console.error(err);
+            alert('Error en el protocolo de pago.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (status === 'cancelled') {
-        return <span className="text-red-600 font-bold border border-red-200 bg-red-50 px-3 py-1 rounded-full text-sm">Cancelado</span>;
+        return <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-red-600 border border-red-300 bg-red-50 px-4 py-2 rounded-full italic">Cancelado_Protocol</span>;
     }
 
     return (
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-4 justify-end items-center">
             {canCancel && (
-                <button
-                    onClick={handleCancel}
-                    disabled={loading}
-                    className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                    {loading ? 'Cancelando...' : 'Cancelar Pedido'}
-                </button>
+                <>
+                    {status === 'pending' && (
+                        <button
+                            onClick={handleResumePayment}
+                            disabled={loading}
+                            className="px-8 py-3 bg-zinc-900 border border-zinc-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl shadow-zinc-900/20 rounded-full active:scale-95"
+                        >
+                            {loading ? 'WAITING...' : 'PAGAR AHORA'}
+                        </button>
+                    )}
+                    <button
+                        onClick={handleCancel}
+                        disabled={loading}
+                        className="px-6 py-3 border border-red-300 text-red-600 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-red-50 transition-all disabled:opacity-50 rounded-full"
+                    >
+                        {loading ? 'WAITING...' : 'CANCELAR PEDIDO'}
+                    </button>
+                </>
             )}
 
             {canReturn && (
                 <>
                     <button
                         onClick={() => setShowReturnModal(true)}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors"
+                        className="px-8 py-3 bg-zinc-900 border border-zinc-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl shadow-zinc-900/20 rounded-full active:scale-95"
                     >
-                        Solicitar Devolución
+                        INICIAR DEVOLUCIÓN
                     </button>
                     <ReturnModal
                         isOpen={showReturnModal}

@@ -49,143 +49,271 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('es-ES', 
 ---
 
 <PublicLayout title="Mis Pedidos">
-  <section class="container-custom py-12 min-h-screen">
-    <div class="max-w-5xl mx-auto">
-      <div class="flex items-end justify-between mb-10">
-          <div>
-              <h1 class="text-4xl font-black text-gray-900 tracking-tight uppercase">Mis Pedidos</h1>
-              <p class="text-gray-500 mt-2">Gestiona tus compras, devoluciones y facturas.</p>
-          </div>
-      </div>
+    <section class="container-custom py-24 min-h-screen bg-white">
+        <div class="max-w-6xl mx-auto px-4 md:px-0">
+            {/* Mega Header Section */}
+            <div class="flex flex-col mb-24 gap-8">
+                <div class="flex items-center gap-4">
+                    <span class="w-16 h-0.5 bg-zinc-400"></span>
+                    <span class="text-xs font-bold uppercase tracking-[0.5em] text-zinc-500">User_Session.Terminal</span>
+                </div>
+                
+                <h1 class="text-6xl md:text-8xl lg:text-9xl font-urban font-black text-zinc-900 tracking-tighter uppercase leading-[0.8] italic">
+                    MIS <span class="text-zinc-400">PEDIDOS</span>
+                </h1>
 
-      {!orders || orders.length === 0 ? (
-        <div class="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
-             <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-400">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-             </div>
-             <h2 class="text-xl font-bold text-gray-900 mb-2">Aún no has realizado pedidos</h2>
-             <a href="/category/all" class="mt-4 inline-block px-8 py-3 bg-black text-white font-bold uppercase tracking-wide rounded-lg hover:bg-gray-800 transition-colors">
-                Explorar Colección
-             </a>
-        </div>
-      ) : (
-        <div class="space-y-16">
-            
-            {/* Active Orders Section */}
-            {activeOrders.length > 0 && (
-                <div>
-                    <h2 class="flex items-center gap-3 text-xl font-bold text-gray-900 mb-6 uppercase tracking-wide border-b border-gray-200 pb-4">
-                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                        Pedidos en Curso ({activeOrders.length})
-                    </h2>
-                    <div class="grid gap-6">
-                        {activeOrders.map(order => (
-                            <article class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transform transition-all hover:scale-[1.01] duration-300">
-                                {/* Header */}
-                                <div class="bg-gray-50 px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-gray-100">
-                                    <div class="flex gap-6 text-sm">
-                                        <div>
-                                            <p class="text-gray-500 font-medium text-xs uppercase">Fecha</p>
-                                            <p class="font-bold text-gray-900">{formatDate(order.created_at)}</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-gray-500 font-medium text-xs uppercase">Total</p>
-                                            <p class="font-bold text-gray-900">{Number(order.total_amount).toFixed(2)}€</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-gray-500 font-medium text-xs uppercase">Pedido #</p>
-                                            <p class="font-mono text-gray-700">{order.id.slice(0,8)}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center gap-3">
-                                         <a 
-                                            href={`/invoices/${order.id}`} 
-                                            target="_blank"
-                                            class="flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-black uppercase tracking-wide border border-gray-300 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                                            Recibo
-                                         </a>
-                                         <OrderActions client:load orderId={order.id} initialStatus={order.status} />
-                                    </div>
-                                </div>
-
-                                {/* Body */}
-                                <div class="p-6">
-                                     {/* Progress Bar */}
-                                     <div class="mb-8 relative">
-                                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-100">
-                                            <div style={{ width: order.status === 'shipped' ? '75%' : order.status === 'processing' ? '50%' : '25%' }} class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-black transition-all duration-1000"></div>
-                                        </div>
-                                        <div class="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                            <span class={order.status === 'pending' ? 'text-black' : ''}>Pago</span>
-                                            <span class={order.status === 'processing' ? 'text-black' : ''}>Procesando</span>
-                                            <span class={order.status === 'shipped' ? 'text-black' : ''}>Enviado</span>
-                                            <span>Entregado</span>
-                                        </div>
-                                     </div>
-
-                                     <div class="flex flex-col gap-4">
-                                        {order.order_items.map((item: any) => (
-                                            <div class="flex items-center gap-4">
-                                                <div class="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                                                    {item.product?.images?.[0] && (
-                                                        <img src={item.product.images[0]} class="w-full h-full object-cover" />
-                                                    )}
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h4 class="font-bold text-gray-900">{item.product_name}</h4>
-                                                    <p class="text-sm text-gray-500">Talla: {item.size} | Cant.: {item.quantity}</p>
-                                                </div>
-                                                <div class="font-bold text-gray-900">{Number(item.price).toFixed(2)}€</div>
-                                            </div>
-                                        ))}
-                                     </div>
-                                </div>
-                            </article>
-                        ))}
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-zinc-300 pb-12">
+                    <div class="max-w-2xl">
+                        <p class="text-zinc-600 font-bold text-lg md:text-xl uppercase tracking-tight leading-snug">
+                            Historial de adquisiciones, logística de tramos y registros de facturación.
+                        </p>
+                    </div>
+                    <div class="flex flex-col items-end gap-4">
+                        <a href="/account/returns" class="group flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-900 transition-all px-8 py-4 border border-zinc-300 rounded-full hover:bg-zinc-50 hover:shadow-xl hover:shadow-zinc-200/50">
+                            MIS DEVOLUCIONES
+                            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </a>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* History Orders Section */}
-            {historyOrders.length > 0 && (
-                <div>
-                     <h2 class="text-xl font-bold text-gray-400 mb-6 uppercase tracking-wide border-b border-gray-100 pb-4">
-                        Historial de Pedidos
-                    </h2>
-                    <div class="grid gap-4 opacity-80 hover:opacity-100 transition-opacity">
-                         {historyOrders.map(order => (
-                            <div class="bg-white rounded-lg border border-gray-200 p-6 flex flex-wrap items-center justify-between gap-6">
-                                <div>
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <h3 class="font-bold text-gray-900">Pedido #{order.id.slice(0,8)}</h3>
-                                        <span class={`px-2 py-0.5 rounded text-xs font-bold uppercase ${order.status === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                                            {order.status === 'cancelled' ? 'Cancelado' : 'Entregado'}
-                                        </span>
-                                    </div>
-                                    <p class="text-sm text-gray-500">{formatDate(order.created_at)} • {Number(order.total_amount).toFixed(2)}€</p>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <a 
-                                        href={`/invoices/${order.id}`} 
-                                        target="_blank"
-                                        class="text-sm font-medium text-gray-600 hover:text-black underline underline-offset-4"
-                                    >
-                                        Ver Factura
-                                    </a>
-                                    {order.status === 'delivered' && (
-                                         <OrderActions client:load orderId={order.id} initialStatus={order.status} />
-                                    )}
-                                </div>
+            {!orders || orders.length === 0 ? (
+                <div class="bg-white rounded-[3rem] border border-zinc-300 p-24 text-center shadow-2xl shadow-zinc-200/40 relative overflow-hidden group">
+                    <div class="w-24 h-24 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-10 text-zinc-300">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    </div>
+                    <h2 class="text-5xl font-urban font-black text-zinc-900 mb-6 uppercase italic">NO HAY REGISTROS</h2>
+                    <p class="text-zinc-500 font-bold uppercase tracking-[0.2em] mb-12">No se han detectado protocolos de compra en este terminal.</p>
+                    <a href="/category/all" class="inline-block px-12 py-5 bg-zinc-900 text-white text-md font-bold uppercase tracking-widest rounded-full hover:bg-black transition-all shadow-xl hover:shadow-2xl">
+                        EXPLORAR CATÁLOGO
+                    </a>
+                </div>
+            ) : (
+                <div class="space-y-32">
+                    {/* Active Section */}
+                    {activeOrders.length > 0 && (
+                        <div>
+                            <div class="flex items-center gap-6 mb-12 font-urban opacity-80">
+                                <h2 class="text-2xl font-black text-zinc-800 uppercase tracking-[0.3em] italic">ACTIVE_DROPS</h2>
+                                <div class="h-px flex-1 bg-zinc-300"></div>
+                                <span class="text-zinc-500 font-bold uppercase tracking-widest text-xs">{activeOrders.length} PROCESOS</span>
                             </div>
-                         ))}
-                    </div>
+
+                            {/* Pending Payments Alert */}
+                            {activeOrders.some(o => o.status === 'pending') && (
+                                <div class="mb-12 p-8 bg-black border-l-8 border-white rounded-3xl flex items-center gap-8 group">
+                                    <div class="w-16 h-16 bg-white text-black rounded-2xl flex items-center justify-center animate-pulse shrink-0">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <h3 class="text-xl font-urban font-black text-white uppercase italic tracking-tighter">ACCESO_RESTRINGIDO: PAGOS_PENDIENTES</h3>
+                                        <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">POR_FAVOR_FINALICE_EL_PROTOCOLO_DE_PAGO_PARA_EVITAR_CANCELACIÓN</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div class="grid gap-20">
+                                {activeOrders.map(order => (
+                                    <article class="bg-white rounded-[3rem] border border-zinc-300 shadow-2xl shadow-zinc-200/40 overflow-hidden transition-all duration-700">
+                                        {/* Status Header Block */}
+                                        <div class="bg-zinc-900 py-8 px-10 flex flex-wrap items-center justify-between gap-8 relative">
+                                            <div class="flex items-center gap-12">
+                                                <div class="flex flex-col">
+                                                    <span class="text-zinc-500 font-bold text-[9px] uppercase tracking-[0.4em] mb-1">TRACE_ID</span>
+                                                    <span class="font-mono text-white text-sm font-bold tracking-tighter">#{order.id.slice(0, 16).toUpperCase()}</span>
+                                                </div>
+                                                <div class="hidden md:flex flex-col border-l border-white/10 pl-12">
+                                                    <span class="text-zinc-500 font-bold text-[9px] uppercase tracking-[0.4em] mb-1">ENTRY_TIMESTAMP</span>
+                                                    <span class="font-bold text-white text-sm uppercase">{formatDate(order.created_at)}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-6">
+                                                <div class="text-right">
+                                                    <p class="text-zinc-500 font-bold text-[9px] uppercase tracking-[0.3em] mb-1">SYSTEM_STATUS</p>
+                                                    <p class={`text-sm font-black uppercase tracking-widest ${
+                                                        order.status === 'pending' ? 'text-white animate-pulse' :
+                                                        order.status === 'shipped' ? 'text-amber-400' : 'text-zinc-300'
+                                                    }`}>
+                                                        {order.status === 'pending' ? 'PENDIENTE DE PAGO' : 
+                                                         order.status === 'processing' ? 'En Preparación' : 
+                                                         order.status === 'shipped' ? 'En Tránsito' : order.status.toUpperCase()}
+                                                    </p>
+                                                </div>
+                                                <OrderActions client:load orderId={order.id} initialStatus={order.status} />
+                                            </div>
+                                        </div>
+
+                                        <div class="grid lg:grid-cols-[1fr_360px]">
+                                            {/* Items Area */}
+                                            <div class="p-10 md:p-16 space-y-16 lg:border-r border-zinc-200">
+                                                <div class="space-y-8">
+                                                    {order.order_items.map((item: any) => (
+                                                        <div class="flex items-center gap-8 md:gap-12 group/item">
+                                                            <div class="relative w-28 h-28 md:w-40 md:h-40 flex-shrink-0 bg-white border border-zinc-200 rounded-3xl overflow-hidden group-hover/item:shadow-2xl group-hover/item:shadow-zinc-200 transition-all duration-500">
+                                                                {item.product?.images?.[0] ? (
+                                                                    <img src={item.product.images[0]} class="w-full h-full object-cover grayscale group-hover/item:grayscale-0 transition-all duration-1000 group-hover/item:scale-110" />
+                                                                ) : (
+                                                                    <div class="w-full h-full bg-zinc-50 italic flex items-center justify-center font-bold text-zinc-300">NO_IMG</div>
+                                                                )}
+                                                            </div>
+                                                            <div class="flex-1 space-y-3">
+                                                                <div class="flex justify-between items-start">
+                                                                    <h4 class="text-3xl md:text-4xl font-urban font-black text-zinc-900 uppercase italic leading-[0.9] tracking-tighter">
+                                                                        {item.product_name}
+                                                                    </h4>
+                                                                    <span class="text-xl font-bold text-zinc-900 tracking-tighter">
+                                                                        {Number(item.price).toFixed(2)}€
+                                                                    </span>
+                                                                </div>
+                                                                <div class="flex flex-wrap gap-4 pt-2">
+                                                                    <span class="px-3 py-1 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg">SIZE_{item.size}</span>
+                                                                    <span class="px-3 py-1 border border-zinc-200 text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg">QTY_0{item.quantity}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Logistics Diagram */}
+                                                <div class="pt-12 border-t border-zinc-100">
+                                                    <div class="flex flex-col gap-8">
+                                                        <div class="flex justify-between items-end">
+                                                            <div class="flex items-center gap-3">
+                                                                <div class="w-2 h-2 rounded-full bg-zinc-900"></div>
+                                                                <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-[0.4em]">LOGISTICS_FLOW</h4>
+                                                            </div>
+                                                            <span class="text-sm font-bold text-zinc-400 uppercase italic tracking-tighter">
+                                                                {order.status === 'pending' ? 'STEP_01' : order.status === 'processing' ? 'STEP_02' : 'STEP_03'} / 04
+                                                            </span>
+                                                        </div>
+                                                        <div class="h-4 bg-zinc-50 rounded-full border border-zinc-200 p-0.5 relative">
+                                                            <div 
+                                                                class="h-full rounded-full bg-zinc-900 transition-all duration-1000 ease-in-out relative overflow-hidden" 
+                                                                style={{ width: order.status === 'shipped' ? '75%' : order.status === 'processing' ? '50%' : '15%' }}
+                                                            >
+                                                                <div class="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.05)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.05)_50%,rgba(255,255,255,0.05)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-shimmer"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="grid grid-cols-4 gap-2 text-[10px] font-bold text-zinc-300 uppercase tracking-tight text-center italic">
+                                                            <span class={order.status === 'pending' ? 'text-zinc-900' : ''}>Audit</span>
+                                                            <span class={order.status === 'processing' ? 'text-zinc-900' : ''}>Storage</span>
+                                                            <span class={order.status === 'shipped' ? 'text-zinc-900' : ''}>Transit</span>
+                                                            <span>Deliver</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Finance Sidebar */}
+                                            <div class="p-10 md:p-14 bg-zinc-50 flex flex-col justify-between">
+                                                <div class="space-y-12">
+                                                    <div class="p-10 bg-zinc-900 rounded-[2.5rem] shadow-2xl shadow-zinc-200 relative overflow-hidden group/pod">
+                                                        <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover/pod:scale-110 transition-transform text-white">
+                                                            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
+                                                        </div>
+                                                        <p class="text-zinc-500 font-bold text-[10px] uppercase tracking-[0.5em] mb-8 font-mono">FINANCIAL_LOG</p>
+                                                        <div class="space-y-4">
+                                                            <div class="flex justify-between items-center text-xs font-bold text-zinc-500 tracking-widest uppercase">
+                                                                <span>ORIGINAL_PRICE</span>
+                                                                <span class="text-white">{(order.total_amount * 0.79).toFixed(2)}€</span>
+                                                            </div>
+                                                            <div class="flex justify-between items-center text-xs font-bold text-zinc-500 tracking-widest uppercase">
+                                                                <span>TAX_VAL (21%)</span>
+                                                                <span class="text-white">{(order.total_amount * 0.21).toFixed(2)}€</span>
+                                                            </div>
+                                                            <div class="pt-6 mt-6 border-t border-white/10">
+                                                                <div class="flex justify-between items-baseline">
+                                                                    <span class="text-md font-urban font-black text-white uppercase italic tracking-widest">GROSS_TOTAL</span>
+                                                                    <span class="text-4xl font-black text-white tracking-tighter leading-none">{Number(order.total_amount).toFixed(2)}€</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="space-y-6">
+                                                        <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] px-2 text-center">GESTIONAR_RECURSOS</p>
+                                                        <div class="grid gap-4">
+                                                            <a 
+                                                                href={`/invoices/${order.id}`} 
+                                                                target="_blank"
+                                                                class="w-full py-5 bg-white border border-zinc-200 text-xs font-bold uppercase tracking-widest text-zinc-900 hover:bg-zinc-900 hover:text-white transition-all shadow-xl shadow-zinc-200/50 rounded-2xl flex items-center justify-center gap-3"
+                                                            >
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                                DESCARGAR FACTURA
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Archived History */}
+                    {historyOrders.length > 0 && (
+                        <div class="pt-20 border-t border-zinc-200">
+                            <div class="flex items-center gap-6 mb-16 font-urban">
+                                <h2 class="text-2xl font-black text-zinc-500 uppercase tracking-[0.3em] italic">ARCHIVE_HISTORY</h2>
+                                <div class="h-px flex-1 bg-zinc-300"></div>
+                                <span class="text-zinc-400 font-bold uppercase tracking-widest text-xs">REGISTROS_TERMINADOS</span>
+                            </div>
+
+                            <div class="grid gap-8">
+                                {historyOrders.map(order => (
+                                    <div class="bg-white border border-zinc-200 p-8 rounded-[2rem] flex flex-wrap items-center justify-between gap-12 group hover:border-zinc-400 hover:shadow-2xl hover:shadow-zinc-200/50 transition-all duration-500">
+                                        <div class="flex items-center gap-12">
+                                            <div class="hidden sm:block">
+                                                <div class="w-16 h-16 bg-zinc-50 border border-zinc-100 rounded-2xl group-hover:bg-zinc-900 group-hover:text-white transition-all flex items-center justify-center font-urban font-black italic text-zinc-200">
+                                                    {order.status === 'delivered' ? 'OK' : 'X'}
+                                                </div>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div class="flex items-center gap-4">
+                                                    <h3 class="text-xl font-urban font-black text-zinc-400 group-hover:text-zinc-900 uppercase italic tracking-tighter transition-colors leading-none">
+                                                        PEDIDO_#{order.id.slice(0, 12).toUpperCase()}
+                                                    </h3>
+                                                    <span class={`px-4 py-1 text-[9px] font-bold uppercase tracking-[0.2em] rounded-full transition-all ${
+                                                        order.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                                                    }`}>
+                                                        {order.status === 'delivered' ? 'Entregado' : 'Cancelado'}
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                                                    <span>FECHA: {formatDate(order.created_at)}</span>
+                                                    <span class="opacity-30">|</span>
+                                                    <span>VALOR: {Number(order.total_amount).toFixed(2)}€</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-6 flex-wrap">
+                                            <a 
+                                                href={`/invoices/${order.id}`} 
+                                                target="_blank"
+                                                class="px-8 py-3 bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-widest transition-all"
+                                            >
+                                                RECIBO
+                                            </a>
+                                            {order.status === 'delivered' && (
+                                                <a 
+                                                    href={`/account/returns?orderId=${order.id}`}
+                                                    class="px-8 py-3 bg-zinc-900 text-white hover:bg-black rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-lg hover:shadow-xl"
+                                                >
+                                                    INICIAR DEVOLUCIÓN
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
-      )}
-    </div>
-  </section>
+    </section>
 </PublicLayout>

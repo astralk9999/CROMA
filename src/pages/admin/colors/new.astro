@@ -1,0 +1,227 @@
+---
+import AdminLayout from '@layouts/AdminLayout.astro';
+import { supabase } from '../../../lib/supabase';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/auth/login');
+}
+---
+
+<AdminLayout title="Configuración de Color" activeSection="colors">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header Protocol -->
+    <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div>
+            <h2 class="text-3xl font-black tracking-tighter text-black uppercase">Nueva Variante Cromática</h2>
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] mt-2 italic">Definición de parámetros visuales y espectro de identificación</p>
+        </div>
+        <a href="/admin/colors" class="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">
+            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+            Volver al Maestro
+        </a>
+    </div>
+
+    <form id="create-color-form" class="space-y-10 mb-20">
+        <!-- Section: Technical Definition -->
+        <div class="bg-white rounded-2xl border border-black/5 shadow-sm p-10 md:p-12 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-zinc-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-zinc-700 text-white rounded-lg flex items-center justify-center font-black text-xs">01</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-black">Especificación del Pigmento</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-3">
+                        <label for="name" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                             Denominación <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="name" name="name" required 
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" 
+                            placeholder="EJ: CARBON BLACK" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="slug" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Slug ID <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="slug" name="slug" required 
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" 
+                            placeholder="auto-generado-por-sistema" />
+                    </div>
+
+                    <div class="md:col-span-2 space-y-6">
+                        <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Calibración Cromática</label>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 bg-zinc-50/50 rounded-3xl p-8 border border-black/[0.03]">
+                            <!-- Pane 1: Industrial Presets -->
+                            <div class="space-y-6">
+                                <h4 class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                    Presets Industriales
+                                </h4>
+                                <div class="grid grid-cols-6 sm:grid-cols-8 gap-3" id="presets-grid">
+                                    {[
+                                        '#ffffff', '#f4f4f5', '#e4e4e7', '#d4d4d8', '#a1a1aa', '#71717a', '#52525b', '#3f3f46', '#27272a', '#18181b', '#000000',
+                                        '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
+                                        '#451a03', '#422006', '#78350f', '#1c1917', '#134e4a', '#064e3b', '#0f172a'
+                                    ].map(color => (
+                                        <button type="button" 
+                                            class="preset-btn w-full aspect-square rounded-lg border border-black/5 shadow-sm transition-all hover:scale-110 active:scale-90" 
+                                            style={`background-color: ${color}`} 
+                                            data-color={color}
+                                            title={color.toUpperCase()} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <!-- Pane 2: High Precision Tool -->
+                            <div class="space-y-6 border-l border-black/[0.05] lg:pl-8">
+                                <h4 class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                    Ajuste de Precisión
+                                </h4>
+                                
+                                <div class="flex items-center gap-6">
+                                    <div class="relative group">
+                                        <div id="hex-preview" class="w-14 h-14 rounded-2xl border border-black/10 shadow-2xl transition-all duration-500 overflow-hidden bg-white relative">
+                                            <input type="color" id="precision-picker" value="#000000" 
+                                                class="absolute inset-x-0 inset-y-0 w-[150%] h-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer opacity-0" />
+                                            <div id="preview-color-fill" class="absolute inset-0 pointer-events-none"></div>
+                                        </div>
+                                        <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg border border-black/5 pointer-events-none group-hover:scale-110 transition-transform">
+                                            <svg class="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1 space-y-2">
+                                        <input type="text" id="hex_code" name="hex_code" 
+                                            class="w-full bg-white border-2 border-black/[0.03] rounded-xl px-6 py-4 text-xs font-mono font-black focus:outline-none focus:border-black transition-all shadow-sm" 
+                                            placeholder="#000000" />
+                                        <p class="text-[8px] font-bold text-zinc-300 uppercase tracking-widest px-2 italic">Entrada de Valor Hexadecimal</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-6 pt-10 border-t border-black/[0.05]">
+            <a href="/admin/colors" class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-black transition-colors px-8 py-5">Abortar Misión</a>
+            <button type="submit" id="submit-btn" 
+                class="w-full sm:w-auto bg-zinc-800 text-white px-12 py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.4em] hover:scale-105 transition-all shadow-2xl active:scale-95 group">
+                <span class="group-hover:tracking-[0.5em] transition-all">Desplegar Variante</span>
+            </button>
+        </div>
+    </form>
+  </div>
+
+  <script>
+    import { supabase } from '../../../lib/supabase';
+    import { navigate } from 'astro:transitions/client';
+
+    function initPage() {
+        const form = document.getElementById('create-color-form') as HTMLFormElement;
+        if (!form) return;
+
+        const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
+        const slugInput = form.querySelector('input[name="slug"]') as HTMLInputElement;
+        const hexInput = document.getElementById('hex_code') as HTMLInputElement;
+        const hexPreviewFill = document.getElementById('preview-color-fill');
+        const precisionPicker = document.getElementById('precision-picker') as HTMLInputElement;
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+        let isSubmitting = false;
+
+        function updateUI(color: string) {
+            const hex = color.startsWith('#') ? color : '#' + color;
+            if (hexInput && hexInput.value !== hex.toUpperCase()) hexInput.value = hex.toUpperCase();
+            if (hexPreviewFill) hexPreviewFill.style.backgroundColor = hex;
+            if (precisionPicker) precisionPicker.value = hex;
+        }
+
+        // Preset Grid Events
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.getAttribute('data-color');
+                if (color) updateUI(color);
+            });
+        });
+
+        // Precision Picker Events
+        precisionPicker?.addEventListener('input', (e) => {
+            updateUI((e.target as HTMLInputElement).value);
+        });
+
+        // Hex Text Input Events
+        hexInput?.addEventListener('input', () => {
+            let val = hexInput.value.trim();
+            if (val && !val.startsWith('#') && val.length <= 6) val = '#' + val;
+            if (/^#[0-9A-F]{3,6}$/i.test(val)) {
+                updateUI(val);
+            }
+        });
+
+        // Auto-generate technical slug
+        nameInput?.addEventListener('input', () => {
+            const slug = nameInput.value.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-') 
+                .replace(/^-+|-+$/g, '');
+            if (slugInput) slugInput.value = slug;
+        });
+
+        // Initial default
+        updateUI('#000000');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            
+            isSubmitting = true;
+
+            if (submitBtn) {
+                submitBtn.setAttribute('disabled', 'true');
+                submitBtn.innerHTML = '<span class="animate-pulse">SINCRONIZANDO...</span>';
+            }
+
+            const formData = new FormData(form);
+            const name = formData.get('name') as string;
+            const slug = formData.get('slug') as string;
+            const hex_code = formData.get('hex_code') as string;
+            
+            try {
+                const { data, error } = await supabase.rpc('admin_create_color', {
+                    p_name: name.toUpperCase(),
+                    p_slug: slug,
+                    p_hex_code: hex_code || null
+                });
+
+                if (error) throw error;
+                if (data && data.success === false) throw new Error(data.message);
+                
+                setTimeout(() => {
+                    navigate('/admin/colors');
+                }, 100);
+            } catch (error: any) {
+                (window as any).showIndustrialAlert('FALLO EN PROTOCOLO: ' + (error.message || 'Error desconocido'), 'error');
+                
+                isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.innerHTML = '<span class="group-hover:tracking-[0.5em] transition-all">Reintentar Despliegue</span>';
+                }
+            }
+        });
+    }
+
+    document.addEventListener('astro:page-load', initPage);
+  </script>
+</AdminLayout>

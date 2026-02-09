@@ -6,9 +6,10 @@ import { supabase } from '@lib/supabase';
 
 interface FavoriteButtonProps {
     productId: string;
+    variant?: 'default' | 'red-circle';
 }
 
-export default function FavoriteButton({ productId }: FavoriteButtonProps) {
+export default function FavoriteButton({ productId, variant = 'default' }: FavoriteButtonProps) {
     const [mounted, setMounted] = useState(false);
     const favorites = useStore(localFavorites);
     const isReady = useStore(storeReady);
@@ -24,29 +25,42 @@ export default function FavoriteButton({ productId }: FavoriteButtonProps) {
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('[FavoriteButton] Click detected');
+        console.log('[FavoriteButton] Click detected for product:', productId);
 
         if (!mounted) {
-            console.log('[FavoriteButton] Not mounted');
-            return;
-        }
-
-        // Check auth on click immediately
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('[FavoriteButton] Session check:', !!session);
-
-        if (!session) {
-            console.log('[FavoriteButton] No session, showing popup');
-            setShowLoginPopup(true);
+            console.log('[FavoriteButton] Not mounted yet');
             return;
         }
 
         try {
+            // Check auth on click
+            const { data: { session }, error: authError } = await supabase.auth.getSession();
+
+            if (authError) {
+                console.error('[FavoriteButton] Auth check error:', authError);
+                // Fallback to showing login popup if we can't verify session
+                setShowLoginPopup(true);
+                return;
+            }
+
+            console.log('[FavoriteButton] Session status:', !!session);
+
+            if (!session) {
+                console.log('[FavoriteButton] No active session, triggering popup');
+                setShowLoginPopup(true);
+                return;
+            }
+
+            // If we have a session, proceed with toggle
             setIsAnimating(true);
-            toggleFavorite(productId);
+            await toggleFavorite(productId);
             setTimeout(() => setIsAnimating(false), 300);
+
         } catch (error) {
-            console.error('Error toggling favorite:', error);
+            console.error('[FavoriteButton] Unexpected error in handleToggle:', error);
+            // On unexpected error, it's safer to show the login popup or a generic error
+            // For now, ensuring the user gets some feedback
+            setShowLoginPopup(true);
         }
     };
 
@@ -67,23 +81,24 @@ export default function FavoriteButton({ productId }: FavoriteButtonProps) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
-                    onClick={closePopup}
                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    onClick={closePopup}
                 >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
 
                 <div className="w-16 h-16 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
                     <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                     </svg>
                 </div>
 
                 <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
                     ¡Guarda tus favoritos!
                 </h3>
+
                 <p className="text-gray-600 mb-6">
                     Inicia sesión para guardar tus productos favoritos y acceder a ellos desde cualquier dispositivo.
                 </p>
@@ -111,16 +126,22 @@ export default function FavoriteButton({ productId }: FavoriteButtonProps) {
         document.body
     ) : null;
 
+    const buttonClasses = variant === 'red-circle'
+        ? `absolute bottom-3 right-3 p-2.5 rounded-full transition-all duration-300 z-20 shadow-lg ${isFavorited
+            ? 'bg-red-600 text-white'
+            : 'bg-red-500 text-white hover:bg-red-600'
+        }`
+        : `absolute top-3 right-3 p-2 rounded-full transition-all duration-300 z-10 ${isFavorited
+            ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg'
+            : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500 border border-gray-100'
+        }`;
+
     return (
         <>
             <button
                 onClick={handleToggle}
                 disabled={!mounted}
-                className={`absolute bottom-2 right-2 p-2 rounded-full transition-all duration-300 z-10 ${isAnimating ? 'scale-125' : 'scale-100'
-                    } ${isFavorited
-                        ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg'
-                        : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500 border border-gray-100'
-                    } ${!mounted ? 'opacity-50 cursor-wait' : ''}`}
+                className={`${buttonClasses} ${isAnimating ? 'scale-125' : 'scale-100'} ${!mounted ? 'opacity-50 cursor-wait' : ''}`}
                 aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
             >
                 <svg
@@ -128,7 +149,7 @@ export default function FavoriteButton({ productId }: FavoriteButtonProps) {
                     fill={isFavorited ? 'currentColor' : 'none'}
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    strokeWidth={isFavorited ? 0 : 2}
+                    strokeWidth={2}
                 >
                     <path
                         strokeLinecap="round"

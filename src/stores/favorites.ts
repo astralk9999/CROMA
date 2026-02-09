@@ -39,12 +39,17 @@ if (typeof window !== 'undefined') {
 
 // Sync local favorites with Supabase if user is logged in
 export async function syncFavoritesWithSupabase() {
+    console.log('[Favorites Store] Starting sync with Supabase...');
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session) {
+            console.log('[Favorites Store] No session found, skipping sync');
+            return;
+        }
 
         const userId = session.user.id;
         const localIds = localFavorites.get();
+        console.log(`[Favorites Store] Syncing for user ${userId}. Local IDs:`, localIds);
 
         // Fetch remote favorites
         const { data: remoteFavorites, error } = await supabase
@@ -52,15 +57,13 @@ export async function syncFavoritesWithSupabase() {
             .select('product_id')
             .eq('user_id', userId);
 
-        if (error) throw error;
+        if (error) {
+            console.error('[Favorites Store] Error fetching remote favorites:', error);
+            throw error;
+        }
 
         const remoteIds = remoteFavorites?.map(f => f.product_id) || [];
-
-        // Reconciliation Strategy:
-        // 1. Items in remote but NOT in local: Add to local (someone favorited on another device)
-        // 2. Items in local but NOT in remote: Add to remote (someone favorited while offline)
-        // 3. To avoid re-adding deleted items, we trust the remote source if it differs significantly 
-        //    from local, but for simplicity, we'll do a one-time merge on the first sync ever.
+        console.log('[Favorites Store] Remote IDs found:', remoteIds);
 
         const localIdsSet = new Set(localIds);
         const remoteIdsSet = new Set(remoteIds);
@@ -70,19 +73,34 @@ export async function syncFavoritesWithSupabase() {
         const missingRemotely = localIds.filter(id => !remoteIdsSet.has(id));
 
         if (missingLocally.length > 0) {
+            console.log('[Favorites Store] Adding missing favorites from remote to local:', missingLocally);
             localFavorites.set([...new Set([...localIds, ...missingLocally])]);
         }
 
         if (missingRemotely.length > 0) {
-            await supabase
+            console.log('[Favorites Store] Pushing missing local favorites to remote:', missingRemotely);
+            const { error: upsertError } = await supabase
                 .from('favorites')
                 .upsert(missingRemotely.map(id => ({
                     user_id: userId,
                     product_id: id
                 })));
+
+            if (upsertError) {
+                console.error('[Favorites Store] Error pushing to remote:', upsertError);
+                // Forensic alert for the user to report back
+                if (typeof window !== 'undefined') {
+                    (window as any).showIndustrialAlert?.(`SYNC ERROR: ${upsertError.message}`, 'error');
+                }
+            } else {
+                console.log('[Favorites Store] Successfully pushed local favorites to remote');
+            }
         }
-    } catch (e) {
-        console.warn('Failed to sync favorites:', e);
+    } catch (e: any) {
+        console.error('[Favorites Store] Critical failure during sync:', e);
+        if (typeof window !== 'undefined') {
+            (window as any).showIndustrialAlert?.(`CRITICAL SYNC FAILURE: ${e.message}`, 'error');
+        }
     }
 }
 

@@ -168,6 +168,49 @@ const profile = Astro.locals.profile;
             <h2 class="text-xl font-bold text-gray-900 mb-4">Resumen del Pedido</h2>
             
             <CartSummary client:only="react" />
+
+            <!-- Premium Coupon Input -->
+            <div id="coupon-section" class="mt-6 pt-6 border-t-2 border-black/5">
+              <div id="coupon-input-container">
+                <label for="coupon_code" class="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3 ml-1">¿Tienes un código?</label>
+                <div class="relative group">
+                  <input 
+                    type="text" 
+                    id="coupon_code" 
+                    name="coupon_code"
+                    class="w-full pl-5 pr-24 py-4 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-black transition-all duration-300 font-bold placeholder:text-gray-300 uppercase tracking-widest"
+                    placeholder="INTRODUCE AQUÍ"
+                  />
+                  <button 
+                    type="button"
+                    id="apply-coupon-btn"
+                    class="absolute right-2 top-2 bottom-2 px-6 bg-black text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    APLICAR
+                  </button>
+                </div>
+              </div>
+
+              <!-- Applied Coupon View (Hidden by default) -->
+              <div id="coupon-applied-container" class="hidden">
+                 <div class="flex items-center justify-between p-4 bg-green-50 border-2 border-green-100 rounded-xl animate-in zoom-in-95 duration-300">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <div>
+                            <p id="applied-code-text" class="text-xs font-black text-green-800 uppercase tracking-wider"></p>
+                            <p class="text-[10px] font-bold text-green-600 uppercase">Cupón aplicado con éxito</p>
+                        </div>
+                    </div>
+                    <button type="button" id="remove-coupon-btn" class="p-2 hover:bg-green-100 rounded-lg text-green-700 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                 </div>
+              </div>
+
+              <p id="coupon-error" class="mt-3 text-[10px] font-black text-red-500 uppercase tracking-widest text-center hidden"></p>
+            </div>
           </div>
         </div>
       </div>
@@ -175,10 +218,72 @@ const profile = Astro.locals.profile;
   </section>
 
   <script>
-    import { cartItems } from '@stores/cart';
+    import { cartItems, cartTotal } from '@stores/cart';
+    import { appliedCoupon } from '@stores/coupon';
     
     const form = document.getElementById('checkout-form') as HTMLFormElement;
     const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+    
+    // Coupon Elements
+    const couponInput = document.getElementById('coupon_code') as HTMLInputElement | null;
+    const applyBtn = document.getElementById('apply-coupon-btn') as HTMLButtonElement | null;
+    const removeBtn = document.getElementById('remove-coupon-btn') as HTMLButtonElement | null;
+    const inputContainer = document.getElementById('coupon-input-container');
+    const appliedContainer = document.getElementById('coupon-applied-container');
+    const appliedCodeText = document.getElementById('applied-code-text');
+    const errorEl = document.getElementById('coupon-error');
+
+    // Sync UI with Store
+    appliedCoupon.subscribe(coupon => {
+        if (!inputContainer || !appliedContainer || !appliedCodeText || !errorEl) return;
+
+        if (coupon && coupon.valid) {
+            inputContainer.classList.add('hidden');
+            appliedContainer.classList.remove('hidden');
+            appliedCodeText.textContent = coupon.code;
+            errorEl.classList.add('hidden');
+        } else {
+            inputContainer.classList.remove('hidden');
+            appliedContainer.classList.add('hidden');
+        }
+    });
+
+    // Handle Coupon Logic
+    applyBtn?.addEventListener('click', async () => {
+        const code = couponInput?.value.trim().toUpperCase();
+        if (!code || !errorEl || !applyBtn) return;
+
+        applyBtn.disabled = true;
+        applyBtn.textContent = '...';
+        errorEl.classList.add('hidden');
+
+        try {
+            const response = await fetch('/api/validate-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, amount: cartTotal.get() })
+            });
+            const result = await response.json();
+
+            if (result.valid) {
+                appliedCoupon.set(result);
+                if (couponInput) couponInput.value = '';
+            } else {
+                errorEl.textContent = result.message || 'Cupón no válido';
+                errorEl.classList.remove('hidden');
+            }
+        } catch (err) {
+            errorEl.textContent = 'Error de conexión';
+            errorEl.classList.remove('hidden');
+        } finally {
+            applyBtn.disabled = false;
+            applyBtn.textContent = 'APLICAR';
+        }
+    });
+
+    removeBtn?.addEventListener('click', () => {
+        appliedCoupon.set(null);
+    });
     
     // Enable button initially (validation will happen on submit)
     if (submitBtn) submitBtn.disabled = false;
@@ -223,6 +328,7 @@ const profile = Astro.locals.profile;
                     shippingAddress,
                     origin: window.location.origin,
                     guestEmail: formData.get('email'),
+                    couponCode: appliedCoupon.get()?.code || undefined,
                 }),
                 });
 

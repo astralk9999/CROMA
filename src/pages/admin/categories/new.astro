@@ -1,5 +1,5 @@
 ---
-import BaseLayout from '@layouts/BaseLayout.astro';
+import AdminLayout from '@layouts/AdminLayout.astro';
 import { supabase } from '../../../lib/supabase';
 
 const user = Astro.locals.user;
@@ -10,79 +10,227 @@ if (!user || profile?.role !== 'admin') {
 }
 ---
 
-<BaseLayout title="Nueva Categoría">
-  <div class="min-h-screen bg-gray-50">
-    <header class="bg-white border-b border-gray-200">
-      <div class="container-custom py-4">
-        <h1 class="text-2xl font-bold text-gray-900">Nueva Categoría</h1>
-      </div>
-    </header>
+<AdminLayout title="Despliegue de Sector" activeSection="categories">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header Protocol -->
+    <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div>
+            <h2 class="text-3xl font-black tracking-tighter text-black uppercase">Nueva Categoría</h2>
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] mt-2 italic">Configuración de parámetros técnicos y clasificación analítica</p>
+        </div>
+        <a href="/admin/categories" class="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">
+            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+            Volver al Archivador
+        </a>
+    </div>
 
-    <main class="container-custom py-8">
-      <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <form id="create-category-form" class="space-y-6">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
-                <input type="text" name="name" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
-            </div>
+    <form id="create-category-form" class="space-y-10 mb-20">
+        <!-- Section: Technical Definition -->
+        <div class="bg-white rounded-2xl border border-black/5 shadow-sm p-10 md:p-12 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-zinc-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-zinc-700 text-white rounded-lg flex items-center justify-center font-black text-xs">01</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-black">Especificación del Género</h3>
+                </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Slug (URL)</label>
-                <input type="text" name="slug" required placeholder="ej: camisetas-hombre" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-3">
+                        <label for="name" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                             Denominación <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="name" name="name" required 
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" 
+                            placeholder="EJ: ACCESORIOS TÁCTICOS" />
+                    </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Descripción</label>
-                <textarea name="description" rows="3" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"></textarea>
-            </div>
+                    <div class="space-y-3">
+                        <label for="slug" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Slug ID <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="slug" name="slug" required 
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" 
+                            placeholder="auto-generado-por-sistema" />
+                    </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">URL de Imagen (Opcional)</label>
-                <input type="text" name="image" placeholder="https://..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black" />
-            </div>
+                    <div class="md:col-span-2 space-y-3">
+                        <label for="description" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Parámetros Descriptivos (Opcional)</label>
+                        <textarea id="description" name="description" rows="4" 
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-6 text-sm font-medium focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" 
+                            placeholder="DETALLE TÉCNICO DE LA FAMILIA DE PRODUCTOS..."></textarea>
+                    </div>
 
-            <div class="flex justify-end gap-4 pt-4">
-                <a href="/admin/categories" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</a>
-                <button type="submit" class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800">Crear Categoría</button>
+                    <div class="md:col-span-2 space-y-3">
+                        <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">Activo Visual del Sector</label>
+                        
+                        <div class="border-2 border-dashed border-zinc-200 rounded-2xl p-10 text-center group hover:border-black transition-all relative cursor-pointer flex flex-col items-center justify-center gap-4 bg-zinc-50/50">
+                            <input type="file" id="image-upload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" />
+                            <div id="upload-placeholder" class="flex flex-col items-center gap-3">
+                                <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center border border-black/5 group-hover:scale-110 transition-transform shadow-sm">
+                                    <svg class="w-8 h-8 text-zinc-300 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-black mb-1">Cargar Identidad Visual</p>
+                                    <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-1 italic">JPG, PNG o WEBP de alta resolución</p>
+                                </div>
+                            </div>
+                            <div id="image-preview" class="hidden relative w-full aspect-video rounded-xl overflow-hidden border border-black/10 shadow-2xl">
+                                <img src="" class="w-full h-full object-cover" />
+                                <button type="button" id="remove-image" class="absolute top-4 right-4 p-2 bg-red-600 text-white rounded-lg hover:scale-110 transition-all shadow-xl">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="upload-progress" class="mt-4 hidden px-4">
+                            <div class="h-1 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                <div id="progress-bar" class="h-full bg-zinc-800 transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <p class="text-[7px] font-black text-zinc-400 uppercase tracking-widest mt-2 text-center">Sincronizando con satélite visual...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </form>
-      </div>
-    </main>
+        </div>
+
+        <!-- Terminal Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-6 pt-10 border-t border-black/[0.05]">
+            <a href="/admin/categories" class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-black transition-colors px-8 py-5">Abortar Misión</a>
+            <button type="submit" id="submit-btn" 
+                class="w-full sm:w-auto bg-zinc-800 text-white px-12 py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.4em] hover:scale-105 transition-all shadow-2xl active:scale-95 group">
+                <span class="group-hover:tracking-[0.5em] transition-all">Desplegar Sector</span>
+            </button>
+        </div>
+    </form>
   </div>
 
   <script>
     import { supabase } from '../../../lib/supabase';
+    import { navigate } from 'astro:transitions/client';
 
-    const form = document.getElementById('create-category-form') as HTMLFormElement;
-    
-    // Auto-generate slug
-    const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
-    const slugInput = form.querySelector('input[name="slug"]') as HTMLInputElement;
+    function initPage() {
+        console.log('Category Creation Protocol Initialized');
+        const form = document.getElementById('create-category-form') as HTMLFormElement;
+        if (!form) return;
 
-    nameInput.addEventListener('input', () => {
-        const slug = nameInput.value.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-') 
-            .replace(/^-+|-+$/g, '');
-        slugInput.value = slug;
-    });
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
+        const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement;
+        const slugInput = form.querySelector('input[name="slug"]') as HTMLInputElement;
+        const imageUpload = document.getElementById('image-upload') as HTMLInputElement;
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const imagePreview = document.getElementById('image-preview');
+        const previewImg = imagePreview?.querySelector('img');
+        const removeImageBtn = document.getElementById('remove-image');
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
         
-        const { error } = await supabase.rpc('admin_create_category', {
-            p_name: formData.get('name'),
-            p_slug: formData.get('slug'),
-            p_description: formData.get('description'),
-            p_image: formData.get('image')
+        let selectedFile: File | null = null;
+        let isSubmitting = false;
+
+        // Visual Asset Preview Logic
+        imageUpload?.addEventListener('change', () => {
+            const file = imageUpload.files?.[0];
+            if (!file) return;
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (previewImg) previewImg.src = e.target?.result as string;
+                uploadPlaceholder?.classList.add('hidden');
+                imagePreview?.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
         });
 
-        if (error) {
-            alert('Error: ' + error.message);
-        } else {
-            window.location.href = '/admin/categories';
+        removeImageBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedFile = null;
+            imageUpload.value = '';
+            uploadPlaceholder?.classList.remove('hidden');
+            imagePreview?.classList.add('hidden');
+        });
+
+        // Cloudinary Pipeline
+        async function uploadToCloud(file: File) {
+            const cloudName = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
+            const preset = import.meta.env.PUBLIC_CLOUDINARY_PRESET || 'croma_uploads';
+            
+            if (uploadProgress) uploadProgress.classList.remove('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', preset);
+            formData.append('folder', 'croma/categories');
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!res.ok) throw new Error('ERR_MEDIA_UPLOAD_FAILED');
+            const data = await res.json();
+            
+            if (progressBar) progressBar.style.width = '100%';
+            return data.secure_url;
         }
-    });
+
+        // Auto-generate technical slug
+        nameInput?.addEventListener('input', () => {
+            const slug = nameInput.value.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-') 
+                .replace(/^-+|-+$/g, '');
+            if (slugInput) slugInput.value = slug;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            
+            isSubmitting = true;
+
+            if (submitBtn) {
+                submitBtn.setAttribute('disabled', 'true');
+                submitBtn.innerHTML = '<span class="animate-pulse">SINCRONIZANDO...</span>';
+            }
+
+            try {
+                // Media Phase
+                let imageUrl = null;
+                if (selectedFile) {
+                    imageUrl = await uploadToCloud(selectedFile);
+                }
+
+                const formData = new FormData(form);
+                const name = formData.get('name') as string;
+                const slug = formData.get('slug') as string;
+                const description = formData.get('description') as string;
+                
+                const { error } = await supabase.rpc('admin_create_category', {
+                    p_name: name,
+                    p_slug: slug,
+                    p_description: description || null,
+                    p_image: imageUrl || null
+                });
+
+                if (error) throw error;
+                
+                setTimeout(() => {
+                    navigate('/admin/categories');
+                }, 100);
+            } catch (error: any) {
+                (window as any).showIndustrialAlert('FALLO EN PROTOCOLO: ' + (error.message || 'Error desconocido'), 'error');
+                
+                isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.innerHTML = '<span class="group-hover:tracking-[0.5em] transition-all">Reintentar Despliegue</span>';
+                }
+            }
+        });
+    }
+
+    document.addEventListener('astro:page-load', initPage);
   </script>
-</BaseLayout>
+</AdminLayout>

@@ -1,16 +1,10 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
     apiVersion: '2024-12-18.acacia' as any,
 });
-
-// Create supabase client with service role for server-side operations
-const supabaseAdmin = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 interface CartItem {
     id: string;
@@ -35,11 +29,12 @@ interface ShippingAddress {
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {
         const body = await request.json();
-        const { items, shippingAddress, origin, guestEmail } = body as {
+        const { items, shippingAddress, origin, guestEmail, couponCode } = body as {
             items: CartItem[];
             shippingAddress: ShippingAddress;
             origin: string;
             guestEmail?: string;
+            couponCode?: string;
         };
 
         if (!items || items.length === 0) {
@@ -71,16 +66,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 const GUEST_ACCOUNT_EMAIL = 'guest@croma.shop';
                 const GUEST_PASSWORD = 'GuestPassword123!@#';
 
-                // 1. Try to sign in to get ID
-                const { data: signInData } = await supabaseAdmin.auth.signInWithPassword({
-                    email: GUEST_ACCOUNT_EMAIL,
-                    password: GUEST_PASSWORD
-                });
+                // 1. Try to find the Guest User ID via direct query
+                const { data: existingGuest } = await supabaseAdmin
+                    .from('profiles')
+                    .select('id')
+                    .eq('email', GUEST_ACCOUNT_EMAIL)
+                    .single();
 
-                if (signInData.user) {
-                    userId = signInData.user.id;
+                if (existingGuest) {
+                    userId = existingGuest.id;
                 } else {
-                    // 2. Create if not exists
+                    // 2. Create if not exists using clean Admin API (No signIn)
                     const { data: createUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
                         email: GUEST_ACCOUNT_EMAIL,
                         password: GUEST_PASSWORD,
@@ -90,14 +86,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
                     if (createUser?.user) {
                         userId = createUser.user.id;
-                    } else if (createError?.message?.includes('already registered')) {
-                        // Retry sign in? Should have worked. 
-                        // Maybe rate limit?
-                        console.error('Guest fallback error:', createError);
-                        return new Response(JSON.stringify({ error: 'Error initializing guest system.' }), { status: 500 });
+                        // Profile should be created automatically by DB trigger, 
+                        // but let's ensure it has the customer role if needed.
                     } else {
                         console.error('Guest creation error:', createError);
-                        return new Response(JSON.stringify({ error: 'Guest system error' }), { status: 500 });
+                        return new Response(JSON.stringify({ error: 'Error initializing guest system.' }), { status: 500 });
                     }
                 }
             } else {
@@ -106,7 +99,30 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         }
 
         // Calculate total
-        const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        let totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        let discountAmount = 0;
+        let appliedCoupon = null;
+
+        // Apply Coupon if provided
+        if (couponCode) {
+            const { data: couponData, error: couponError } = await supabaseAdmin
+                .rpc('validate_coupon', {
+                    p_code: couponCode,
+                    p_cart_amount: totalAmount
+                });
+
+            if (couponError) {
+                console.error('Coupon validation error:', couponError);
+            } else if (couponData && couponData.valid) {
+                appliedCoupon = couponData;
+                if (couponData.type === 'percentage') {
+                    discountAmount = totalAmount * (couponData.value / 100);
+                } else {
+                    discountAmount = couponData.value;
+                }
+                totalAmount = Math.max(0, totalAmount - discountAmount);
+            }
+        }
 
         // Create order in database with status 'pending'
         const { data: order, error: orderError } = await supabaseAdmin
@@ -116,6 +132,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 status: 'pending',
                 total_amount: totalAmount,
                 shipping_address: { ...shippingAddress, email: customerEmail },
+                notes: appliedCoupon ? JSON.stringify({ coupon_code: appliedCoupon.code, discount_amount: discountAmount }) : null
             })
             .select()
             .single();
@@ -192,6 +209,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 order_id: order.id,
                 user_id: userId || 'guest',
             },
+            discounts: appliedCoupon ? [
+                {
+                    coupon: await (async () => {
+                        // Create a temporary Stripe coupon for this transaction
+                        const stripeCoupon = await stripe.coupons.create({
+                            percent_off: appliedCoupon.type === 'percentage' ? appliedCoupon.value : undefined,
+                            amount_off: appliedCoupon.type === 'fixed' ? Math.round(appliedCoupon.value * 100) : undefined,
+                            currency: 'eur',
+                            duration: 'once',
+                            name: `Cupón: ${appliedCoupon.code}`
+                        });
+                        return stripeCoupon.id;
+                    })()
+                }
+            ] : undefined,
             shipping_address_collection: undefined, // We already collected it
         });
 

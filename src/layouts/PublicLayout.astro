@@ -6,6 +6,7 @@ import UserMenu from '@components/islands/UserMenu';
 import MobileMenu from '@components/islands/MobileMenu';
 import SearchWidget from '@components/islands/SearchWidget';
 import NewsletterPopup from '@components/islands/NewsletterPopup';
+import IndustrialToast from '@components/admin/IndustrialToast.astro';
 
 interface Props {
   title: string;
@@ -17,40 +18,41 @@ const { title, description } = Astro.props;
 
 <BaseLayout title={title} description={description}>
   {/* Header */}
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-    <nav class="container-custom py-2">
-      <div class="flex items-center justify-between">
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <nav class="container-custom py-2 md:py-4">
+      <div class="relative flex items-center justify-between">
         
         {/* Left: Hamburger Menu */}
-        <div class="flex items-center">
+        <div class="flex items-center z-50">
             <MobileMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
         </div>
 
-        {/* Center: Logo */}
-        <a href="/" class="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+        {/* Center: Logo (Restored Absolute Centering) */}
+        <a href="/" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10 w-full max-w-[150px] md:max-w-none">
           <img 
             src="/chromakopia_logo.png" 
             alt="CROMA" 
-            class="h-24 w-auto object-contain" 
+            class="h-20 md:h-24 w-auto object-contain transition-all duration-300" 
             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
           />
           <span class="hidden text-3xl font-black tracking-tighter text-gray-900 uppercase">Croma</span>
         </a>
 
-        <div class="flex items-center space-x-4">
+        {/* Right: Actions */}
+        <div class="flex items-center space-x-2 md:space-x-4 z-50">
           
           {/* Search Widget */}
-          <div class="flex items-center justify-center w-10 h-10">
+          <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
             <SearchWidget client:load />
           </div>
           
           {/* User Menu Widget */}
-          <div class="flex items-center justify-center w-10 h-10">
+          <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
             <UserMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
           </div>
 
           {/* Cart Icon */}
-          <div class="flex items-center justify-center w-10 h-10">
+          <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
             <CartIcon client:load />
           </div>
         </div>
@@ -98,6 +100,8 @@ const { title, description } = Astro.props;
       </div>
     </div>
   </footer>
+  
+  <IndustrialToast />
 
   {/* Cart Slide Over */}
   <CartSlideOver client:load />

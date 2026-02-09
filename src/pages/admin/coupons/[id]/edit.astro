@@ -1,0 +1,212 @@
+---
+import AdminLayout from '@layouts/AdminLayout.astro';
+import { supabase } from '../../../../lib/supabase';
+
+const { id } = Astro.params;
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/auth/login');
+}
+
+const { data: coupon, error } = await supabase
+  .from('coupons')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !coupon) {
+  return Astro.redirect('/admin/coupons');
+}
+
+// Format dates for input fields
+const formatDateForInput = (dateStr: string | null) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toISOString().slice(0, 16);
+};
+---
+
+<AdminLayout title="Editar Cupón" activeSection="coupons">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header Protocol -->
+    <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-[9px] font-black text-black bg-zinc-100 px-2 py-0.5 rounded border border-black/5 tracking-widest uppercase">ID: {coupon.id.slice(0, 8)}</span>
+                <span class="w-1/1 h-1/1 bg-zinc-200 rounded-full"></span>
+                <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest italic">Edición de Cupón</span>
+            </div>
+            <h2 class="text-3xl font-black tracking-tighter text-black uppercase">Editar Cupón</h2>
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] mt-2 italic">Código: {coupon.code}</p>
+        </div>
+        <a href="/admin/coupons" class="group flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-black transition-colors">
+            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/></svg>
+            Volver al Registro
+        </a>
+    </div>
+
+    <form id="edit-coupon-form" class="space-y-10 mb-20" data-id={coupon.id}>
+        <!-- Section: Coupon Identity -->
+        <div class="bg-white rounded-2xl border border-black/5 shadow-sm p-10 md:p-12 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-zinc-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0 opacity-50"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-zinc-700 text-white rounded-lg flex items-center justify-center font-black text-xs shadow-xl">01</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-black">Identidad del Cupón</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-3">
+                        <label for="code" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                             Código del Cupón <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="code" name="code" required value={coupon.code}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="discount_type" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Tipo de Descuento <span class="text-red-500">*</span>
+                        </label>
+                        <select id="discount_type" name="discount_type" required
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all">
+                            <option value="percentage" selected={coupon.discount_type === 'percentage'}>Porcentaje (%)</option>
+                            <option value="fixed" selected={coupon.discount_type === 'fixed'}>Monto Fijo (€)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="value" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                             Valor del Descuento <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="value" name="value" required min="0" step="0.01" value={coupon.value}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="min_purchase_amount" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Compra Mínima (€)
+                        </label>
+                        <input type="number" id="min_purchase_amount" name="min_purchase_amount" min="0" step="0.01" value={coupon.min_purchase_amount || 0}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Usage Limits -->
+        <div class="bg-white rounded-2xl border border-black/5 shadow-sm p-10 md:p-12 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-zinc-50 rounded-full translate-x-1/2 -translate-y-1/2 -z-0 opacity-50"></div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <span class="w-10 h-10 bg-zinc-700 text-white rounded-lg flex items-center justify-center font-black text-xs shadow-xl">02</span>
+                    <h3 class="text-xl font-black tracking-tighter uppercase text-black">Límites y Validez</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-3">
+                        <label for="max_uses" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Máximo de Usos
+                        </label>
+                        <input type="number" id="max_uses" name="max_uses" min="1" placeholder="Ilimitado" value={coupon.max_uses || ''}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" />
+                        <p class="text-[9px] font-bold text-zinc-300 uppercase tracking-widest px-4">
+                            Usos actuales: <span class="text-black">{coupon.current_uses}</span>
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label for="expires_at" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-4">
+                            Fecha de Expiración
+                        </label>
+                        <input type="datetime-local" id="expires_at" name="expires_at" value={formatDateForInput(coupon.expires_at)}
+                            class="w-full bg-zinc-50 border-2 border-black/[0.03] rounded-xl px-8 py-5 text-sm font-black uppercase tracking-tight focus:outline-none focus:border-black focus:bg-white transition-all placeholder:text-zinc-200" />
+                    </div>
+
+                    <div class="md:col-span-2 space-y-3">
+                        <label class="flex items-center gap-4 cursor-pointer group/check">
+                            <input type="checkbox" id="is_active" name="is_active" checked={coupon.is_active}
+                                class="w-6 h-6 rounded border-2 border-zinc-300 text-black focus:ring-black focus:ring-offset-0" />
+                            <span class="text-sm font-black text-zinc-600 uppercase tracking-tight group-hover/check:text-black transition-colors">
+                                Cupón Activo
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-6 pt-10 border-t border-black/[0.05]">
+            <a href="/admin/coupons" class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-black transition-colors px-8 py-5">Cancelar</a>
+            <button type="submit" id="submit-btn" 
+                class="w-full sm:w-auto bg-zinc-800 text-white px-12 py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.4em] hover:scale-105 transition-all shadow-2xl active:scale-95 group">
+                <span class="group-hover:tracking-[0.5em] transition-all">Guardar Cambios</span>
+            </button>
+        </div>
+    </form>
+  </div>
+
+  <script>
+    import { supabase } from '../../../../lib/supabase';
+    import { navigate } from 'astro:transitions/client';
+
+    function initPage() {
+        const form = document.getElementById('edit-coupon-form') as HTMLFormElement;
+        if (!form) return;
+
+        const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+        let isSubmitting = false;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isSubmitting) return;
+            
+            isSubmitting = true;
+            if (submitBtn) {
+                submitBtn.setAttribute('disabled', 'true');
+                submitBtn.innerHTML = '<span class="animate-pulse">GUARDANDO...</span>';
+            }
+
+            const couponId = form.getAttribute('data-id');
+            const formData = new FormData(form);
+            
+            try {
+                const maxUsesValue = formData.get('max_uses');
+                const expiresAtValue = formData.get('expires_at');
+
+                const { data, error } = await supabase.rpc('admin_update_coupon', {
+                    p_id: couponId,
+                    p_code: formData.get('code'),
+                    p_discount_type: formData.get('discount_type'),
+                    p_value: parseFloat(formData.get('value') as string),
+                    p_min_purchase_amount: parseFloat(formData.get('min_purchase_amount') as string) || 0,
+                    p_max_uses: maxUsesValue ? parseInt(maxUsesValue as string) : null,
+                    p_expires_at: expiresAtValue ? new Date(expiresAtValue as string).toISOString() : null,
+                    p_is_active: (document.getElementById('is_active') as HTMLInputElement).checked
+                });
+
+                if (error) throw error;
+                if (data && data.success === false) throw new Error(data.message);
+                
+                (window as any).showIndustrialAlert('CUPÓN ACTUALIZADO CORRECTAMENTE', 'success');
+                setTimeout(() => navigate('/admin/coupons'), 500);
+            } catch (error: any) {
+                console.error('Error updating coupon:', error);
+                (window as any).showIndustrialAlert('ERROR: ' + error.message, 'error');
+                isSubmitting = false;
+                if (submitBtn) {
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.innerHTML = '<span class="group-hover:tracking-[0.5em] transition-all">Reintentar</span>';
+                }
+            }
+        });
+    }
+
+    document.addEventListener('astro:page-load', initPage);
+  </script>
+</AdminLayout>

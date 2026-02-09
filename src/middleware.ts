@@ -25,14 +25,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
 
         // Fetch user profile with role
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
+        if (profileError) {
+          console.error('[Middleware] Profile Fetch Error:', profileError.message);
+        }
+
         context.locals.user = user;
         context.locals.profile = profile;
+
+        if (profile) {
+          console.log(`[Middleware] Auth Success: ${user.email} (${profile.role})`);
+        }
       } else if (error) {
         // Clear invalid cookies
         cookies.delete('sb-access-token', { path: '/' });

@@ -1,0 +1,87 @@
+---
+---
+<div id="industrial-toast-container" class="fixed top-8 right-8 z-[100] flex flex-col gap-4 pointer-events-none"></div>
+
+<template id="industrial-toast-template">
+    <div class="industrial-toast pointer-events-auto flex items-center gap-4 bg-black border-2 border-white/10 rounded-2xl px-8 py-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl translate-x-12 opacity-0 transition-all duration-500 ease-out max-w-md border-l-4">
+        <div class="toast-icon w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+            <!-- Icons injected here -->
+        </div>
+        <div class="flex-1">
+            <h4 class="toast-title text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">PROTOCOLO DE SISTEMA</h4>
+            <p class="toast-message text-xs font-bold text-white uppercase tracking-tight leading-relaxed"></p>
+        </div>
+        <button class="toast-close p-2 text-white/20 hover:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+</template>
+
+<script>
+    import { navigate } from 'astro:transitions/client';
+
+    function showIndustrialAlert(message: string, type: 'success' | 'error' = 'success') {
+        const container = document.getElementById('industrial-toast-container');
+        const template = document.getElementById('industrial-toast-template') as HTMLTemplateElement;
+        
+        if (!container || !template) return;
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const toast = clone.querySelector('.industrial-toast') as HTMLElement;
+        const msgEl = clone.querySelector('.toast-message') as HTMLElement;
+        const titleEl = clone.querySelector('.toast-title') as HTMLElement;
+        const iconEl = clone.querySelector('.toast-icon') as HTMLElement;
+        const closeBtn = clone.querySelector('.toast-close') as HTMLElement;
+
+        msgEl.textContent = message.toUpperCase();
+        
+        if (type === 'error') {
+            toast.classList.add('border-l-red-600');
+            titleEl.textContent = 'ERROR DE PROTOCOLO';
+            iconEl.classList.add('text-red-500');
+            iconEl.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+        } else {
+            toast.classList.add('border-l-green-500');
+            titleEl.textContent = 'SISTEMA OPERATIVO';
+            iconEl.classList.add('text-green-500');
+            iconEl.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`;
+        }
+
+        container.appendChild(clone);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-12', 'opacity-0');
+        });
+
+        const dismiss = () => {
+            toast.classList.add('translate-x-12', 'opacity-0');
+            setTimeout(() => toast.remove(), 500);
+        };
+
+        closeBtn.addEventListener('click', dismiss);
+
+        // Auto dismiss
+        setTimeout(dismiss, 6000);
+    }
+
+    // Expose to window
+    (window as any).showIndustrialAlert = showIndustrialAlert;
+</script>
+
+<style is:global>
+    .industrial-toast {
+        animation: toastIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes toastIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>

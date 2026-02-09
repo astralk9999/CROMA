@@ -6,15 +6,38 @@ import { supabase } from '@lib/supabase';
 
 const { slug } = Astro.params;
 const normalizedSlug = slug || 'BRAND';
-const name = normalizedSlug.replace(/-/g, ' ').toUpperCase();
+let name = normalizedSlug.replace(/-/g, ' ').toUpperCase();
 
-const { data: products } = await supabase
-  .from('products')
-  .select('*')
-  .eq('brand', slug)
-  .order('created_at', { ascending: false });
+let filteredProducts = [];
 
-const filteredProducts = products || []; 
+// 1. Try to find the brand in the DB by slug to get its exact Name
+const { data: brandData } = await supabase
+  .from('brands')
+  .select('name')
+  .eq('slug', slug)
+  .single();
+
+if (brandData) {
+    name = brandData.name.toUpperCase();
+    
+    // 2. Fetch products matching this brand name
+    const { data: products } = await supabase
+      .from('products')
+      .select('*')
+      .eq('brand', brandData.name)
+      .order('created_at', { ascending: false });
+      
+    filteredProducts = products || [];
+} else {
+    // Fallback: try direct match if brand not found (e.g. legacy)
+    const { data: products } = await supabase
+      .from('products')
+      .select('*')
+      .eq('brand', slug)
+      .order('created_at', { ascending: false });
+      
+    filteredProducts = products || [];
+}
 ---
 
 <PublicLayout title={name}>

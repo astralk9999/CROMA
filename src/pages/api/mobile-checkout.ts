@@ -1,15 +1,10 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-12-18.acacia' as any,
 });
-
-const supabaseAdmin = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {

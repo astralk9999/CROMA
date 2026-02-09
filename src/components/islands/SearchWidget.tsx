@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@lib/supabase';
-import { mockProducts } from '@data/mockProducts';
+
 
 interface Product {
     id: string;
@@ -35,18 +35,7 @@ export default function SearchWidget() {
             if (query.trim().length > 2) {
                 setLoading(true);
                 try {
-                    // Hybrid Strategy: Show mocks IMMEDIATELY for instant UI feedback
-                    const filteredMock = mockProducts.filter((p: any) =>
-                        p.name.toLowerCase().includes(query.toLowerCase()) ||
-                        p.category.toLowerCase().includes(query.toLowerCase()) ||
-                        (p.brand && p.brand.toLowerCase().includes(query.toLowerCase()))
-                    ) as Product[];
-
-                    // Initial results (fast)
-                    setResults(filteredMock.slice(0, 6));
-                    setLoading(true);
-
-                    // Dual Strategy: Try RPC first, fallback to Client Query
+                    // Strategy: Try RPC first, fallback to Client Query
                     let dbProducts: Product[] = [];
                     let hasDbError = false;
 
@@ -105,24 +94,13 @@ export default function SearchWidget() {
                     }
 
                     if (!hasDbError && dbProducts.length > 0) {
-                        // Universal Deduplicator: Priority to DB, then unique Mocks by slug
-                        const resultsMap = new Map<string, Product>();
-
-                        // Add DB products first (they win)
-                        dbProducts.forEach(p => {
-                            if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
-                        });
-
-                        // Add Mock products if slug not already present
-                        filteredMock.forEach(p => {
-                            if (!resultsMap.has(p.slug)) resultsMap.set(p.slug, p);
-                        });
-
-                        setResults(Array.from(resultsMap.values()).slice(0, 8));
+                        setResults(dbProducts.slice(0, 8));
                     }
                 } catch (err) {
                     console.error("Critical search processing error:", err);
-                    // On complete failure, we already showed mocks so we are safe
+                    console.error("Critical search processing error:", err);
+                    // On complete failure, show nothing
+                    setResults([]);
                 } finally {
                     setLoading(false);
                 }

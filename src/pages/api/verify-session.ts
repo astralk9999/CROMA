@@ -1,16 +1,12 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@lib/supabase-admin';
+import { sendOrderConfirmationEmail } from '@lib/email';
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
     apiVersion: '2024-12-18.acacia' as any,
 });
-
-// Admin Supabase client to bypass RLS for updates
-const supabaseAdmin = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
@@ -26,11 +22,20 @@ export const GET: APIRoute = async ({ request }) => {
         if (session.payment_status === 'paid') {
             const orderId = session.metadata?.order_id;
             if (orderId) {
-                // Update order to 'processing' if it is pending
-                // Fetch current status first to avoid overwriting Cancelled or Shipped status from race conditions
+                // Fetch current order with items and product images
                 const { data: currentOrder } = await supabaseAdmin
                     .from('orders')
-                    .select('status')
+                    .select(`
+                        *,
+                        order_items (
+                            *,
+                            product:products (
+                                name,
+                                images
+                            )
+                        ),
+                        profiles (email)
+                    `)
                     .eq('id', orderId)
                     .single();
 
@@ -48,8 +53,30 @@ export const GET: APIRoute = async ({ request }) => {
                         })
                         .eq('id', orderId);
 
-                    if (error) console.error("Error updating order via verification:", error);
-                    else console.log(`Order ${orderId} verified and updated to processing`);
+                    if (error) {
+                        console.error("Error updating order via verification:", error);
+                    } else {
+                        console.log(`Order ${orderId} verified and updated to processing`);
+
+                        // Send order confirmation email
+                        const customerEmail = currentOrder.profiles?.email || (currentOrder.shipping_address as any)?.email;
+                        if (customerEmail) {
+                            // Map items to include product image from relation
+                            const emailItems = currentOrder.order_items.map((item: any) => ({
+                                ...item,
+                                product_name: item.product?.name || item.product_name, // Fallback or override
+                                product_image: item.product?.images?.[0] || null
+                            }));
+
+                            sendOrderConfirmationEmail(
+                                customerEmail,
+                                orderId,
+                                emailItems,
+                                Number(currentOrder.total_amount),
+                                currentOrder.shipping_address
+                            ).catch(e => console.error('[EMAIL_ERROR]:', e));
+                        }
+                    }
                 }
             }
         }

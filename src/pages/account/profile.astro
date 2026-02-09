@@ -147,12 +147,32 @@ const success = Astro.url.searchParams.get('success');
 
         <div class="mt-8 pt-8 border-t border-gray-200">
           <h3 class="text-lg font-bold text-gray-900 mb-4">Acciones de Cuenta</h3>
-          <a
-            href="/auth/logout"
+          <div class="flex flex-wrap gap-4">
+              <a
+                href="/account/orders"
+                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
+              >
+                Mis Pedidos
+              </a>
+              <a
+                href="/account/returns"
+                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
+              >
+                Mis Devoluciones
+              </a>
+              <a
+                href="/category/my-favorites"
+                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
+              >
+                Favoritos
+              </a>
+              <a
+                href="/auth/logout"
             class="inline-block px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
           >
             Cerrar Sesión
           </a>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { localFavorites, toggleFavorite } from '@stores/favorites';
+import FavoriteButton from './FavoriteButton';
 import { useEffect, useState } from 'react';
 
 interface Product {
@@ -122,47 +123,48 @@ export default function FavoritesGrid({ allProducts }: FavoritesGridProps) {
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
                             {favoriteProducts.map((product) => (
-                                <a
-                                    key={product.id}
-                                    href={`/productos/${product.slug}`}
-                                    className="group block relative"
-                                >
-                                    <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
-                                        <img
-                                            src={product.images[0] || '/placeholder.jpg'}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            loading="lazy"
-                                        />
+                                <div key={product.id} className="group relative">
+                                    <div className="relative overflow-hidden bg-gray-100">
+                                        <a
+                                            href={`/productos/${product.slug}`}
+                                            className="block aspect-[3/4]"
+                                        >
+                                            <img
+                                                src={product.images[0] || '/placeholder.jpg'}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy"
+                                            />
+                                        </a>
                                         {product.stock > 0 && (
-                                            <div className="absolute bottom-2 left-2 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                                            <div className="absolute bottom-2 left-2 pointer-events-none bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
                                                 New In
                                             </div>
                                         )}
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                toggleFavorite(product.id);
-                                            }}
-                                            className="absolute bottom-2 right-2 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
-                                        >
-                                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                        </button>
+                                        {/* Use the shared FavoriteButton component for consistency */}
+                                        <div className="absolute bottom-2 right-2 z-20">
+                                            <FavoriteButton productId={product.id} variant="red-circle" />
+                                        </div>
                                     </div>
-                                    <div className="pt-3">
-                                        <h3 className="text-sm font-normal text-gray-600 mb-1 leading-tight group-hover:text-black transition-colors line-clamp-1">
+                                    <a
+                                        href={`/productos/${product.slug}`}
+                                        className="block pt-3 text-left"
+                                    >
+                                        <h3 className="text-[10px] font-medium text-zinc-800 uppercase tracking-wide leading-tight group-hover:underline decoration-1 underline-offset-4 line-clamp-2">
                                             {product.name}
                                         </h3>
-                                        <div className="flex items-center space-x-2">
-                                            <p className="text-sm font-bold text-black">
+
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <p className="text-xs font-bold text-zinc-900">
                                                 €{product.price.toFixed(2)}
                                             </p>
                                         </div>
-                                    </div>
-                                </a>
+
+                                        <div className="mt-1 text-[9px] text-zinc-400 font-medium">
+                                            +1 Color
+                                        </div>
+                                    </a>
+                                </div>
                             ))}
                         </div>
                     )}

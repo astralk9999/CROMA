@@ -117,7 +117,7 @@ export default function NewsletterPopup() {
                                     <label htmlFor="email" className="sr-only">Email</label>
                                     <input
                                         type="email"
-                                        id="newsletter-email"
+                                        id="popup-newsletter-email"
                                         placeholder="tucorreo@ejemplo.com"
                                         required
                                         value={email}

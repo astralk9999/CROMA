@@ -1,180 +1,447 @@
 ---
 import AdminLayout from '@layouts/AdminLayout.astro';
-import { supabase } from '@lib/supabase';
+import ConfirmationModal from '@components/islands/ConfirmationModal';
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 // Fetch all products
-const { data: products, error } = await supabase
+const { data: products, error: fetchError } = await supabaseAdmin
   .from('products')
-  .select('*')
+  .select('*, categories(name, id)')
   .order('created_at', { ascending: false });
+
+if (fetchError) {
+  console.error('[Admin Products] Fetch Error:', fetchError);
+}
+
+const rawProductsCount = products?.length || 0;
 
 const searchQuery = Astro.url.searchParams.get('search') || '';
 const categoryFilter = Astro.url.searchParams.get('category') || '';
-
-// Filter products
-let filteredProducts = products || [];
-if (searchQuery) {
-  filteredProducts = filteredProducts.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.slug.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-}
-if (categoryFilter) {
-  filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
-}
-
-// Get unique categories
-const categories = [...new Set(products?.map(p => p.category) || [])];
+const colorFilter = Astro.url.searchParams.get('color') || '';
+const statusFilter = Astro.url.searchParams.get('status') || ''; // 'hidden', 'visible', 'drop', 'discount', 'launch', 'viral', 'bestseller'
+const sortBy = Astro.url.searchParams.get('sort') || ''; // 'stock_asc', 'stock_desc', 'price_asc', 'price_desc'
 
 // Helper to calculate total stock
 function getTotalStock(product: any) {
   if (!product.stock_by_sizes) return 0;
   return Object.values(product.stock_by_sizes as Record<string, number>).reduce((sum: number, qty: number) => sum + qty, 0);
 }
+
+// Filter and Sort products
+let filteredProducts = products || [];
+
+if (searchQuery) {
+  filteredProducts = filteredProducts.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+}
+
+if (categoryFilter) {
+  filteredProducts = filteredProducts.filter(p => p.category === categoryFilter);
+}
+
+if (colorFilter) {
+  filteredProducts = filteredProducts.filter(p => p.colors && p.colors.includes(colorFilter));
+}
+
+// Status Filter Logic
+if (statusFilter) {
+    const now = new Date();
+    filteredProducts = filteredProducts.filter(p => {
+        switch(statusFilter) {
+            case 'hidden': return p.is_hidden;
+            case 'visible': return !p.is_hidden;
+            case 'drop': return p.is_limited_drop;
+            case 'discount': return p.discount_active;
+            case 'launch': return p.launch_date && new Date(p.launch_date) > now;
+            case 'viral': return p.is_viral_trend;
+            case 'bestseller': return p.is_bestseller;
+            default: return true;
+        }
+    });
+}
+
+if (sortBy === 'stock_asc') {
+  filteredProducts.sort((a, b) => getTotalStock(a) - getTotalStock(b));
+} else if (sortBy === 'stock_desc') {
+  filteredProducts.sort((a, b) => getTotalStock(b) - getTotalStock(a));
+} else if (sortBy === 'price_asc') {
+  filteredProducts.sort((a, b) => Number(a.price) - Number(b.price));
+} else if (sortBy === 'price_desc') {
+  filteredProducts.sort((a, b) => Number(b.price) - Number(a.price));
+}
+
+// Get unique categories and colors for filters
+const { data: allCategories } = await supabaseAdmin.from('categories').select('id, name').order('name');
+const allColors = [...new Set(products?.flatMap(p => p.colors || []) || [])].sort();
+
 ---
 
-<AdminLayout title="Gestión de Productos" activeSection="products">
-  <!-- Actions Bar -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-      <!-- Search -->
-      <form method="get" class="flex-1 max-w-md">
-        <div class="relative">
-          <input
-            type="text"
-            name="search"
-            placeholder="Buscar productos..."
-            value={searchQuery}
-            class="w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-          />
-          <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
+<AdminLayout title="Depósito de Artículos" activeSection="products">
+  <!-- Industrial Actions Bar (Sticky) -->
+  <div class="mb-12 sticky top-0 z-[100] px-0 pt-4 pb-12 bg-zinc-50/80 backdrop-blur-xl transition-all duration-300">
+    <div class="bg-zinc-800 rounded-2xl p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative border border-white/10">
+        <div class="absolute -top-10 left-0 text-[8px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-3 py-1 rounded-t-lg border border-b-0 border-zinc-200">
+            Diagnóstico: {rawProductsCount} productos en DB | Filtro: {filteredProducts.length}
         </div>
-      </form>
+        <!-- Accent Glow -->
+        <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-white/5 blur-[120px] rounded-full"></div>
+        </div>
+        <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-white/5 blur-[100px] rounded-full pointer-events-none"></div>
 
-      <!-- Category Filter -->
-      <form method="get" class="flex gap-2 items-center">
-        <select
-          name="category"
-          class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-          onchange="this.form.submit()"
-        >
-          <option value="">Todas las categorías</option>
-          {categories.map(cat => (
-            <option value={cat} selected={categoryFilter === cat}>{cat}</option>
-          ))}
-        </select>
-      </form>
+        <div class="relative z-10 flex flex-col xl:flex-row flex-wrap gap-4 items-center p-2 px-4 lg:px-6">
+            <!-- Search Sector -->
+            <div class="flex-1 min-w-[300px] relative group/search">
+                <!-- Audit Status Gauge -->
+                <div class="absolute -top-3 left-8 px-3 py-1 bg-zinc-700 border border-white/10 rounded-sm z-20 opacity-0 group-focus-within/search:opacity-100 transition-all duration-500 translate-y-2 group-focus-within/search:translate-y-0 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+                    <div class="flex gap-0.5">
+                        <div class="w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                        <div class="w-1 h-1 bg-white/40 rounded-full animate-pulse [animation-delay:200ms]"></div>
+                        <div class="w-1 h-1 bg-white/10 rounded-full animate-pulse [animation-delay:400ms]"></div>
+                    </div>
+                    <span class="text-[7px] font-black text-white/90 uppercase tracking-[0.4em]">Audit_Protocol.Active</span>
+                </div>
 
-      <!-- Add Product Button -->
-      <a
-        href="/admin/products/new"
-        class="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
-      >
-        + Añadir Producto
-      </a>
+                <form method="get" class="relative" id="search-form">
+                    <input
+                        type="text"
+                        name="search"
+                        id="main-search"
+                        placeholder="EJECUTAR BÚSQUEDA DE MANIFIESTO..."
+                        value={searchQuery}
+                        class="w-full bg-white/5 border-2 border-white/10 rounded-xl px-14 py-6 text-white text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-white focus:bg-zinc-700/50 focus:ring-8 focus:ring-white/[0.03] focus:shadow-[0_0_50px_rgba(255,255,255,0.08)] focus:tracking-[0.3em] transition-all duration-500 placeholder:text-white/10 placeholder:font-bold selection:bg-white selection:text-black"
+                    />
+                    <input type="hidden" name="category" value={categoryFilter} />
+                    <input type="hidden" name="color" value={colorFilter} />
+                    <input type="hidden" name="status" value={statusFilter} />
+                    <input type="hidden" name="sort" value={sortBy} />
+                    
+                    <svg class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within/search:text-white group-focus-within/search:scale-110 group-hover:text-white/40 transition-all duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    
+                    {searchQuery && (
+                        <a href="/admin/products" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </a>
+                    )}
+                </form>
+            </div>
+
+            <!-- Divider -->
+            <div class="hidden xl:block w-px h-10 bg-white/10 self-center"></div>
+
+            <!-- Filters Grid Sector -->
+            <div class="flex flex-col md:flex-row items-center gap-1 p-1">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-1 w-full md:w-auto">
+                    <!-- Status -->
+                    <div class="relative group/dropdown" id="status-filter-container">
+                        <button type="button" id="prod-status-btn" 
+                            class={`w-full h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 
+                                ${statusFilter 
+                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                                    : 'bg-white/0 hover:bg-white/5 border-white/10 text-white hover:border-white/30'}`}>
+                            <span class="flex items-center gap-3 truncate">
+                                <svg class={`w-3.5 h-3.5 ${statusFilter ? 'text-black/40' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                {statusFilter ? (
+                                    statusFilter === 'hidden' ? 'OCULTOS' :
+                                    statusFilter === 'visible' ? 'VISIBLES' :
+                                    statusFilter === 'drop' ? 'DROPS' :
+                                    statusFilter === 'discount' ? 'OFERTAS' :
+                                    statusFilter === 'launch' ? 'LANZAMIENTOS' :
+                                    statusFilter === 'viral' ? 'VIRAL' :
+                                    statusFilter === 'bestseller' ? 'TOP VENTAS' : 'ESTADO'
+                                ) : 'ESTADO'}
+                            </span>
+                            <svg class={`w-3 h-3 transition-transform ${statusFilter ? 'text-black/40' : 'text-white/20'}`} id="prod-status-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="prod-status-menu" class="absolute top-full left-0 right-0 lg:w-64 mt-2 bg-zinc-800 border border-white/10 rounded-2xl overflow-hidden hidden z-[200] shadow-2xl backdrop-blur-xl">
+                            <div class="p-2 space-y-1">
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${!statusFilter ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Todos</a>
+                                <div class="h-px bg-white/5 my-1 mx-2"></div>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=visible`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'visible' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Visibles</a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=hidden`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'hidden' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Ocultos</a>
+                                <div class="h-px bg-white/5 my-1 mx-2"></div>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=drop`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'drop' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Drops Limitados</a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=discount`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'discount' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Descuentos</a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=launch`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'launch' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Lanzamientos</a>
+                                <div class="h-px bg-white/5 my-1 mx-2"></div>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=viral`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'viral' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Viral Trends</a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=${sortBy}&status=bestseller`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${statusFilter === 'bestseller' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Bestsellers</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="relative group/dropdown" id="category-filter-container">
+                        <button type="button" id="prod-category-btn" 
+                            class={`w-full h-14 px-6 rounded-2xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 
+                                ${categoryFilter 
+                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                                    : 'bg-white/0 hover:bg-white/5 border-white/10 text-white hover:border-white/30'}`}>
+                            <span class="flex items-center gap-2 truncate">
+                                <svg class={`w-3.5 h-3.5 ${categoryFilter ? 'text-black/40' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                {categoryFilter ? categoryFilter : 'FAMILIA'}
+                            </span>
+                            <svg class={`w-3 h-3 transition-transform ${categoryFilter ? 'text-black/40' : 'text-white/20'}`} id="prod-category-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="prod-category-menu" class="absolute top-full left-0 right-0 lg:w-64 mt-2 bg-zinc-800 border border-white/10 rounded-3xl overflow-hidden hidden z-[200] shadow-2xl backdrop-blur-xl">
+                            <div class="p-2 space-y-1">
+                                <a href={`?search=${searchQuery}&color=${colorFilter}&sort=${sortBy}&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${!categoryFilter ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Todas</a>
+                                {allCategories?.map(cat => (
+                                    <a href={`?search=${searchQuery}&category=${cat.name}&color=${colorFilter}&sort=${sortBy}&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat.name ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>{cat.name}</a>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="relative group/dropdown" id="color-filter-container">
+                        <button type="button" id="prod-color-btn" 
+                            class={`w-full h-14 px-6 rounded-2xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 
+                                ${colorFilter 
+                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                                    : 'bg-white/0 hover:bg-white/5 border-white/10 text-white hover:border-white/30'}`}>
+                            <span class="flex items-center gap-2 truncate">
+                                <svg class={`w-3.5 h-3.5 ${colorFilter ? 'text-black/40' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                                {colorFilter ? colorFilter : 'COLOR'}
+                            </span>
+                            <svg class={`w-3 h-3 transition-transform ${colorFilter ? 'text-black/40' : 'text-white/20'}`} id="prod-color-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="prod-color-menu" class="absolute top-full right-0 lg:w-64 mt-2 bg-zinc-800 border border-white/10 rounded-3xl overflow-hidden hidden z-[200] shadow-2xl backdrop-blur-xl">
+                            <div class="p-2 space-y-1">
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&sort=${sortBy}&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${!colorFilter ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>Todos</a>
+                                {allColors.map(color => (
+                                    <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${color}&sort=${sortBy}&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${colorFilter === color ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>{color}</a>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="relative group/dropdown" id="sort-filter-container">
+                        <button type="button" id="prod-sort-btn" 
+                            class={`w-full h-14 px-6 rounded-2xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 
+                                ${sortBy 
+                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                                    : 'bg-white/0 hover:bg-white/5 border-white/10 text-white hover:border-white/30'}`}>
+                            <span class="flex items-center gap-2 truncate">
+                                <svg class={`w-3.5 h-3.5 ${sortBy ? 'text-black/40' : 'text-white/40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+                                {sortBy === 'stock_asc' ? 'STOCK ↑' : 
+                                 sortBy === 'stock_desc' ? 'STOCK ↓' : 
+                                 sortBy === 'price_asc' ? 'PRECIO ↑' : 
+                                 sortBy === 'price_desc' ? 'PRECIO ↓' : 'ORDENAR'}
+                            </span>
+                            <svg class={`w-3 h-3 transition-transform ${sortBy ? 'text-black/40' : 'text-white/20'}`} id="prod-sort-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="prod-sort-menu" class="absolute top-full right-0 lg:w-64 mt-2 bg-zinc-800 border border-white/10 rounded-3xl overflow-hidden hidden z-[200] shadow-2xl backdrop-blur-xl">
+                            <div class="p-2 space-y-1">
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=stock_desc&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'stock_desc' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+                                    <span class="flex items-center justify-between gap-4">STOCK: Mayor a menor <span class="opacity-40">↓</span></span>
+                                </a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=stock_asc&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'stock_asc' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+                                    <span class="flex items-center justify-between gap-4">STOCK: Menor a mayor <span class="opacity-40">↑</span></span>
+                                </a>
+                                <div class="h-px bg-white/5 my-1 mx-2"></div>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=price_desc&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'price_desc' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+                                    <span class="flex items-center justify-between gap-4">PRECIO: Mayor a menor <span class="opacity-40">↓</span></span>
+                                </a>
+                                <a href={`?search=${searchQuery}&category=${categoryFilter}&color=${colorFilter}&sort=price_asc&status=${statusFilter}`} class={`block px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'price_asc' ? 'bg-white text-black' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}>
+                                    <span class="flex items-center justify-between gap-4">PRECIO: Menor a mayor <span class="opacity-40">↑</span></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Sector -->
+                <div class="pl-2">
+                    <a href="/admin/products/new" class="flex items-center gap-3 px-8 h-14 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl group">
+                        <svg class="w-4 h-4 transition-transform group-hover:rotate-90 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
+                        NUEVO INGRESO
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 
-  <!-- Info Bar -->
-  <div class="mb-4">
-    <p class="text-sm text-gray-600">{filteredProducts.length} productos encontrados</p>
+  <!-- Inventory Insights -->
+  <div class="px-8 mt-12 mb-8 grid grid-cols-2 lg:grid-cols-4 gap-8">
+    <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Total Referencias</p>
+        <p class="text-2xl font-black text-black">{filteredProducts.length}</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Stock Acumulado</p>
+        <p class="text-2xl font-black text-black">{filteredProducts.reduce((sum, p) => sum + getTotalStock(p), 0)}</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+        <p class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Valoración Total</p>
+        <p class="text-2xl font-black text-black">{(filteredProducts.reduce((sum, p) => sum + (Number(p.price) * getTotalStock(p)), 0)).toLocaleString()}€</p>
+    </div>
+    <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-sm border-l-amber-500 border-l-4">
+        <p class="text-[8px] font-black text-amber-500 uppercase tracking-[0.2em] mb-2">Índice Landpage</p>
+        <p class="text-2xl font-black text-black">{filteredProducts.filter(p => p.featured).length}</p>
+    </div>
   </div>
 
-  <!-- Products Table -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <!-- Results Info (Legacy replaced by Insights) -->
+  <div class="px-8 mb-6 hidden">
+    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+        Inventario: <span class="text-black">{filteredProducts.length}</span> registros localizados
+    </p>
+  </div>
+
+  <!-- Products List: Industrial Table -->
+  <div class="bg-white rounded-[3rem] border border-zinc-200/60 shadow-xl overflow-hidden mb-20">
     <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-gray-50 border-b border-gray-200">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-zinc-50 border-b-2 border-zinc-100">
           <tr>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Producto
-            </th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Categoría
-            </th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Precio
-            </th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Stock
-            </th>
-            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Estado
-            </th>
-            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Acciones
-            </th>
+            <th class="px-10 py-6 text-[11px] font-black text-black uppercase tracking-[0.2em]">Referencia</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Categoría</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Valoración</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Existencias</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] text-right">Acciones</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-black/[0.03]">
           {filteredProducts.length > 0 ? (
             filteredProducts.map(product => {
               const totalStock = getTotalStock(product);
               const isLowStock = totalStock < 10;
               
               return (
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          class="w-12 h-12 object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                          </svg>
-                        </div>
-                      )}
+                <tr class={`group hover:bg-zinc-50/50 transition-all duration-500 border-l-[3px] 
+                    ${product.featured ? 'border-amber-500/50 hover:border-amber-500' : 
+                      product.discount_active ? 'border-red-500/50 hover:border-red-500' : 
+                      'border-transparent hover:border-zinc-200'}`}>
+                  <td class="px-10 py-8">
+                    <div class="flex items-center gap-6">
+                      <div class="w-16 h-20 bg-zinc-100 rounded-2xl overflow-hidden flex-shrink-0 border border-black/[0.03] group-hover:scale-105 transition-transform duration-500">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                          />
+                        ) : (
+                          <div class="w-full h-full flex items-center justify-center text-zinc-300">
+                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                          </div>
+                        )}
+                      </div>
                       <div>
-                        <p class="font-medium text-gray-900">{product.name}</p>
-                        <p class="text-sm text-gray-500">{product.slug}</p>
+                        <p class="text-sm font-black text-black uppercase tracking-tight mb-1">{product.name}</p>
+                        <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{product.slug}</p>
+                        
+                        <!-- Status Badges -->
+                        <div class="flex flex-wrap gap-1 mt-2">
+                             {product.is_hidden && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-100 text-zinc-500 rounded border border-zinc-200 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                    Oculto
+                                </span>
+                             )}
+                             
+                             {product.is_limited_drop && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-600 rounded border border-purple-100 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    Drop Limitado
+                                </span>
+                             )}
+
+                             {product.discount_active && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 rounded border border-red-100 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                                    -{product.discount_percent}%
+                                </span>
+                             )}
+
+                             {product.launch_date && new Date(product.launch_date) > new Date() && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-600 rounded border border-blue-100 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Lanzamiento
+                                </span>
+                             )}
+
+                             {product.is_viral_trend && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded border border-indigo-100 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    Viral
+                                </span>
+                             )}
+
+                             {product.is_bestseller && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100 text-[8px] font-black uppercase tracking-widest">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                    Top Ventas
+                                </span>
+                             )}
+
+                             {product.featured && (
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-950 text-amber-500 rounded border border-amber-500/30 text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.175 0l-3.976 2.888c-.783.57-1.838-.197-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                    LANDPAGE
+                                </span>
+                             )}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td class="px-6 py-4">
-                    <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                      {product.category}
+                  <td class="px-10 py-8">
+                    <span class="inline-block px-4 py-1.5 bg-zinc-100 text-zinc-600 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-black/[0.03]">
+                      {product.category || 'GENÉRICO'}
                     </span>
                   </td>
-                  <td class="px-6 py-4">
-                    <span class="font-medium text-gray-900">{Number(product.price).toFixed(2)}€</span>
+                  <td class="px-10 py-8">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-black text-black tracking-tighter">{Number(product.price).toFixed(2)}€</span>
+                    </div>
                   </td>
-                  <td class="px-6 py-4">
-                    <span class={`font-medium ${isLowStock ? 'text-orange-600' : 'text-gray-900'}`}>
-                      {totalStock} unidades
-                    </span>
+                  <td class="px-10 py-8">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-4">
+                            <!-- Stock Density Gauge -->
+                            <div class="flex gap-1 group/gauge">
+                                {[1, 2, 3, 4, 5].map(step => {
+                                    const isActive = (totalStock / 25) * 5 >= step;
+                                    const colorClass = totalStock < 5 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' : 
+                                                     totalStock < 15 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 
+                                                     'bg-zinc-800/80';
+                                    return (
+                                        <div class={`w-1.5 h-4 rounded-[1px] transition-all duration-500 ${isActive ? colorClass : 'bg-zinc-100 group-hover/gauge:bg-zinc-200'}`}></div>
+                                    );
+                                })}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class={`text-[10px] font-black uppercase tracking-widest leading-none ${totalStock < 10 ? 'text-red-600' : 'text-black'}`}>
+                                    {totalStock} <span class="text-[8px] text-zinc-400 ml-0.5">UDS</span>
+                                </span>
+                                <span class="text-[7px] font-bold text-zinc-300 uppercase tracking-[0.2em] mt-1">Nivel: {Math.min(100, Math.round((totalStock/50)*100))}%</span>
+                            </div>
+                        </div>
+                    </div>
                   </td>
-                  <td class="px-6 py-4">
-                    {isLowStock ? (
-                      <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
-                        Stock bajo
-                      </span>
-                    ) : (
-                      <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                        En stock
-                      </span>
-                    )}
-                  </td>
-                  <td class="px-6 py-4 text-right">
-                    <div class="flex items-center justify-end gap-2">
+                  <td class="px-10 py-8 text-right">
+                    <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a
                         href={`/admin/products/${product.id}/edit`}
-                        class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        class="p-3 bg-white border border-black/5 text-zinc-400 hover:text-black hover:shadow-md rounded-xl transition-all"
+                        title="Configurar"
                       >
-                        Editar
+                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                       </a>
                       <button
                         data-product-id={product.id}
                         data-product-name={product.name}
-                        class="delete-btn px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium"
+                        class="delete-btn p-3 bg-white border border-black/5 text-zinc-300 hover:text-red-600 hover:border-red-100 hover:shadow-md rounded-xl transition-all"
+                        title="Eliminar"
                       >
-                        Eliminar
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                       </button>
                     </div>
                   </td>
@@ -183,8 +450,13 @@ function getTotalStock(product: any) {
             })
           ) : (
             <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                No se encontraron productos
+              <td colspan="5" class="px-10 py-32 text-center">
+                 <div class="flex flex-col items-center gap-4">
+                    <div class="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-200 border border-black/[0.03]">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    </div>
+                    <p class="text-xs font-black text-zinc-400 uppercase tracking-[0.3em]">No se han detectado artículos</p>
+                 </div>
               </td>
             </tr>
           )}
@@ -195,34 +467,233 @@ function getTotalStock(product: any) {
 
   <script>
     import { supabase } from '../../../lib/supabase';
-
-    // Delete product functionality
-    const deleteButtons = document.querySelectorAll('.delete-btn');
+    // Import definition only for TS check or side effects if needed, 
+    // real logic is event based but we need the component mounted
     
-    deleteButtons.forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const productId = btn.getAttribute('data-product-id');
-        const productName = btn.getAttribute('data-product-name');
+    // Helper for custom confirmation
+    function customConfirm(title: string, message: string, variant: 'danger' | 'warning' | 'info' = 'info'): Promise<boolean> {
+        return new Promise((resolve) => {
+            const event = new CustomEvent('open-confirm-modal', {
+                detail: {
+                    title,
+                    message,
+                    variant,
+                    confirmText: 'CONFIRMAR',
+                    cancelText: 'CANCELAR',
+                    onConfirm: () => resolve(true),
+                    onCancel: () => resolve(false)
+                }
+            });
+            window.dispatchEvent(event);
+        });
+    }
+
+    let isInitialized = false;
+    const SCROLL_KEY = 'admin_products_scroll_pos';
+
+    function initPage() {
+        console.log('[ADMIN] Iniciando protocolo de productos...');
         
-        if (!confirm(`¿Estás seguro de que quieres eliminar "${productName}"?`)) {
-          return;
+        // Prevent multiple identical listeners on document if we can
+        if (isInitialized) {
+            console.log('[ADMIN] Productos ya inicializado, saltando...');
+            return;
         }
 
-        try {
-          // Delete using RPC
-          const { error } = await supabase.rpc('admin_delete_product', {
-            p_product_id: productId
-          });
-
-          if (error) throw error;
-
-          alert('Producto eliminado exitosamente');
-          window.location.reload();
-        } catch (error: any) {
-          console.error('Error deleting product:', error);
-          alert('Error al eliminar el producto: ' + error.message);
+        // Restore scroll
+        const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+        if (savedScroll) {
+            window.scrollTo(0, parseInt(savedScroll));
+            sessionStorage.removeItem(SCROLL_KEY);
         }
-      });
-    });
+
+        // --- GLOBAL EVENT DELEGATION ---
+        document.addEventListener('click', async (e) => {
+            const target = e.target as HTMLElement;
+            
+            // 2. DELETE PRODUCT ACTION
+            const deleteBtn = target.closest('.delete-btn') as HTMLButtonElement;
+            if (deleteBtn) {
+                console.log('[ADMIN] Click en eliminar detectado');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (deleteBtn.dataset.deleting === 'true') return;
+                
+                const productId = deleteBtn.getAttribute('data-product-id');
+                const productName = deleteBtn.getAttribute('data-product-name');
+                
+                // Show immediate feedback
+                (window as any).showIndustrialAlert('PREPARANDO ELIMINACIÓN...', 'info');
+
+                try {
+                    console.log('[ADMIN] Abriendo confirmación para:', productName);
+                    const confirmed = await customConfirm(
+                        'ELIMINAR ARTÍCULO',
+                        `¿ESTÁS SEGURO DE QUE QUIERES ELIMINAR "${productName?.toUpperCase()}"? ESTA ACCIÓN ES IRREVERSIBLE.`,
+                        'danger'
+                    );
+
+                    if (!confirmed) {
+                        console.log('[ADMIN] Eliminación cancelada por usuario');
+                        return;
+                    }
+
+                    deleteBtn.dataset.deleting = 'true';
+                    deleteBtn.disabled = true;
+                    deleteBtn.style.opacity = '0.5';
+
+                    console.log('[ADMIN] Ejecutando borrado vía PROXY de servidor...');
+                    
+                    const response = await fetch('/api/admin/delete-product', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || data.success === false) {
+                        console.error('[ADMIN] Error Proxy:', data);
+                        if (data.message === 'CONSTRAINT_ORDER_ITEMS: PRODUCTO TIENE PEDIDOS ASOCIADOS') {
+                            throw new Error('FOREIGN_KEY_ORDERS');
+                        }
+                        throw new Error(data.message || 'Fallo en el servidor proxy');
+                    }
+
+                    console.log('[ADMIN] Éxito. Animando salida...');
+                    const row = deleteBtn.closest('tr');
+                    if (row) {
+                        // Premium "Industrial Shred" Animation
+                        row.style.transition = 'all 0.8s cubic-bezier(0.7, 0, 0.3, 1)';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(-100px) scaleY(0)';
+                        row.style.filter = 'blur(10px) brightness(2) saturate(0)';
+                        row.style.background = 'rgba(255, 0, 0, 0.1)';
+                        row.style.pointerEvents = 'none';
+                    }
+
+                    (window as any).showIndustrialAlert('PRODUCTO ELIMINADO EXITOSAMENTE', 'success');
+                    sessionStorage.setItem(SCROLL_KEY, window.scrollY.toString());
+                    setTimeout(() => window.location.href = window.location.href, 900);
+
+                } catch (error: any) {
+                    console.error('[ADMIN] Error fatal en borrado:', error);
+                    const errorMessage = error.message;
+
+                    if (errorMessage === 'FOREIGN_KEY_ORDERS') {
+                        // Custom warning for products with history
+                        await new Promise<void>((resolve) => {
+                            const overlay = document.createElement('div');
+                            overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);';
+                            const modal = document.createElement('div');
+                            modal.style.cssText = 'background:#18181b;border:1px solid rgba(255,255,255,0.1);max-width:400px;width:100%;border-radius:1rem;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);';
+                            modal.innerHTML = `
+                                <div style="height:6px;background:#f59e0b;"></div>
+                                <div style="padding:2rem;text-align:center;">
+                                    <div style="width:4rem;height:4rem;margin:0 auto 1.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                        <svg style="width:2rem;height:2rem;color:#f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <h3 style="font-size:1.25rem;font-weight:900;color:white;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.75rem;">OPERACIÓN NO PERMITIDA</h3>
+                                    <p style="color:#a1a1aa;font-size:0.875rem;line-height:1.6;margin-bottom:2rem;">
+                                        EL PRODUCTO TIENE PEDIDOS ASOCIADOS Y NO PUEDE SER ELIMINADO.
+                                    </p>
+                                    <button id="warning-modal-btn" style="width:100%;padding:0.75rem 1rem;background:#f59e0b;color:black;font-size:0.75rem;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;border:none;border-radius:0.75rem;cursor:pointer;">ENTENDIDO</button>
+                                </div>
+                            `;
+                            overlay.appendChild(modal);
+                            document.body.appendChild(overlay);
+                            modal.querySelector('#warning-modal-btn')?.addEventListener('click', () => {
+                                overlay.remove();
+                                resolve();
+                            });
+                        });
+                    } else {
+                        (window as any).showIndustrialAlert('ERROR DE PROTOCOLO: ' + errorMessage, 'error');
+                    }
+                    
+                    deleteBtn.dataset.deleting = 'false';
+                    deleteBtn.disabled = false;
+                    deleteBtn.style.opacity = '1';
+                }
+                return;
+            }
+
+            // 1. Filter Dropdowns
+            const dropdownBtn = target.closest('#prod-category-btn, #prod-color-btn, #prod-sort-btn, #prod-status-btn');
+            if (dropdownBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const idPrefix = dropdownBtn.id.replace('prod-', '').replace('-btn', '');
+                const menuId = `prod-${idPrefix}-menu`;
+                const arrowId = `prod-${idPrefix}-arrow`;
+                
+                const menu = document.getElementById(menuId);
+                const arrow = document.getElementById(arrowId);
+                
+                document.querySelectorAll('[id^="prod-"][id$="-menu"]').forEach(m => {
+                    if (m !== menu) m.classList.add('hidden');
+                });
+                document.querySelectorAll('[id^="prod-"][id$="-arrow"]').forEach(a => {
+                    if (a !== arrow) a.classList.remove('rotate-180');
+                });
+
+                menu?.classList.toggle('hidden');
+                arrow?.classList.toggle('rotate-180');
+                return;
+            }
+
+            // 3. TEST CONNECTION
+            const testBtn = target.closest('#test-connection-btn');
+            if (testBtn) {
+                const btn = testBtn as HTMLButtonElement;
+                btn.textContent = 'CONECTANDO...';
+                btn.disabled = true;
+                try {
+                    console.log('[DIAG] Probando conexión con Supabase...');
+                    const start = Date.now();
+                    const { error } = await supabase.from('products').select('count', { count: 'exact', head: true });
+                    const end = Date.now();
+                    if (error) throw error;
+                    (window as any).showIndustrialAlert(`CONEXIÓN ACTIVA (${end - start}ms)`, 'success');
+                } catch (err: any) {
+                    console.error('[DIAG] Fallo de conexión:', err);
+                    (window as any).showIndustrialAlert('FALLO DE RED: Supabase no responde', 'error');
+                } finally {
+                    btn.textContent = 'Probar Red';
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            // Global close for dropdowns
+            document.querySelectorAll('[id^="prod-"][id$="-menu"]').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('[id^="prod-"][id$="-arrow"]').forEach(a => a.classList.remove('rotate-180'));
+        });
+
+        isInitialized = true;
+    }
+
+    // Run on every load and View Transitions navigation
+    document.addEventListener('astro:page-load', initPage);
   </script>
+
+  <style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-fade-in-up {
+        animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+  
+  {/* Global Confirmation Modal Island */}
+  <ConfirmationModal client:load />
 </AdminLayout>

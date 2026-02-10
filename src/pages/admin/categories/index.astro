@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '@layouts/AdminLayout.astro';
 import ConfirmationModal from '@components/islands/ConfirmationModal';
-import { supabase, supabaseAdmin } from '../../../lib/supabase-admin';
+import { supabaseAdmin } from '../../../lib/supabase-admin';
 
 // Fetch categories
 const { data: categories, error } = await supabaseAdmin

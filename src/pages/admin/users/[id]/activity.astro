@@ -58,7 +58,7 @@ const totalSpent = orders?.reduce((sum, order) => sum + (order.status !== 'cance
 const totalOrders = orders?.length || 0;
 const totalFavorites = favorites?.length || 0;
 
-const getStatusColor = (status) => {
+const getStatusColor = (status: string) => {
   switch (status) {
     case 'delivered': return 'bg-green-50 text-green-700 border-green-100';
     case 'shipped': return 'bg-blue-50 text-blue-700 border-blue-100';

@@ -1,0 +1,51 @@
+---
+import PublicLayout from '@layouts/PublicLayout.astro';
+---
+
+<PublicLayout title="Size Guide">
+  <div class="container-custom py-24 min-h-[60vh]">
+    <h1 class="text-4xl font-black uppercase mb-8">Size Guide</h1>
+    <p class="text-zinc-600 mb-12">
+      Find your perfect fit with our comprehensive size charts.
+    </p>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-zinc-200">
+            <th class="py-4 px-6 font-bold uppercase text-sm">Size</th>
+            <th class="py-4 px-6 font-bold uppercase text-sm">Chest (cm)</th>
+            <th class="py-4 px-6 font-bold uppercase text-sm">Waist (cm)</th>
+            <th class="py-4 px-6 font-bold uppercase text-sm">Hips (cm)</th>
+          </tr>
+        </thead>
+        <tbody class="text-zinc-600">
+          <tr class="border-b border-zinc-100">
+            <td class="py-4 px-6 font-bold">S</td>
+            <td class="py-4 px-6">88-92</td>
+            <td class="py-4 px-6">76-80</td>
+            <td class="py-4 px-6">92-96</td>
+          </tr>
+          <tr class="border-b border-zinc-100">
+            <td class="py-4 px-6 font-bold">M</td>
+            <td class="py-4 px-6">96-100</td>
+            <td class="py-4 px-6">84-88</td>
+            <td class="py-4 px-6">100-104</td>
+          </tr>
+          <tr class="border-b border-zinc-100">
+            <td class="py-4 px-6 font-bold">L</td>
+            <td class="py-4 px-6">104-108</td>
+            <td class="py-4 px-6">92-96</td>
+            <td class="py-4 px-6">108-112</td>
+          </tr>
+          <tr class="border-b border-zinc-100">
+            <td class="py-4 px-6 font-bold">XL</td>
+            <td class="py-4 px-6">112-116</td>
+            <td class="py-4 px-6">100-104</td>
+            <td class="py-4 px-6">116-120</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</PublicLayout>

@@ -82,36 +82,56 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
         }
     }, [isOpen]);
 
-    const categories = [
+    const [categories, setCategories] = useState<any[]>([]);
+    const [brands, setBrands] = useState<any[]>([]);
+    const [colors, setColors] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch Categories
+                const { data: categoriesData } = await supabase
+                    .from('categories')
+                    .select('name, slug')
+                    .order('name');
+                if (categoriesData) setCategories(categoriesData);
+
+                // Fetch Brands
+                const { data: brandsData } = await supabase
+                    .from('brands')
+                    .select('name, slug')
+                    .order('name');
+                if (brandsData) setBrands(brandsData);
+
+                // Fetch Colors
+                const { data: colorsData } = await supabase
+                    .from('colors')
+                    .select('*')
+                    .order('name');
+
+                if (colorsData) {
+                    const formattedColors = colorsData.map(color => ({
+                        name: color.name,
+                        slug: color.slug,
+                        cssColor: color.hex_code || color.name.toLowerCase()
+                    }));
+                    setColors(formattedColors);
+                }
+            } catch (error) {
+                console.error('Error fetching menu data:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const specials = [
         { name: 'Limited Drops', href: '/category/limited-drops' },
         { name: 'Discounts', href: '/category/discounts' },
         { name: 'Coming soon', href: '/category/coming-soon' },
         { name: 'VIRAL TRENDS', href: '/category/viral-trends' },
         { name: 'Bestsellers', href: '/category/bestsellers' },
         { name: 'MY FAVORITES', href: '/category/my-favorites' },
-    ];
-
-    const clothingCategories = [
-        'Jackets', 'Sweatshirt / Pullover', 'T-Shirts', 'Trousers', 'Denim',
-        'Shirts', 'Accessories', 'Underwear & Socks', 'Sportswear', 'Shoes'
-    ];
-
-    const brands = [
-        'SMOG', 'FSBN', 'BLACK SQUAD', 'ICONO', 'IQ', 'LUCKY ATHLETES'
-    ];
-
-    const colors = [
-        { name: 'Beige', class: 'bg-[#F5F5DC]' },
-        { name: 'Blue', class: 'bg-blue-600' },
-        { name: 'Brown', class: 'bg-amber-800' },
-        { name: 'Gold', class: 'bg-yellow-500' },
-        { name: 'Green', class: 'bg-green-600' },
-        { name: 'Grey/Black', class: 'bg-gray-800' },
-        { name: 'Orange', class: 'bg-orange-500' },
-        { name: 'Pink', class: 'bg-pink-500' },
-        { name: 'Red', class: 'bg-red-600' },
-        { name: 'White', class: 'bg-white border border-gray-300' },
-        { name: 'Yellow', class: 'bg-yellow-400' }
     ];
 
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -179,39 +199,37 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                         {/* Global Catálogo Card - Urban Flat Aesthetic Balanced Scale */}
                         <div className="px-6 mb-12">
                             <a href="/category/all"
-                                className="group relative flex items-center justify-between overflow-hidden bg-black text-white p-5 rounded-[1.8rem] active:scale-[0.98] border border-white/5"
+                                className="group relative flex items-center justify-between overflow-hidden bg-black text-white p-5 rounded-[1.8rem] transition-all duration-300 hover:bg-zinc-900 border border-white/5 active:scale-[0.98]"
                                 onClick={() => setIsOpen(false)}>
 
-                                {/* Internal Urban Tag */}
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-7 bg-white rounded-full"></div>
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-7 bg-white rounded-full transition-all duration-500 group-hover:h-9 group-hover:bg-zinc-400"></div>
 
                                 <div className="relative z-10 pl-5">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[6.5px] font-mono text-zinc-500 uppercase tracking-[0.3em]">PROTOCOL_ALL.ACCESS</span>
+                                        <span className="text-[6.5px] font-mono text-zinc-500 uppercase tracking-[0.3em] group-hover:text-white transition-colors">PROTOCOL_ALL.ACCESS</span>
                                         <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
                                     </div>
                                     <h2 className="text-[17.5px] font-black uppercase tracking-tighter leading-none">
-                                        EVERYTHING / <span className="text-zinc-600">ALL</span>
+                                        EVERYTHING / <span className="text-zinc-600 group-hover:text-white transition-colors">ALL</span>
                                     </h2>
                                 </div>
 
-                                <div className="relative z-10 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                                <div className="relative z-10 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                                 </div>
 
-                                {/* Subtle Technical Overlay */}
                                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
                             </a>
                         </div>
 
                         {/* Specials */}
-                        <div className="px-6 mb-14">
-                            <div className="flex items-center gap-3 mb-8 border-b border-black pb-4">
-                                <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.175 0l-3.976 2.888c-.784.57-1.838-.197-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                                <h3 className="font-black text-[14px] uppercase text-zinc-900 tracking-[0.1em] leading-none">Specials</h3>
-                            </div>
+                        <div className="px-6 mb-12">
+                            <h3 className="font-urban font-black text-2xl uppercase mb-6 flex items-center text-gray-900 border-b-2 border-gray-900 pb-2">
+                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                                Specials
+                            </h3>
                             <nav className="space-y-6 px-1">
-                                {categories.map((cat) => (
+                                {specials.map((cat) => (
                                     <a
                                         key={cat.name}
                                         href={cat.href}
@@ -232,7 +250,7 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                         </div>
 
                         {/* Categories Accordion */}
-                        <div className="px-6 mb-8">
+                        <div className="px-6 mb-8 pt-4">
                             <button
                                 onClick={() => toggleSection('categories')}
                                 className="w-full text-left mb-6"
@@ -247,17 +265,18 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                             </button>
                             {expandedSection === 'categories' && (
                                 <div className="space-y-6 animate-fade-in pb-8">
-                                    {clothingCategories.map((item) => (
+                                    {categories.map((item) => (
                                         <a
-                                            key={item}
-                                            href={`/category/${item.toLowerCase().replace(/ /g, '-').replace(/\//g, '').replace(/&/g, 'and')}`}
+                                            key={item.slug}
+                                            href={`/category/${item.slug}`}
                                             className="flex items-center text-[10.5px] font-black text-zinc-400 active:text-black uppercase tracking-widest"
                                             onClick={() => setIsOpen(false)}
                                         >
                                             <svg className="w-3.5 h-3.5 mr-4 text-zinc-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7"></path></svg>
-                                            <span>{item}</span>
+                                            <span>{item.name}</span>
                                         </a>
                                     ))}
+                                    {categories.length === 0 && <p className="text-xs text-zinc-400 pl-8">No categories found</p>}
                                 </div>
                             )}
                         </div>
@@ -280,15 +299,16 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                                 <div className="space-y-6 animate-fade-in pb-8">
                                     {brands.map((item) => (
                                         <a
-                                            key={item}
-                                            href={`/brand/${item.toLowerCase().replace(/ /g, '-')}`}
+                                            key={item.slug}
+                                            href={`/brand/${item.slug}`}
                                             className="flex items-center text-[10.5px] font-black text-zinc-400 active:text-black uppercase tracking-widest"
                                             onClick={() => setIsOpen(false)}
                                         >
                                             <span className="w-2 h-2 rounded-full bg-zinc-200 mr-4"></span>
-                                            <span>{item}</span>
+                                            <span>{item.name}</span>
                                         </a>
                                     ))}
+                                    {brands.length === 0 && <p className="text-xs text-zinc-400 pl-8">No brands found</p>}
                                 </div>
                             )}
                         </div>
@@ -311,17 +331,18 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                                 <div className="space-y-4 animate-fade-in pb-4 px-1">
                                     {colors.map((item) => (
                                         <a
-                                            key={item.name}
-                                            href={`/color/${item.name.toLowerCase()}`}
+                                            key={item.slug}
+                                            href={`/color/${item.slug}`}
                                             className="flex items-center gap-4 text-[10.5px] font-black uppercase tracking-widest text-zinc-400 active:text-black"
                                             onClick={() => setIsOpen(false)}
                                         >
                                             <div className="relative overflow-hidden rounded-full p-[1.5px] bg-zinc-50 ring-1 ring-black/5">
-                                                <div className={`w-3.5 h-3.5 rounded-full ${item.class} shadow-inner`}></div>
+                                                <div className="w-3.5 h-3.5 rounded-full shadow-inner" style={{ backgroundColor: item.cssColor }}></div>
                                             </div>
                                             {item.name}
                                         </a>
                                     ))}
+                                    {colors.length === 0 && <p className="text-xs text-zinc-400 pl-8">No colors found</p>}
                                 </div>
                             )}
                         </div>
@@ -367,14 +388,16 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                             </div>
                             <div className="space-y-4 animate-fade-in pb-4 px-1">
                                 {[
-                                    { name: 'CUSTOMER SERVICE', slug: 'customer-service' },
+                                    { name: 'CUSTOMER SERVICE / CONTACT', slug: 'customer-service' },
                                     { name: 'SIZE GUIDE', slug: 'size-guide' },
                                     { name: 'RETURNS', slug: 'returns' },
-                                    { name: 'FAQ', slug: 'faq' }
+                                    { name: 'FAQ', slug: 'faq' },
+                                    { name: 'ABOUT US', slug: 'about' },
+                                    { name: 'SHIPPING & RETURNS', slug: 'shipping' }
                                 ].map((item) => (
                                     <a
                                         key={item.name}
-                                        href={`/help/${item.slug}`}
+                                        href={`/${item.slug}`}
                                         className="flex items-center gap-4 text-[10.5px] font-black uppercase tracking-widest text-zinc-400 active:text-black"
                                         onClick={() => setIsOpen(false)}
                                     >

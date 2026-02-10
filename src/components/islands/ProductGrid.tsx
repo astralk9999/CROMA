@@ -215,7 +215,7 @@ export default function ProductGrid({
                 {!isFavoritesPage && (
                     <button
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
-                        className={`group px-5 py-2.5 border border-black/10 rounded-full font-bold uppercase tracking-[0.15em] text-[10px] transition-all flex items-center gap-3 ${isFilterOpen ? 'bg-black text-white border-black' : 'bg-white text-black hover:border-black/30 shadow-sm hover:shadow-md'}`}
+                        className={`group px-5 py-2.5 border border-black/10 rounded-full font-bold uppercase tracking-[0.15em] text-[10px] transition-all flex items-center gap-3 ${isFilterOpen ? 'bg-[#202020] text-white border-black' : 'bg-white text-black hover:border-black/30 shadow-sm hover:shadow-md'}`}
                     >
                         <span className="opacity-80">FILTER</span>
                         <div className={`flex flex-col gap-0.5 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`}>
@@ -397,7 +397,7 @@ export default function ProductGrid({
                                         />
                                     </a>
                                     {product.stock > 0 && !hasDiscount && (
-                                        <div className="absolute bottom-2 left-2 pointer-events-none bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                                        <div className="absolute bottom-2 left-2 pointer-events-none bg-[#202020] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
                                             New In
                                         </div>
                                     )}
@@ -422,7 +422,7 @@ export default function ProductGrid({
                                                         {formatPrice(finalPrice)}
                                                     </span>
                                                 </div>
-                                                <div className="bg-black text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider inline-block transform -skew-x-6">
+                                                <div className="bg-[#202020] text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider inline-block transform -skew-x-6">
                                                     {discountPercent}% OFF
                                                 </div>
                                             </>

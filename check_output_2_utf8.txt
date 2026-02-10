@@ -1,0 +1,316 @@
+﻿[2m10:35:22[22m [34m[@astrojs/node][39m Enabling sessions with filesystem storage
+[2m10:35:23[22m [34m[content][39m Syncing content
+[2m10:35:23[22m [34m[content][39m Synced content
+[2m10:35:23[22m [34m[types][39m Generated [2m62ms[22m
+[2m10:35:23[22m [34m[check][39m Getting diagnostics for Astro files in C:\Users\k\Desktop\all\clase\Tienda Online...
+[96msrc/components/admin/IndustrialToast.astro[0m:[93m21[0m:[93m5[0m - [93mwarning[0m[90m ts(6133): [0m'navigate' is declared but its value is never read.
+
+[7m21[0m     import { navigate } from 'astro:transitions/client';
+[7m  [0m [93m    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/components/checkout/CartSummary.tsx[0m:[93m7[0m:[93m11[0m - [93mwarning[0m[90m ts(6196): [0m'Coupon' is declared but never used.
+
+[7m7[0m interface Coupon {
+[7m [0m [93m          ~~~~~~[0m
+
+[96msrc/components/islands/AddToCartButton.tsx[0m:[93m26[0m:[93m9[0m - [93mwarning[0m[90m ts(6133): [0m'count' is declared but its value is never read.
+
+[7m26[0m   const count = useStore(cartCount);
+[7m  [0m [93m        ~~~~~[0m
+
+[96msrc/components/islands/FavoriteButton.tsx[0m:[93m15[0m:[93m11[0m - [93mwarning[0m[90m ts(6133): [0m'isReady' is declared but its value is never read.
+
+[7m15[0m     const isReady = useStore(storeReady);
+[7m  [0m [93m          ~~~~~~~[0m
+
+[96msrc/components/islands/FavoritesGrid.tsx[0m:[93m2[0m:[93m26[0m - [93mwarning[0m[90m ts(6133): [0m'toggleFavorite' is declared but its value is never read.
+
+[7m2[0m import { localFavorites, toggleFavorite } from '@stores/favorites';
+[7m [0m [93m                         ~~~~~~~~~~~~~~[0m
+
+[96msrc/components/islands/OrderActions.tsx[0m:[93m1[0m:[93m8[0m - [93mwarning[0m[90m ts(6133): [0m'React' is declared but its value is never read.
+
+[7m1[0m import React, { useState } from 'react';
+[7m [0m [93m       ~~~~~[0m
+
+[96msrc/components/islands/UserMenu.tsx[0m:[93m13[0m:[93m12[0m - [93mwarning[0m[90m ts(6133): [0m'loading' is declared but its value is never read.
+
+[7m13[0m     const [loading, setLoading] = useState(!initialProfile);
+[7m  [0m [93m           ~~~~~~~[0m
+
+[96msrc/layouts/PublicLayout.astro[0m:[93m8[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'NewsletterPopup' is declared but its value is never read.
+
+[7m8[0m import NewsletterPopup from '@components/islands/NewsletterPopup';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/lib/email.ts[0m:[93m264[0m:[93m103[0m - [93mwarning[0m[90m ts(6133): [0m'total' is declared but its value is never read.
+
+[7m264[0m export async function sendOrderStatusEmail(to: string, orderId: string, status: string, items: any[], total: number) {
+[7m   [0m [93m                                                                                                      ~~~~~[0m
+
+[96msrc/lib/supabase.ts[0m:[93m15[0m:[93m32[0m - [93mwarning[0m[90m ts(6133): [0m'acquireTimeout' is declared but its value is never read.
+
+[7m15[0m     lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+[7m  [0m [93m                               ~~~~~~~~~~~~~~[0m
+[96msrc/lib/supabase.ts[0m:[93m15[0m:[93m18[0m - [93mwarning[0m[90m ts(6133): [0m'name' is declared but its value is never read.
+
+[7m15[0m     lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+[7m  [0m [93m                 ~~~~[0m
+
+[96msrc/pages/debug-returns-public.astro[0m:[93m4[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'serviceKey' is declared but its value is never read.
+
+[7m4[0m const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+[7m [0m [93m      ~~~~~~~~~~[0m
+
+[96msrc/pages/index.astro[0m:[93m18[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'categories' is declared but its value is never read.
+
+[7m18[0m const { data: categories } = await supabase
+[7m  [0m [93m      ~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/search.astro[0m:[93m9[0m:[93m5[0m - [93mwarning[0m[90m ts(6133): [0m'loading' is declared but its value is never read.
+
+[7m9[0m let loading = false;
+[7m [0m [93m    ~~~~~~~[0m
+
+[96msrc/pages/account/orders.astro[0m:[93m31[0m:[93m23[0m - [93mwarning[0m[90m ts(6133): [0m'error' is declared but its value is never read.
+
+[7m31[0m const { data: orders, error } = await supabaseAuth
+[7m  [0m [93m                      ~~~~~[0m
+
+[96msrc/pages/account/profile.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '@lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/dashboard.astro[0m:[93m44[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'totalProducts' is declared but its value is never read.
+
+[7m44[0m const totalProducts = products?.length || 0;
+[7m  [0m [93m      ~~~~~~~~~~~~~[0m
+[96msrc/pages/admin/dashboard.astro[0m:[93m6[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'profile' is declared but its value is never read.
+
+[7m6[0m const profile = Astro.locals.profile;
+[7m [0m [93m      ~~~~~~~[0m
+[96msrc/pages/admin/dashboard.astro[0m:[93m5[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'user' is declared but its value is never read.
+
+[7m5[0m const user = Astro.locals.user;
+[7m [0m [93m      ~~~~[0m
+
+[96msrc/pages/admin/brands/index.astro[0m:[93m7[0m:[93m23[0m - [93mwarning[0m[90m ts(6133): [0m'error' is declared but its value is never read.
+
+[7m7[0m const { data: brands, error } = await supabaseAdmin
+[7m [0m [93m                      ~~~~~[0m
+
+[96msrc/pages/admin/brands/new.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '../../../lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/categories/index.astro[0m:[93m7[0m:[93m27[0m - [93mwarning[0m[90m ts(6133): [0m'error' is declared but its value is never read.
+
+[7m7[0m const { data: categories, error } = await supabaseAdmin
+[7m [0m [93m                          ~~~~~[0m
+
+[96msrc/pages/admin/categories/new.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '../../../lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/colors/index.astro[0m:[93m5[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m5[0m import { supabase } from '../../../lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/colors/new.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '../../../lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/coupons/new.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '../../../lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/marketing/index.astro[0m:[93m321[0m:[93m71[0m - [93mwarning[0m[90m ts(6133): [0m'i' is declared but its value is never read.
+
+[7m321[0m                                             {safeCoupons.map((coupon, i) => (
+[7m   [0m [93m                                                                      ~[0m
+[96msrc/pages/admin/marketing/index.astro[0m:[93m526[0m:[93m19[0m - [93mwarning[0m[90m ts(6133): [0m'showStock' is declared but its value is never read.
+
+[7m526[0m             const showStock = showStockToggle.checked;
+[7m   [0m [93m                  ~~~~~~~~~[0m
+[96msrc/pages/admin/marketing/index.astro[0m:[93m500[0m:[93m116[0m - [93mwarning[0m[90m ts(6133): [0m'label' is declared but its value is never read.
+
+[7m500[0m         setupCustomSelector(couponTrigger, couponPopover, couponHiddenId, couponDisplayValue, couponOptions, (val, label, data) => {
+[7m   [0m [93m                                                                                                                   ~~~~~[0m
+
+[96msrc/pages/admin/orders/[id].astro[0m:[93m9[0m:[93m11[0m - [93mwarning[0m[90m ts(6196): [0m'LaptopImage' is declared but never used.
+
+[7m9[0m interface LaptopImage {
+[7m [0m [93m          ~~~~~~~~~~~[0m
+[96msrc/pages/admin/orders/[id].astro[0m:[93m288[0m:[93m11[0m - [93mwarning[0m[90m astro(4000): [0mThis script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+
+See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+
+Add the `is:inline` directive explicitly to silence this hint.
+
+[7m288[0m   <script define:vars={{ orderId: order.id }}>
+[7m   [0m [93m          ~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/orders/index.astro[0m:[93m636[0m:[93m19[0m - [93mwarning[0m[90m ts(6133): [0m'newStatus' is declared but its value is never read.
+
+[7m636[0m             const newStatus = (button.dataset.status || '').toUpperCase();
+[7m   [0m [93m                  ~~~~~~~~~[0m
+
+[96msrc/pages/admin/products/index.astro[0m:[93m315[0m:[93m21[0m - [93mwarning[0m[90m ts(6133): [0m'isLowStock' is declared but its value is never read.
+
+[7m315[0m               const isLowStock = totalStock < 10;
+[7m   [0m [93m                    ~~~~~~~~~~[0m
+
+[96msrc/pages/admin/products/new.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '@lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/pages/admin/products/new.astro[0m:[93m374[0m:[93m15[0m - [93mwarning[0m[90m ts(6133): [0m'colorsContainer' is declared but its value is never read.
+
+[7m374[0m         const colorsContainer = document.getElementById('colors-container');
+[7m   [0m [93m              ~~~~~~~~~~~~~~~[0m
+[96msrc/pages/admin/products/new.astro[0m:[93m373[0m:[93m15[0m - [93mwarning[0m[90m ts(6133): [0m'addColorBtn' is declared but its value is never read.
+
+[7m373[0m         const addColorBtn = document.getElementById('add-color-btn');
+[7m   [0m [93m              ~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/products/[id]/edit.astro[0m:[93m69[0m:[93m69[0m - [93mwarning[0m[90m ts(6385): [0m'event' is deprecated.
+
+[7m69[0m     <form id="edit-product-form" class="space-y-10 mb-20" onsubmit="event.preventDefault(); return false;">
+[7m  [0m [93m                                                                    ~~~~~[0m
+[96msrc/pages/admin/products/[id]/edit.astro[0m:[93m563[0m:[93m29[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+
+[7m563[0m                     const { data, error: updateError } = await supabase.rpc('admin_update_product', {
+[7m   [0m [93m                            ~~~~[0m
+[96msrc/pages/admin/products/[id]/edit.astro[0m:[93m409[0m:[93m53[0m - [93mwarning[0m[90m ts(6133): [0m'e' is declared but its value is never read.
+
+[7m409[0m             imagesInput.addEventListener('change', (e) => {
+[7m   [0m [93m                                                    ~[0m
+[96msrc/pages/admin/products/[id]/edit.astro[0m:[93m357[0m:[93m5[0m - [93mwarning[0m[90m ts(6133): [0m'navigate' is declared but its value is never read.
+
+[7m357[0m     import { navigate } from 'astro:transitions/client';
+[7m   [0m [93m    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/admin/users/index.astro[0m:[93m70[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'customerCount' is declared but its value is never read.
+
+[7m70[0m const customerCount = totalUsers - adminCount;
+[7m  [0m [93m      ~~~~~~~~~~~~~[0m
+[96msrc/pages/admin/users/index.astro[0m:[93m310[0m:[93m11[0m - [93mwarning[0m[90m ts(6133): [0m'SCROLL_KEY' is declared but its value is never read.
+
+[7m310[0m     const SCROLL_KEY = 'admin_users_scroll_pos';
+[7m   [0m [93m          ~~~~~~~~~~[0m
+
+[96msrc/pages/api/mobile-checkout.ts[0m:[93m36[0m:[93m19[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+
+[7m36[0m             const { data } = await supabaseAdmin.from('users').select('id').eq('email', GUEST_ACCOUNT_EMAIL).single();
+[7m  [0m [93m                  ~~~~~~~~[0m
+[96msrc/pages/api/mobile-checkout.ts[0m:[93m18[0m:[93m13[0m - [93mwarning[0m[90m ts(6133): [0m'customerEmail' is declared but its value is never read.
+
+[7m18[0m         let customerEmail = email || shippingAddress?.email;
+[7m  [0m [93m            ~~~~~~~~~~~~~[0m
+[96msrc/pages/api/mobile-checkout.ts[0m:[93m9[0m:[93m49[0m - [93mwarning[0m[90m ts(6133): [0m'cookies' is declared but its value is never read.
+
+[7m9[0m export const POST: APIRoute = async ({ request, cookies }) => {
+[7m [0m [93m                                                ~~~~~~~[0m
+
+[96msrc/pages/api/stripe-webhook.ts[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'createClient' is declared but its value is never read.
+
+[7m3[0m import { createClient } from '@supabase/supabase-js';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/api/test-email.ts[0m:[93m2[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabaseAdmin' is declared but its value is never read.
+
+[7m2[0m import { supabaseAdmin } from '@lib/supabase-admin';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/api/verify-session.ts[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'createClient' is declared but its value is never read.
+
+[7m3[0m import { createClient } from '@supabase/supabase-js';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/api/checkout/resume.ts[0m:[93m63[0m:[93m13[0m - [93mwarning[0m[90m ts(6133): [0m'discountItems' is declared but its value is never read.
+
+[7m63[0m         let discountItems = undefined;
+[7m  [0m [93m            ~~~~~~~~~~~~~[0m
+
+[96msrc/pages/api/orders/returnable-items.ts[0m:[93m39[0m:[93m15[0m - [93mwarning[0m[90m ts(6198): [0mAll destructured elements are unused.
+
+[7m39[0m         const { data: returnedItems, error: returnedError } = await supabaseAdmin
+[7m  [0m [93m              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/pages/api/orders/returnable-items.ts[0m:[93m4[0m:[93m39[0m - [93mwarning[0m[90m ts(6133): [0m'params' is declared but its value is never read.
+
+[7m4[0m export const GET: APIRoute = async ({ params, locals, request }) => {
+[7m [0m [93m                                      ~~~~~~[0m
+
+[96msrc/pages/auth/callback.astro[0m:[93m10[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'next' is declared but its value is never read.
+
+[7m10[0m const next = nextParam || nextCookie || "/account/profile";
+[7m  [0m [93m      ~~~~[0m
+
+[96msrc/pages/auth/login.astro[0m:[93m174[0m:[93m17[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+
+[7m174[0m         const { data, error } = await supabase.auth.signInWithOAuth({
+[7m   [0m [93m                ~~~~[0m
+
+[96msrc/pages/auth/logout.astro[0m:[93m4[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m4[0m import { supabase } from '@lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/auth/register.astro[0m:[93m239[0m:[93m17[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+
+[7m239[0m         const { data, error } = await supabase.auth.signUp({
+[7m   [0m [93m                ~~~~[0m
+[96msrc/pages/auth/register.astro[0m:[93m205[0m:[93m17[0m - [93mwarning[0m[90m ts(6133): [0m'data' is declared but its value is never read.
+
+[7m205[0m         const { data, error } = await supabase.auth.signInWithOAuth({
+[7m   [0m [93m                ~~~~[0m
+
+[96msrc/pages/category/[slug].astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'ProductCard' is declared but its value is never read.
+
+[7m3[0m import ProductCard from '@components/product/ProductCard.astro';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/checkout/index.astro[0m:[93m4[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'formatPrice' is declared but its value is never read.
+
+[7m4[0m import { formatPrice } from '@lib/utils';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/pages/checkout/index.astro[0m:[93m3[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'supabase' is declared but its value is never read.
+
+[7m3[0m import { supabase } from '@lib/supabase';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/pages/invoices/[id].astro[0m:[93m5[0m:[93m7[0m - [93mwarning[0m[90m ts(6133): [0m'accessToken' is declared but its value is never read.
+
+[7m5[0m const accessToken = Astro.cookies.get('sb-access-token')?.value;
+[7m [0m [93m      ~~~~~~~~~~~[0m
+
+[96msrc/pages/productos/[slug].astro[0m:[93m193[0m:[93m9[0m - [93mwarning[0m[90m astro(4000): [0mThis script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+
+See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+
+Add the `is:inline` directive explicitly to silence this hint.
+
+[7m193[0m <script define:vars={{ productId: product.id }}>
+[7m   [0m [93m        ~~~~~~~~~~~[0m
+
+[96msrc/stores/cart.ts[0m:[93m1[0m:[93m16[0m - [93mwarning[0m[90m ts(6133): [0m'map' is declared but its value is never read.
+
+[7m1[0m import { atom, map, computed } from 'nanostores';
+[7m [0m [93m               ~~~[0m
+
+[96msrc/stores/coupon.ts[0m:[93m1[0m:[93m1[0m - [93mwarning[0m[90m ts(6133): [0m'atom' is declared but its value is never read.
+
+[7m1[0m import { atom } from 'nanostores';
+[7m [0m [93m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+Result (117 files): 
+- 0 errors
+- 0 warnings
+- 63 hints
+

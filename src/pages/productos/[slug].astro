@@ -48,142 +48,147 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
 
 <PublicLayout title={product.name} description={product.description}>
   <section class="container-custom py-12">
-    {/* Breadcrumbs */}
-    <nav class="mb-8 text-sm">
-      <ol class="flex items-center space-x-2 text-charcoal-600">
-        <li><a href="/" class="hover:text-navy-800">Inicio</a></li>
-        <li>/</li>
-        <li><a href="/productos" class="hover:text-navy-800">Productos</a></li>
+    {/* Industrial Breadcrumbs */}
+    <nav class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="px-2 py-0.5 bg-black text-white text-[7px] font-mono font-black uppercase tracking-widest">PRODUCT_LINK_V5</span>
+        <div class="h-[1px] flex-1 bg-black/10"></div>
+      </div>
+      <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
+        <li><a href="/" class="hover:text-black transition-colors">ROOT</a></li>
+        <li class="text-zinc-200">/</li>
+        <li><a href="/productos" class="hover:text-black transition-colors">COLLECTION</a></li>
         {product.categories && (
           <>
-            <li>/</li>
+            <li class="text-zinc-200">/</li>
             <li>
-            <a href={`/category/${product.category}`} class="hover:text-navy-800">
-                {product.categories.name}
-              </a>
+                <a href={`/category/${product.category}`} class="hover:text-black transition-colors">
+                    {product.categories.name}
+                </a>
             </li>
           </>
         )}
-        <li>/</li>
-        <li class="text-navy-800 font-medium">{product.name}</li>
+        <li class="text-zinc-200">/</li>
+        <li class="text-black italic">{product.name}</li>
       </ol>
     </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-      {/* Product Gallery */}
-      <ProductGallery images={product.images || [mainImage]} productName={product.name} />
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+      {/* Product Gallery (Left) */}
+      <div class="lg:col-span-7">
+        <ProductGallery images={product.images || [mainImage]} productName={product.name} />
+      </div>
 
-      {/* Product Info */}
-      <div>
-        {/* Drop Badge */}
+      {/* Product Info (Right) */}
+      <div class="lg:col-span-5 lg:sticky lg:top-24 self-start">
+        {/* Release Status */}
         {isNotYetAvailable && (
-          <div class="mb-4">
-            <span class="inline-flex items-center gap-2 px-3 py-1 bg-gray-900 text-white text-sm font-bold rounded-full">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              PRÓXIMO LANZAMIENTO
-            </span>
+          <div class="mb-6 flex items-center gap-2">
+            <span class="flex h-1.5 w-1.5 rounded-full bg-brand-red animate-pulse"></span>
+            <span class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-brand-red">DROP_SCHEDULED</span>
           </div>
         )}
 
-        <h1 class="text-4xl font-serif font-bold text-navy-900 mb-4">
-          {product.name}
-        </h1>
-
-        <div class="mb-6 flex flex-col items-start gap-1">
-            {(product.discount_active && product.discount_percent) || (product.sale_price && product.sale_price < product.price) ? (
-                <>
-                    <div class="flex items-baseline gap-3">
-                        <span class="text-3xl font-bold text-brand-red">
+        <div class="mb-8">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-[9px] font-mono font-black text-zinc-300">REF_{product.id.toString().slice(0,8).toUpperCase()}</span>
+                <div class="h-[1px] w-6 bg-zinc-200"></div>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-urban font-black uppercase tracking-tighter text-black leading-[0.85] mb-4 italic">
+                {product.name}
+            </h1>
+            
+            <div class="flex items-baseline gap-3 mt-6 pt-6 border-t-2 border-black/5">
+                {(product.discount_active && product.discount_percent) || (product.sale_price && product.sale_price < product.price) ? (
+                    <>
+                        <span class="text-3xl md:text-4xl font-urban font-black tracking-tighter text-brand-red">
                             {formatPrice(
                                 product.discount_active 
                                 ? product.price * (1 - (product.discount_percent || 0)/100) 
                                 : (product.sale_price || product.price)
                             )}
                         </span>
-                        <span class="text-xl font-medium text-zinc-400 line-through decoration-zinc-400">
+                        <span class="text-xl font-urban font-bold text-zinc-300 line-through tracking-tighter decoration-zinc-300">
                             {formatPrice(product.price)}
                         </span>
-                    </div>
-                    {/* Visual Black Badge for Discount - Left aligned */}
-                    <div class="bg-black text-white text-xs font-bold px-3 py-1 uppercase tracking-wider inline-block transform -skew-x-6 mt-1">
-                        {(product.discount_active && product.discount_percent) 
-                            ? `${product.discount_percent}% OFF` 
-                            : `${Math.round((1 - (product.sale_price || 0) / product.price) * 100)}% OFF`
-                        }
-                    </div>
-                </>
-            ) : (
-                <span class="text-3xl font-bold text-charcoal-900">
-                    {formatPrice(product.price)}
-                </span>
-            )}
+                        <div class="ml-auto bg-black text-white text-[9px] font-black px-3 py-0.5 uppercase tracking-widest transform -skew-x-12">
+                            {(product.discount_active && product.discount_percent) 
+                                ? `${product.discount_percent}%_OFF` 
+                                : `${Math.round((1 - (product.sale_price || 0) / product.price) * 100)}%_OFF`
+                            }
+                        </div>
+                    </>
+                ) : (
+                    <span class="text-3xl md:text-4xl font-urban font-black tracking-tighter text-black">
+                        {formatPrice(product.price)}
+                    </span>
+                )}
+            </div>
         </div>
 
         {product.description && (
-          <div class="prose prose-lg mb-8 text-gray-800 leading-relaxed font-medium">
-            <p>{product.description}</p>
+          <div class="mb-10">
+            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-3 italic underline decoration-zinc-100 underline-offset-4">MANIFESTO_DESCRIPTION</h3>
+            <p class="text-xs font-bold uppercase tracking-wider leading-relaxed text-zinc-500 italic max-w-lg">
+              {product.description}
+            </p>
           </div>
         )}
 
         {/* Countdown for Drops */}
         {isNotYetAvailable && availableFrom && (
-          <div class="mb-6">
+          <div class="mb-10 p-8 bg-zinc-50 translate-y-1 hover:translate-y-0 transition-transform">
             <Countdown 
               client:load
               targetDate={availableFrom.toISOString()} 
-              title="Disponible en"
+              title="DROP_COMMENCING_IN"
             />
           </div>
         )}
 
-        {/* Stock Status - React Island with Skeleton */}
-        <StockStatus 
-          client:load 
-          stock={effectiveStock} 
-          isNotYetAvailable={isNotYetAvailable} 
-        />
+        {/* Stock Status */}
+        <div class="mb-10">
+            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-4 italic underline decoration-zinc-100 underline-offset-4">INVENTORY_PROTOCOL</h3>
+            <StockStatus 
+                client:load 
+                stock={effectiveStock} 
+                isNotYetAvailable={isNotYetAvailable} 
+            />
+        </div>
 
-        {/* Add to Cart */}
-        <AddToCartButton 
-          client:load
-          product={{
-            id: product.id,
-            name: product.name,
-            slug: product.slug,
-            price: product.price,
-            image: mainImage,
-            sizes: product.sizes || [],
-            stock: effectiveStock,
-            stockBySizes: product.stock_by_sizes || undefined,
-            discount_active: product.discount_active,
-            discount_percent: product.discount_percent,
-            sale_price: product.sale_price
-          }}
-          isNotYetAvailable={isNotYetAvailable}
-        />
+        {/* Add to Cart Section */}
+        <div class="space-y-8 p-8 bg-zinc-50">
+            <AddToCartButton 
+                client:load
+                product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price: product.price,
+                    image: mainImage,
+                    sizes: product.sizes || [],
+                    stock: effectiveStock,
+                    stockBySizes: product.stock_by_sizes || undefined,
+                    discount_active: product.discount_active,
+                    discount_percent: product.discount_percent,
+                    sale_price: product.sale_price
+                }}
+                isNotYetAvailable={isNotYetAvailable}
+            />
+        </div>
 
-        {/* Additional Info */}
-        <div class="mt-8 pt-8 border-t border-charcoal-200 space-y-4">
-          <div class="flex items-start gap-3">
-            <svg class="w-6 h-6 text-navy-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <div>
-              <p class="font-medium text-charcoal-900">Envío gratuito</p>
-              <p class="text-sm text-charcoal-600">En pedidos superiores a 50€</p>
+        {/* System Perks */}
+        <div class="mt-12 pt-8 border-t-2 border-black grid grid-cols-2 gap-6">
+            <div class="space-y-1">
+                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">LOGISTICS_01</span>
+                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">ENVÍO_EXPRESS_GRATIS</p>
+                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">ORDERS > 50€ // 24H_ETA</p>
             </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <svg class="w-6 h-6 text-navy-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            <div>
-              <p class="font-medium text-charcoal-900">Devoluciones fáciles</p>
-              <p class="text-sm text-charcoal-600">30 días para cambios y devoluciones</p>
+            <div class="space-y-1">
+                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">REVERSE_02</span>
+                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">RETURN_PROTOCOL_ACTIVE</p>
+                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">30_DÍAS // RISK_FREE</p>
             </div>
-          </div>
         </div>
       </div>
     </div>

@@ -2,93 +2,87 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 ---
 
-<PublicLayout title="Política de Privacidad - CROMA">
-  <section class="container-custom py-16">
+<PublicLayout title="Privacy Protocol - CROMA">
+  <div class="container-custom py-24 min-h-[60vh]">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-5xl font-urban font-black text-gray-900 mb-4 uppercase">Política de Privacidad</h1>
-      <p class="text-gray-500 mb-8">Última actualización: Enero 2026</p>
-      
-      <div class="prose prose-lg max-w-none space-y-8">
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">1. Información que Recopilamos</h2>
-          <p class="text-gray-600 mb-4">En CROMA, recopilamos la siguiente información:</p>
-          <ul class="list-disc pl-5 space-y-2 text-gray-600">
-            <li><strong>Datos de identificación:</strong> nombre, apellidos, email, teléfono</li>
-            <li><strong>Datos de envío:</strong> dirección postal completa</li>
-            <li><strong>Datos de pago:</strong> procesados de forma segura por Stripe</li>
-            <li><strong>Datos de navegación:</strong> cookies y preferencias de uso</li>
-          </ul>
-        </section>
+        {/* Header Section */}
+        <header class="mb-20">
+            <div class="flex items-center gap-4 mb-6">
+                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">DATA_PROTECTION_V2</span>
+                <div class="h-[2px] flex-1 bg-black/10"></div>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-urban font-black uppercase tracking-tighter text-black leading-[0.85] mb-6">
+                PRIVACY<br/>
+                <span class="text-zinc-300">PROTOCOL</span>
+            </h1>
+            <p class="text-zinc-500 font-mono text-xs uppercase tracking-widest">
+                ÚLTIMA ACTUALIZACIÓN: ENERO 2026 // CROMA_LEGAL_DEPT
+            </p>
+        </header>
 
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">2. Uso de la Información</h2>
-          <p class="text-gray-600 mb-4">Utilizamos tus datos para:</p>
-          <ul class="list-disc pl-5 space-y-2 text-gray-600">
-            <li>Procesar y enviar tus pedidos</li>
-            <li>Gestionar tu cuenta de usuario</li>
-            <li>Enviarte comunicaciones sobre tu pedido</li>
-            <li>Mejorar nuestros servicios y experiencia de usuario</li>
-            <li>Enviarte ofertas y novedades (solo si das tu consentimiento)</li>
-          </ul>
-        </section>
+        {/* Content Section */}
+        <div class="space-y-16">
+            <section>
+                <div class="flex gap-6 items-start mb-6">
+                    <span class="text-2xl font-black text-zinc-200">01</span>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">RECOPILACIÓN DE DATOS</h2>
+                </div>
+                <div class="pl-12 space-y-4 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
+                    <p>EN CROMA, RECOPILAMOS INFORMACIÓN ESPECÍFICA PARA GARANTIZAR EL FUNCIONAMIENTO DEL SERVICIO:</p>
+                    <ul class="space-y-2 border-l-2 border-zinc-100 pl-6">
+                        <li>IDENTIFICACIÓN: NOMBRE, APELLIDOS, EMAIL, TELÉFONO.</li>
+                        <li>LOGÍSTICA: DIRECCIÓN POSTAL COMPLETA PARA ENTREGAS.</li>
+                        <li>TRANSACCIONES: DATOS DE PAGO PROCESADOS EXTERNAMENTE POR STRIPE.</li>
+                        <li>SISTEMA: COOKIES TÉCNICAS Y PREFERENCIAS DE NAVEGACIÓN.</li>
+                    </ul>
+                </div>
+            </section>
 
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">3. Compartición de Datos</h2>
-          <p class="text-gray-600">
-            No vendemos tus datos personales. Solo compartimos información con:
-          </p>
-          <ul class="list-disc pl-5 space-y-2 text-gray-600 mt-4">
-            <li><strong>Empresas de logística:</strong> para realizar los envíos</li>
-            <li><strong>Procesadores de pago:</strong> Stripe para transacciones seguras</li>
-            <li><strong>Proveedores de servicios:</strong> hosting y bases de datos (Supabase)</li>
-          </ul>
-        </section>
+            <section>
+                <div class="flex gap-6 items-start mb-6">
+                    <span class="text-2xl font-black text-zinc-200">02</span>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">USO DEL SISTEMA</h2>
+                </div>
+                <div class="pl-12 space-y-4 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
+                    <p>UTILIZAMOS TUS DATOS BAJO LOS SIGUIENTES PROTOCOLOS:</p>
+                    <ul class="space-y-2 border-l-2 border-zinc-100 pl-6">
+                        <li>EJECUCIÓN DE PEDIDOS Y LOGÍSTICA DE ENVÍO.</li>
+                        <li>GESTIÓN DE CUENTAS DE USUARIO Y SEGURIDAD.</li>
+                        <li>COMUNICACIONES CRÍTICAS SOBRE TRANSACCIONES.</li>
+                        <li>MEJORA CONTINUA DE LA EXPERIENCIA DE INTERFAZ.</li>
+                    </ul>
+                </div>
+            </section>
 
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">4. Tus Derechos</h2>
-          <p class="text-gray-600 mb-4">
-            De acuerdo con el RGPD, tienes derecho a:
-          </p>
-          <ul class="list-disc pl-5 space-y-2 text-gray-600">
-            <li>Acceder a tus datos personales</li>
-            <li>Rectificar datos incorrectos</li>
-            <li>Solicitar la eliminación de tus datos</li>
-            <li>Oponerte al tratamiento de tus datos</li>
-            <li>Solicitar la portabilidad de tus datos</li>
-          </ul>
-        </section>
+            <section>
+                <div class="flex gap-6 items-start mb-6">
+                    <span class="text-2xl font-black text-zinc-200">03</span>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">PROTOCOLOS DE TERCEROS</h2>
+                </div>
+                <div class="pl-12 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
+                    <p>NO COMERCIALIZAMOS TUS DATOS. SOLO SE COMPARTEN CON SOCIOS LOGÍSTICOS (CORREOS, DHL, UPS) Y PROCESADORES DE PAGO (STRIPE) PARA LA CORRECTA EJECUCIÓN DEL SERVICIO.</p>
+                </div>
+            </section>
 
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">5. Cookies</h2>
-          <p class="text-gray-600">
-            Utilizamos cookies técnicas necesarias para el funcionamiento del sitio y cookies de 
-            preferencias para recordar tu sesión. Puedes gestionar las cookies desde la 
-            configuración de tu navegador.
-          </p>
-        </section>
+            <section>
+                <div class="p-10 bg-zinc-50 border-2 border-black rounded-[2rem]">
+                    <div class="flex gap-6 items-start mb-6">
+                        <span class="text-2xl font-black text-black">04</span>
+                        <h2 class="text-xl font-black uppercase tracking-tight pt-1 italic underline">DERECHOS DEL USUARIO (RGPD)</h2>
+                    </div>
+                    <div class="pl-12 space-y-4 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-600 leading-loose">
+                        <p>TIENES DERECHO AL ACCESO, RECTIFICACIÓN, SUPRESIÓN Y PORTABILIDAD DE TUS DATOS PERSONALES EN CUALQUIER MOMENTO.</p>
+                        <p>PARA EJERCER ESTOS DERECHOS, CONTACTA CON: <span class="text-black underline">PRIVACY@CROMA.ES</span></p>
+                    </div>
+                </div>
+            </section>
+        </div>
 
-        <section class="bg-white border-2 border-gray-200 rounded-xl p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">6. Seguridad</h2>
-          <p class="text-gray-600">
-            Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos, 
-            incluyendo encriptación SSL, autenticación segura y acceso restringido a la información.
-          </p>
-        </section>
-
-        <section class="bg-gray-900 text-white rounded-xl p-6">
-          <h2 class="text-xl font-bold mb-4">7. Contacto</h2>
-          <p class="text-gray-300 mb-4">
-            Para cualquier consulta sobre privacidad, puedes contactarnos en:
-          </p>
-          <p class="font-bold">privacy@croma.es</p>
-          <a 
-            href="/contact" 
-            class="inline-block mt-4 px-6 py-2 border-2 border-white text-white font-bold uppercase text-sm hover:bg-white hover:text-black transition-colors"
-          >
-            Ir a Contacto
-          </a>
-        </section>
-      </div>
+        {/* Action Link */}
+        <div class="mt-24 pt-12 border-t border-zinc-100 flex justify-between items-center">
+            <span class="text-[10px] font-mono font-black text-zinc-300">END_OF_DOCUMENT // V2.0</span>
+            <a href="/contact" class="text-[10px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">SOPORTE_LEGAL</a>
+        </div>
     </div>
-  </section>
+  </div>
 </PublicLayout>

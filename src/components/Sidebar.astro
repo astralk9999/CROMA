@@ -41,7 +41,7 @@ const specials = [
 ---
 
 <aside class="w-68 flex-shrink-0 pl-3 pr-10 hidden lg:block" transition:persist>
-  <div id="sidebar-scroll-container" class="sticky top-24 overflow-y-auto max-h-[calc(100vh-6rem)] scrollbar-hide py-4">
+  <div id="sidebar-scroll-container" class="sticky top-24 overflow-y-auto max-h-[calc(100vh-6rem)] custom-scrollbar py-4 pr-4">
     
     {/* Urban Access Card */}
     <div class="mb-12">
@@ -64,7 +64,7 @@ const specials = [
                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
            </div>
            
-           <div class="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+           <div class="absolute inset-0 bg-[#202020]"></div>
         </a>
     </div>
 
@@ -162,6 +162,21 @@ const specials = [
     </div>
 
   </div>
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e4e4e7; /* zinc-200 */
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #18181b; /* zinc-900 */
+  }
+</style>
 </aside>
 
 <script>

@@ -2,50 +2,202 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 ---
 
-<PublicLayout title="Size Guide">
+<PublicLayout title="Size Guide & Fitting Protocol">
   <div class="container-custom py-24 min-h-[60vh]">
-    <h1 class="text-4xl font-black uppercase mb-8">Size Guide</h1>
-    <p class="text-zinc-600 mb-12">
-      Find your perfect fit with our comprehensive size charts.
-    </p>
-    
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="border-b border-zinc-200">
-            <th class="py-4 px-6 font-bold uppercase text-sm">Size</th>
-            <th class="py-4 px-6 font-bold uppercase text-sm">Chest (cm)</th>
-            <th class="py-4 px-6 font-bold uppercase text-sm">Waist (cm)</th>
-            <th class="py-4 px-6 font-bold uppercase text-sm">Hips (cm)</th>
-          </tr>
-        </thead>
-        <tbody class="text-zinc-600">
-          <tr class="border-b border-zinc-100">
-            <td class="py-4 px-6 font-bold">S</td>
-            <td class="py-4 px-6">88-92</td>
-            <td class="py-4 px-6">76-80</td>
-            <td class="py-4 px-6">92-96</td>
-          </tr>
-          <tr class="border-b border-zinc-100">
-            <td class="py-4 px-6 font-bold">M</td>
-            <td class="py-4 px-6">96-100</td>
-            <td class="py-4 px-6">84-88</td>
-            <td class="py-4 px-6">100-104</td>
-          </tr>
-          <tr class="border-b border-zinc-100">
-            <td class="py-4 px-6 font-bold">L</td>
-            <td class="py-4 px-6">104-108</td>
-            <td class="py-4 px-6">92-96</td>
-            <td class="py-4 px-6">108-112</td>
-          </tr>
-          <tr class="border-b border-zinc-100">
-            <td class="py-4 px-6 font-bold">XL</td>
-            <td class="py-4 px-6">112-116</td>
-            <td class="py-4 px-6">100-104</td>
-            <td class="py-4 px-6">116-120</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <header class="mb-20">
+            <div class="flex items-center gap-4 mb-6">
+                <span class="px-3 py-1 bg-black text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">MANUAL_04</span>
+                <div class="h-[2px] flex-1 bg-black/10"></div>
+            </div>
+            <h1 class="text-6xl md:text-8xl font-urban font-black uppercase tracking-tighter text-black leading-none mb-6">
+                SIZE<br/>
+                <span class="text-zinc-300">GUIDE</span>
+            </h1>
+            <p class="text-zinc-500 font-mono text-sm uppercase tracking-widest max-w-xl">
+                SYSTEM_FIT_PROTOCOL // ASEGURANDO LA PRECISIÓN EN CADA PIEZA. ENCUENTRA TU AJUSTE PERFECTO EN NUESTRO CATÁLOGO GLOBAL.
+            </p>
+        </header>
+
+        <div class="grid lg:grid-cols-3 gap-12">
+            {/* Main Charts area */}
+            <div class="lg:col-span-2 space-y-16">
+                
+                {/* Tops Section */}
+                <section>
+                    <div class="flex items-center gap-3 mb-8 border-b-4 border-black pb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <h2 class="text-3xl font-black uppercase tracking-tighter">TOPS / OUTERWEAR</h2>
+                    </div>
+                    
+                    <div class="overflow-x-auto border-2 border-black">
+                        <table class="w-full text-left border-collapse bg-white">
+                            <thead>
+                                <tr class="bg-black text-white">
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest border-r border-white/10">SIZE</th>
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest border-r border-white/10">CHEST (CM)</th>
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest">SLEEVE (CM)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-mono text-sm font-bold">
+                                <tr class="border-b border-black/5 hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">XS / 44</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">84 - 88</td>
+                                    <td class="py-5 px-6 text-zinc-400">81 - 83</td>
+                                </tr>
+                                <tr class="border-b border-black/5 hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">S / 46</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">88 - 92</td>
+                                    <td class="py-5 px-6 text-zinc-400">83 - 85</td>
+                                </tr>
+                                <tr class="border-b border-black/5 hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">M / 48</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">96 - 100</td>
+                                    <td class="py-5 px-6 text-zinc-400">85 - 87</td>
+                                </tr>
+                                <tr class="border-b border-black/5 hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">L / 50</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">104 - 108</td>
+                                    <td class="py-5 px-6 text-zinc-400">87 - 89</td>
+                                </tr>
+                                <tr class="border-b border-black/5 hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">XL / 52</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">112 - 116</td>
+                                    <td class="py-5 px-6 text-zinc-400">89 - 91</td>
+                                </tr>
+                                <tr class="hover:bg-zinc-50 transition-colors">
+                                    <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">XXL / 54</td>
+                                    <td class="py-5 px-6 border-r border-black/5 text-zinc-600">120 - 124</td>
+                                    <td class="py-5 px-6 text-zinc-400">91 - 93</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                {/* Bottoms Section */}
+                <section>
+                    <div class="flex items-center gap-3 mb-8 border-b-4 border-black pb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <h2 class="text-3xl font-black uppercase tracking-tighter">BOTTOMS / PANTS</h2>
+                    </div>
+
+                    <div class="overflow-x-auto border-2 border-black">
+                        <table class="w-full text-left border-collapse bg-white">
+                            <thead>
+                                <tr class="bg-black text-white">
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest border-r border-white/10">SIZE (IN)</th>
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest border-r border-white/10">WAIST (CM)</th>
+                                    <th class="py-4 px-6 font-black uppercase text-[11px] tracking-widest">HIPS (CM)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-mono text-sm font-bold">
+                                {[
+                                    { s: '28-29', w: '74-76', h: '91-94' },
+                                    { s: '30-31', w: '79-81', h: '96-99' },
+                                    { s: '32-33', w: '84-86', h: '101-104' },
+                                    { s: '34-36', w: '89-94', h: '106-111' },
+                                    { s: '38-40', w: '99-104', h: '116-121' }
+                                ].map((row, idx, arr) => (
+                                    <tr class={`hover:bg-zinc-50 transition-colors ${idx !== arr.length - 1 ? 'border-b border-black/5' : ''}`}>
+                                        <td class="py-5 px-6 border-r border-black/5 bg-zinc-50">{row.s}</td>
+                                        <td class="py-5 px-6 border-r border-black/5 text-zinc-600">{row.w}</td>
+                                        <td class="py-5 px-6 text-zinc-400">{row.h}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                {/* Shoes Section */}
+                <section>
+                    <div class="flex items-center gap-3 mb-8 border-b-4 border-black pb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                        <h2 class="text-3xl font-black uppercase tracking-tighter">FOOTWEAR / CALZADO</h2>
+                    </div>
+
+                    <div class="overflow-x-auto border-2 border-black">
+                        <table class="w-full text-left border-collapse bg-white text-center">
+                            <thead>
+                                <tr class="bg-black text-white">
+                                    <th class="py-4 px-4 font-black uppercase text-[11px] border-r border-white/10 uppercase">EU</th>
+                                    <th class="py-4 px-4 font-black uppercase text-[11px] border-r border-white/10 uppercase">US M</th>
+                                    <th class="py-4 px-4 font-black uppercase text-[11px] border-r border-white/10 uppercase">UK</th>
+                                    <th class="py-4 px-4 font-black uppercase text-[11px] uppercase uppercase">CM</th>
+                                </tr>
+                            </thead>
+                            <tbody class="font-mono text-sm font-bold">
+                                {[
+                                    { eu: 40, us: 7, uk: 6, cm: 25 },
+                                    { eu: 41, us: 8, uk: 7, cm: 26 },
+                                    { eu: 42, us: 9, uk: 8, cm: 27 },
+                                    { eu: 43, us: 10, uk: 9, cm: 28 },
+                                    { eu: 44, us: 11, uk: 10, cm: 29 }
+                                ].map((row, idx, arr) => (
+                                    <tr class={`hover:bg-zinc-50 transition-colors ${idx !== arr.length - 1 ? 'border-b border-black/5' : ''}`}>
+                                        <td class="py-4 px-4 border-r border-black/5 bg-zinc-50">{row.eu}</td>
+                                        <td class="py-4 px-4 border-r border-black/5 text-zinc-600">{row.us}</td>
+                                        <td class="py-4 px-4 border-r border-black/5 text-zinc-600">{row.uk}</td>
+                                        <td class="py-4 px-4 text-zinc-400">{row.cm}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            {/* Side instructions area */}
+            <div class="space-y-8 lg:sticky lg:top-32 h-fit">
+                <div class="bg-[#202020] text-white p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[10rem] -mr-8 -mt-8 transition-transform group-hover:scale-125 duration-700"></div>
+                    
+                    <h3 class="text-2xl font-black uppercase mb-8 relative z-10 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-white rounded-full"></span>
+                        HOW TO<br/>MEASURE
+                    </h3>
+
+                    <ul class="space-y-8 relative z-10">
+                        <li class="flex gap-4">
+                            <span class="text-zinc-500 font-black text-xl leading-none">01</span>
+                            <div>
+                                <p class="font-black text-[11px] uppercase tracking-wider mb-2">CHEST / PECHO</p>
+                                <p class="text-[12px] text-zinc-400 leading-relaxed font-bold">Mide debajo de los brazos, alrededor de la parte más ancha de tu pecho.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-zinc-500 font-black text-xl leading-none">02</span>
+                            <div>
+                                <p class="font-black text-[11px] uppercase tracking-wider mb-2">WAIST / CINTURA</p>
+                                <p class="text-[12px] text-zinc-400 leading-relaxed font-bold">Mide alrededor de tu cintura natural, manteniendo la cinta ligeramente suelta.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="text-zinc-500 font-black text-xl leading-none">03</span>
+                            <div>
+                                <p class="font-black text-[11px] uppercase tracking-wider mb-2">HIPS / CADERA</p>
+                                <p class="text-[12px] text-zinc-400 leading-relaxed font-bold">Mide alrededor de la parte más prominente de tus caderas.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="mt-12 pt-8 border-t border-white/10 italic text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center">
+                        * All measurements are in centimeters unless noted otherwise.
+                    </div>
+                </div>
+
+                <div class="bg-zinc-50 p-8 rounded-[2rem] border border-zinc-200">
+                    <h4 class="font-black uppercase tracking-tighter text-xl mb-4 italic">¿Dudas con tu talla?</h4>
+                    <p class="text-sm text-zinc-500 font-medium mb-6">Si estás entre dos tallas, te recomendamos elegir la más grande para un ajuste más holgado (Oversized Look) o la más pequeña para un ajuste ceñido.</p>
+                    <a href="/customer-service" class="block w-full py-4 bg-white border border-zinc-300 text-center text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all rounded-xl">
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 </PublicLayout>
+

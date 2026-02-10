@@ -36,7 +36,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
       {/* Launch Overlay */}
       {product.launch_date && new Date(product.launch_date) > new Date() && (
           <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-              <div class="bg-black text-white px-4 py-2 rounded-xl border border-white/20 shadow-2xl transform rotate-[-2deg]">
+              <div class="bg-[#202020] text-white px-4 py-2 rounded-xl border border-white/20 shadow-2xl transform rotate-[-2deg]">
                   <span class="text-[10px] font-black uppercase tracking-[0.2em]">Próximamente</span>
               </div>
           </div>
@@ -47,7 +47,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
     <div class="absolute bottom-3 left-3 flex flex-col gap-1 pointer-events-none z-10">
        {/* Discount / Sale / New In Badge (Black Box Style) */}
        {(product.discount_active || (product.sale_price && product.sale_price < product.price)) && (
-           <div class="bg-black text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
+           <div class="bg-[#202020] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
                {product.discount_active && product.discount_percent ? `-${product.discount_percent}%` : 'SALE'}
            </div>
        )}
@@ -68,7 +68,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
        
        {/* Default New In context */}
        {!product.is_limited_drop && !product.discount_active && product.stock > 0 && (
-           <div class="bg-black text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
+           <div class="bg-[#202020] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
                NEW IN
            </div>
        )}
@@ -99,7 +99,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
                     </span>
                 </div>
                 {/* Visual Black Badge for Discount - Centered below price */}
-                <div class="bg-black text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider inline-block transform -skew-x-6">
+                <div class="bg-[#202020] text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider inline-block transform -skew-x-6">
                     {(product.discount_active && product.discount_percent) 
                         ? `${product.discount_percent}% OFF` 
                         : `${Math.round((1 - (product.sale_price || 0) / product.price) * 100)}% OFF`

@@ -218,7 +218,7 @@ export default function MobileMenu({ initialProfile, currentPath = '/' }: Mobile
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                                 </div>
 
-                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                                <div className="absolute inset-0 bg-[#202020]"></div>
                             </a>
                         </div>
 

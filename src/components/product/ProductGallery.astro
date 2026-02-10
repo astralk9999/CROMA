@@ -9,30 +9,33 @@ const mainImage = images[0] || '/placeholder.jpg';
 ---
 
 <div class="flex flex-col-reverse lg:flex-row gap-6">
-  {/* Thumbnails Sidebar */}
+  {/* System Thumbnails */}
   {images.length > 1 && (
     <div class="flex lg:flex-col gap-3 lg:w-24 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide">
       {images.map((image, index) => (
         <button
-          class={`thumbnail-btn flex-shrink-0 w-20 lg:w-full aspect-[3/4] bg-gray-50 border-2 transition-all overflow-hidden group ${index === 0 ? 'border-black' : 'border-transparent hover:border-black'}`}
+          class={`thumbnail-btn flex-shrink-0 w-20 lg:w-full aspect-[3/4] bg-zinc-50 transition-all overflow-hidden group relative ${index === 0 ? 'ring-2 ring-black ring-offset-2' : 'hover:bg-zinc-100'}`}
           data-image={image}
-          onclick="document.querySelectorAll('.thumbnail-btn').forEach(b => b.classList.remove('border-black', 'border-transparent')); document.querySelectorAll('.thumbnail-btn').forEach(b => b.classList.add('border-transparent')); this.classList.remove('border-transparent'); this.classList.add('border-black'); document.getElementById('main-image').src = this.dataset.image; document.getElementById('zoom-image').src = this.dataset.image"
+          onclick="document.querySelectorAll('.thumbnail-btn').forEach(b => b.classList.remove('ring-2', 'ring-black', 'ring-offset-2')); this.classList.add('ring-2', 'ring-black', 'ring-offset-2'); document.getElementById('main-image').src = this.dataset.image; document.getElementById('zoom-image').src = this.dataset.image"
         >
           <img 
             src={image} 
             alt={`${productName} - vista ${index + 1}`}
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             loading="lazy"
           />
+          <div class="absolute bottom-1 right-1.5 text-[7px] font-mono font-black text-black opacity-30 group-hover:opacity-100 transition-opacity">
+            CH_{index + 1}
+          </div>
         </button>
       ))}
     </div>
   )}
 
-  {/* Main Image Container with Manual Zoom Toggle */}
+  {/* Seamless Technical View Container */}
   <div 
     id="zoom-container"
-    class="flex-1 bg-gray-50 aspect-[3/4] overflow-hidden relative group shadow-inner rounded-sm border border-gray-100"
+    class="flex-1 bg-zinc-50 aspect-[3/4] overflow-hidden relative group shadow-sm"
   >
     {/* Base Image */}
     <img 
@@ -42,7 +45,7 @@ const mainImage = images[0] || '/placeholder.jpg';
       class="w-full h-full object-cover transition-opacity duration-300"
     />
     
-    {/* Zoom Image Layer (Initially hidden) */}
+    {/* Zoom Image Layer */}
     <div 
       id="zoom-layer"
       class="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none flex items-center justify-center overflow-hidden"
@@ -56,11 +59,17 @@ const mainImage = images[0] || '/placeholder.jpg';
         />
     </div>
 
+    {/* technical Overlay */}
+    <div class="absolute top-6 left-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-700">
+        <span class="px-1.5 py-0.5 bg-black text-white text-[7px] font-mono font-black tracking-widest">RECORD_STATE :: ACTIVE</span>
+        <div class="h-[1px] w-8 bg-black/20"></div>
+    </div>
+
     {/* Zoom Toggle Button */}
     <button 
       id="zoom-toggle"
-      class="absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border border-gray-100 text-black hover:bg-black hover:text-white transition-all duration-300"
-      title="Activar Zoom"
+      class="absolute bottom-6 right-6 z-10 bg-black text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all duration-300"
+      title="ZOOM_PROTOCOL_ACTIVATE"
     >
         <svg id="zoom-icon-plus" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
@@ -94,11 +103,12 @@ const mainImage = images[0] || '/placeholder.jpg';
             zoomLayer.style.opacity = '1';
             zoomLayer.style.pointerEvents = 'auto';
             zoomImg.style.display = 'block';
-            mainImg.style.opacity = '0';
+            mainImg.style.opacity = '0.2';
             iconPlus?.classList.add('hidden');
             iconMinus?.classList.remove('hidden');
             container.style.cursor = 'move';
-            toggle.title = "Desactivar Zoom";
+            toggle.title = "ZOOM_PROTOCOL_ABORT";
+            toggle.classList.add('bg-brand-red');
         } else {
             zoomLayer.style.opacity = '0';
             zoomLayer.style.pointerEvents = 'none';
@@ -107,7 +117,8 @@ const mainImage = images[0] || '/placeholder.jpg';
             iconPlus?.classList.remove('hidden');
             iconMinus?.classList.add('hidden');
             container.style.cursor = 'default';
-            toggle.title = "Activar Zoom";
+            toggle.title = "ZOOM_PROTOCOL_ACTIVATE";
+            toggle.classList.remove('bg-brand-red');
         }
     });
 
@@ -121,7 +132,7 @@ const mainImage = images[0] || '/placeholder.jpg';
         // Follow the cursor
         zoomImg.style.left = `${x}%`;
         zoomImg.style.top = `${y}%`;
-        zoomImg.style.transform = `translate(${-x}%, ${-y}%) scale(1.5)`;
+        zoomImg.style.transform = `translate(${-x}%, ${-y}%) scale(1.6)`;
     });
 
     // Optional: Reset on mouse leave if we want to auto-disable or just pause

@@ -8,8 +8,7 @@
     "phases": {
         "setup": {
             "nixPkgs": [
-                "nodejs_22",
-                "npm"
+                "nodejs_22"
             ],
             "aptPkgs": [
                 "wget",

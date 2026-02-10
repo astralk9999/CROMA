@@ -4,8 +4,44 @@ import { supabaseAdmin } from '@lib/supabase-admin';
 
 const { id } = Astro.params;
 
+type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+interface LaptopImage {
+    0: string;
+}
+
+interface OrderItem {
+    product: {
+        brand: string;
+        images: string[] | null;
+    };
+    product_name: string;
+    price: number;
+    size: string;
+    quantity: number;
+}
+
+interface Order {
+    id: string;
+    created_at: string;
+    status: OrderStatus;
+    total_amount: number;
+    notes: string;
+    user_id: string;
+    items: OrderItem[];
+    shipping_address: {
+        name: string;
+        email: string;
+        phone: string;
+        address: string;
+        postal_code: string;
+        city: string;
+        country: string;
+    };
+}
+
 // Fetch order with its items and product data
-const { data: order, error } = await supabaseAdmin
+const { data, error } = await supabaseAdmin
   .from('orders')
   .select(`
     *,
@@ -16,6 +52,8 @@ const { data: order, error } = await supabaseAdmin
   `)
   .eq('id', id)
   .single();
+
+const order = data as unknown as Order;
 
 if (error || !order) {
   console.error('[Admin Order Detail] Fetch Error:', error);
@@ -33,7 +71,7 @@ if (order.user_id) {
     customerProfile = profile;
 }
 
-const getStatusColor = (status) => {
+const getStatusColor = (status: string) => {
   switch (status) {
     case 'delivered': return 'bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]';
     case 'shipped': return 'bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]';
@@ -43,7 +81,7 @@ const getStatusColor = (status) => {
   }
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   pending: 'Pendiente',
   processing: 'En Proceso',
   shipped: 'Enviado',

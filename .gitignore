@@ -32,3 +32,17 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Dart/Flutter (if any)
+.dart_tool/
+pubspec.lock
+.metadata
+analysis_options.yaml
+*.iml
+
+# Binaries
+stripe.exe
+
+# Coolify
+.nixpacks/
+nixpacks-plan.json

@@ -50,56 +50,46 @@ export default function SearchWidget() {
                     };
 
                     try {
-                        // 1. Try RPC with 2s timeout
-                        const { data: rpcData, error: rpcError } = await withTimeout(
-                            (async () => await supabase.rpc('search_products', { query_text: query }))(),
-                            2000
+                        // Directly use Client-Side Query (RPC is unreliable/outdated)
+                        // console.log("Searching for:", query);
+
+                        const { data, error } = await withTimeout(
+                            (async () => await supabase
+                                .from('products')
+                                .select('id, name, slug, price, category_id, images, categories(name)')
+                                .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+                                .range(0, 5))(),
+                            3000 // Increased timeout slightly
                         ) as any;
 
-                        if (!rpcError && rpcData) {
-                            dbProducts = (rpcData as any[]).map(p => ({
+                        if (!error && data) {
+                            dbProducts = data.map((p: any) => ({
                                 id: p.id,
                                 name: p.name,
                                 slug: p.slug,
                                 price: p.price,
-                                category: p.category || p.category_id || '',
+                                // Handle the joined category data safely (it might be an array or object)
+                                category: Array.isArray(p.categories)
+                                    ? p.categories[0]?.name
+                                    : p.categories?.name || 'Producto',
                                 images: p.images || []
                             }));
                         } else {
-                            throw rpcError || new Error('No data');
+                            // If no data or error, just show empty
+                            // console.warn("Search error or no data:", error);
                         }
-                    } catch (rpcError: any) {
-                        console.warn("Search RPC fast-fallback:", rpcError?.message || rpcError);
-
-                        try {
-                            // 2. Fallback to Client-Side Query with 2s timeout
-                            const { data: clientData, error: clientError } = await withTimeout(
-                                (async () => await supabase
-                                    .from('products')
-                                    .select('id, name, slug, price, category, images')
-                                    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-                                    .range(0, 5))(),
-                                2000
-                            ) as any;
-
-                            if (!clientError && clientData) {
-                                dbProducts = clientData as Product[];
-                            } else {
-                                throw clientError || new Error('No data');
-                            }
-                        } catch (clientError: any) {
-                            console.error("Search Client Query error:", clientError?.message || clientError);
-                            hasDbError = true;
-                        }
+                    } catch (err: any) {
+                        console.error("Search processing error:", err?.message || err);
+                        hasDbError = true;
                     }
 
                     if (!hasDbError && dbProducts.length > 0) {
-                        setResults(dbProducts.slice(0, 8));
+                        setResults(dbProducts);
+                    } else {
+                        setResults([]);
                     }
                 } catch (err) {
-                    console.error("Critical search processing error:", err);
-                    console.error("Critical search processing error:", err);
-                    // On complete failure, show nothing
+                    console.error("Critical search failure:", err);
                     setResults([]);
                 } finally {
                     setLoading(false);

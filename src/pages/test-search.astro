@@ -1,0 +1,63 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { supabase } from '../lib/supabase';
+
+// Diagnostic Logic
+let simpleFetch: any = null;
+let searchTest: any = null;
+let rpcTest: any = null;
+let textColumnTest: any = null;
+
+try {
+    // 1. Simple Fetch (Check connection and data existence)
+    const { data: d1, error: e1 } = await supabase.from('products').select('id, name').limit(3);
+    simpleFetch = { data: d1, error: e1 };
+
+    // 2. Search Test (Check .ilike query)
+    const { data: d2, error: e2 } = await supabase
+        .from('products')
+        .select('id, name')
+        .ilike('name', '%a%') // Simple search for letter 'a'
+        .limit(3);
+    searchTest = { data: d2, error: e2 };
+
+    // 3. Text Column Test (Check if 'category' column works)
+    const { data: d3, error: e3 } = await supabase
+        .from('products')
+        .select('id, category')
+        .limit(3);
+    textColumnTest = { data: d3, error: e3 };
+
+} catch (err) {
+    console.error("Diagnostic error:", err);
+}
+---
+
+<PublicLayout title="Diagnóstico de Búsqueda">
+    <div class="container mx-auto py-12 px-4">
+        <h1 class="text-3xl font-bold mb-8">Diagnóstico de Supabase</h1>
+        
+        <div class="space-y-8">
+            <div class="bg-gray-100 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">1. Fetch Simple (Conexión)</h2>
+                <pre class="bg-black text-green-400 p-4 rounded overflow-x-auto text-xs">
+{JSON.stringify(simpleFetch, null, 2)}
+                </pre>
+            </div>
+
+            <div class="bg-gray-100 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">2. Test de Búsqueda (.ilike '%a%')</h2>
+                <pre class="bg-black text-green-400 p-4 rounded overflow-x-auto text-xs">
+{JSON.stringify(searchTest, null, 2)}
+                </pre>
+            </div>
+
+            <div class="bg-gray-100 p-6 rounded-lg">
+                <h2 class="text-xl font-bold mb-4">3. Test Columna 'category'</h2>
+                <pre class="bg-black text-green-400 p-4 rounded overflow-x-auto text-xs">
+{JSON.stringify(textColumnTest, null, 2)}
+                </pre>
+            </div>
+        </div>
+    </div>
+</PublicLayout>

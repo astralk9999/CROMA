@@ -13,7 +13,7 @@ if (query) {
   try {
     const { data: dbProducts, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, categories(name)')
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`) // Case insensitive search
       .order('created_at', { ascending: false });
     
@@ -21,7 +21,7 @@ if (query) {
 
     products = (dbProducts || []).map(p => ({
       ...p,
-      category: p.category || p.category_id || p.category?.name || '' // Handle potential schema variations
+      category: p.categories?.name || p.category || 'Producto' // Handle joined data with fallback
     }));
     
   } catch (err) {

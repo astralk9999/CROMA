@@ -110,7 +110,7 @@ if (!user || profile?.role !== 'admin') {
     import { navigate } from 'astro:transitions/client';
 
     function initPage() {
-        console.log('Category Creation Protocol Initialized');
+        console.log('[ADMIN] Iniciando protocolo de nueva categoría...');
         const form = document.getElementById('create-category-form') as HTMLFormElement;
         if (!form) return;
 

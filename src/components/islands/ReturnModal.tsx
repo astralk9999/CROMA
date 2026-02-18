@@ -4,9 +4,39 @@ interface ReturnModalProps {
     isOpen: boolean;
     onClose: () => void;
     orderId: string;
+    translations: {
+        title: string;
+        subtitle: string;
+        selectItems: string;
+        analyzing: string;
+        sizeLabel: string;
+        alreadyReturned: string;
+        reasonLabel: string;
+        reasonPlaceholder: string;
+        reasons: {
+            wrongSize: string;
+            damaged: string;
+            notAsDescribed: string;
+            changedMind: string;
+            others: string;
+        };
+        detailsLabel: string;
+        detailsPlaceholder: string;
+        evidenceLabel: string;
+        uploadLogs: string;
+        maxFiles: string;
+        syncing: string;
+        abort: string;
+        submit: string;
+        stabilizing: string;
+        alertNoItems: string;
+        alertNoReason: string;
+        alertSuccess: string;
+        alertError: string;
+    };
 }
 
-export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalProps) {
+export default function ReturnModal({ isOpen, onClose, orderId, translations }: ReturnModalProps) {
     const [reason, setReason] = useState('');
     const [details, setDetails] = useState('');
     const [images, setImages] = useState<File[]>([]);
@@ -34,7 +64,7 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                         setItems(data.items);
                     }
                 })
-                .catch(console.error)
+                .catch(void 0)
                 .finally(() => setLoadingItems(false));
         }
     }, [isOpen, orderId]);
@@ -95,12 +125,12 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
         e.preventDefault();
 
         if (selectedItems.length === 0) {
-            (window as any).showIndustrialAlert('DEBE SELECCIONAR AL MENOS UN ARTÍCULO', 'error');
+            (window as any).showIndustrialAlert(translations.alertNoItems, 'error');
             return;
         }
 
         if (!reason) {
-            (window as any).showIndustrialAlert('POR FAVOR, SELECCIONA UN MOTIVO', 'error');
+            (window as any).showIndustrialAlert(translations.alertNoReason, 'error');
             return;
         }
 
@@ -123,15 +153,14 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
             const data = await response.json();
             if (!response.ok || !data.success) throw new Error(data.message || 'Error al procesar la solicitud');
 
-            (window as any).showIndustrialAlert('SOLICITUD DE DEVOLUCIÓN ENVIADA. EL PROTOCOLO HA SIDO ACTIVADO.', 'success');
+            (window as any).showIndustrialAlert(translations.alertSuccess, 'success');
             onClose();
             // Wait for toast to be visible before reloading
             setTimeout(() => {
                 window.location.reload();
             }, 2500);
         } catch (err: any) {
-            console.error(err);
-            (window as any).showIndustrialAlert('ERROR EN EL PROTOCOLO: ' + err.message, 'error');
+            (window as any).showIndustrialAlert(translations.alertError.replace('{error}', err.message), 'error');
         } finally {
             setLoading(false);
             setUploadProgress(0);
@@ -157,7 +186,7 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                             </span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-urban font-black uppercase italic tracking-tighter leading-[0.8]">
-                            SOLICITUD DE <span className="text-zinc-500">DEVOLUCIÓN</span>
+                            {translations.title.split(' ').slice(0, -1).join(' ')} <span className="text-zinc-500">{translations.subtitle}</span>
                         </h2>
                         <p className="text-[12px] font-bold text-zinc-500 uppercase tracking-[0.4em] font-mono italic">NODE_SERIAL: #{orderId.slice(0, 16).toUpperCase()}</p>
                     </div>
@@ -170,11 +199,11 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                         <div className="space-y-4">
                             <label className="text-[11px] font-bold text-zinc-600 uppercase tracking-[0.3em] block flex items-center gap-3">
                                 <span className="w-4 h-4 bg-zinc-900 rounded-sm"></span>
-                                SELECCIONAR_ITEMS_RECLAMADOS ({selectedItems.length})
+                                {translations.selectItems} ({selectedItems.length})
                             </label>
                             {loadingItems ? (
                                 <div className="p-12 text-center bg-white border border-zinc-300 border-dashed rounded-3xl animate-pulse">
-                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.5em]">ANALIZANDO_INVENTARIO_LOCAL...</p>
+                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.5em]">{translations.analyzing}</p>
                                 </div>
                             ) : (
                                 <div className="grid gap-4 max-h-60 overflow-y-auto pr-4 custom-scrollbar">
@@ -200,8 +229,8 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                                                     {item.product_name}
                                                 </p>
                                                 <div className="flex items-center gap-4">
-                                                    <span className={`text-[9px] font-bold uppercase tracking-widest ${selectedItems.includes(item.id) ? 'text-zinc-500' : 'text-zinc-400'}`}>TALLA_{item.size}</span>
-                                                    {item.is_returned && <span className="text-[9px] font-bold uppercase tracking-widest text-red-500 underline">YA_RETORNADO</span>}
+                                                    <span className={`text-[9px] font-bold uppercase tracking-widest ${selectedItems.includes(item.id) ? 'text-zinc-500' : 'text-zinc-400'}`}>{translations.sizeLabel.replace('{size}', item.size)}</span>
+                                                    {item.is_returned && <span className="text-[9px] font-bold uppercase tracking-widest text-red-500 underline">{translations.alreadyReturned}</span>}
                                                 </div>
                                             </div>
                                             {!item.is_returned && (
@@ -221,7 +250,7 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                         <div className="space-y-4">
                             <label className="text-[11px] font-bold text-zinc-600 uppercase tracking-[0.3em] block flex items-center gap-3">
                                 <span className="w-4 h-4 bg-zinc-900 rounded-sm"></span>
-                                MOTIVO_DISCREPANCIA
+                                {translations.reasonLabel}
                             </label>
                             <select
                                 required
@@ -229,25 +258,25 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                                 onChange={(e) => setReason(e.target.value)}
                                 className="w-full bg-white border border-zinc-300 rounded-2xl px-6 py-5 text-[11px] font-bold uppercase tracking-[0.2em] focus:outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all appearance-none cursor-pointer italic shadow-lg shadow-zinc-200/50 text-zinc-900"
                             >
-                                <option value="">--- SELECCIONAR_MOTIVO ---</option>
-                                <option value="Talla Incorrecta">TALLA_INCORRECTA</option>
-                                <option value="Producto Dañado">DEFECTO_ESTRUCTURAL</option>
-                                <option value="No es como se describe">ERROR_DESCRIPCIÓN_VISUAL</option>
-                                <option value="Cambio de opinión">CAMBIO_CRITERIO_ADQUISICIÓN</option>
-                                <option value="Otros">OTROS_PROTOCOLO</option>
+                                <option value="">--- {translations.reasonPlaceholder} ---</option>
+                                <option value="Talla Incorrecta">{translations.reasons.wrongSize}</option>
+                                <option value="Producto Dañado">{translations.reasons.damaged}</option>
+                                <option value="No es como se describe">{translations.reasons.notAsDescribed}</option>
+                                <option value="Cambio de opinión">{translations.reasons.changedMind}</option>
+                                <option value="Otros">{translations.reasons.others}</option>
                             </select>
                         </div>
 
                         <div className="space-y-4">
                             <label className="text-[11px] font-bold text-zinc-600 uppercase tracking-[0.3em] block flex items-center gap-3">
                                 <span className="w-4 h-4 bg-zinc-900 rounded-sm"></span>
-                                DETALLES_AUDITORÍA
+                                {translations.detailsLabel}
                             </label>
                             <textarea
                                 value={details}
                                 onChange={(e) => setDetails(e.target.value)}
                                 rows={3}
-                                placeholder="PROPORCIONE REGISTRO DETALLADO DEL INCIDENTE..."
+                                placeholder={translations.detailsPlaceholder}
                                 className="w-full bg-white border border-zinc-300 rounded-2xl px-8 py-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-zinc-900/5 placeholder:text-zinc-300 placeholder:italic shadow-lg shadow-zinc-200/50 text-zinc-900"
                             />
                         </div>
@@ -255,7 +284,7 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                         <div className="space-y-4">
                             <label className="text-[11px] font-bold text-zinc-600 uppercase tracking-[0.3em] block flex items-center gap-3">
                                 <span className="w-4 h-4 bg-zinc-900 rounded-sm"></span>
-                                EVIDENCIA_ADJUNTA
+                                {translations.evidenceLabel}
                             </label>
                             <div
                                 onClick={() => fileInputRef.current?.click()}
@@ -273,8 +302,8 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                                     <div className="w-16 h-16 bg-zinc-50 border border-zinc-200 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-zinc-900 group-hover:text-white transition-all duration-500">
                                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                     </div>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-500 group-hover:text-zinc-900 transition-colors">UPLOAD_VISUAL_LOGS</p>
-                                    <p className="text-[9px] font-bold text-zinc-400 italic">MAX_FILES: 05 / TYPE: RAW_IMG</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-500 group-hover:text-zinc-900 transition-colors">{translations.uploadLogs}</p>
+                                    <p className="text-[9px] font-bold text-zinc-400 italic">{translations.maxFiles}</p>
                                 </div>
                             </div>
 
@@ -305,7 +334,7 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                                     style={{ width: `${uploadProgress}%` }}
                                 ></div>
                             </div>
-                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.5em] text-center italic animate-pulse">SYNCHRONIZING_WITH_CLOUD_HUB...</p>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.5em] text-center italic animate-pulse">{translations.syncing}</p>
                         </div>
                     )}
 
@@ -315,14 +344,14 @@ export default function ReturnModal({ isOpen, onClose, orderId }: ReturnModalPro
                             onClick={onClose}
                             className="text-[11px] font-bold uppercase tracking-[0.4em] text-zinc-400 hover:text-red-500 transition-all font-mono italic"
                         >
-                            [ ABORT_PROCESS ]
+                            {translations.abort}
                         </button>
                         <button
                             type="submit"
                             disabled={loading || selectedItems.length === 0}
                             className="flex-1 bg-zinc-900 text-white py-6 text-[12px] font-black uppercase tracking-[0.5em] hover:bg-black transition-all shadow-xl shadow-zinc-900/20 rounded-full active:scale-95 disabled:opacity-30 disabled:grayscale relative overflow-hidden group"
                         >
-                            <span className="relative z-10">{loading ? 'STABILIZING...' : 'INICIAR_DEVOLUCIÓN'}</span>
+                            <span className="relative z-10">{loading ? translations.stabilizing : translations.submit}</span>
                             <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
                         </button>
                     </div>

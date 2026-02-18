@@ -56,7 +56,7 @@ const { data, error } = await supabaseAdmin
 const order = data as unknown as Order;
 
 if (error || !order) {
-  console.error('[Admin Order Detail] Fetch Error:', error);
+  console.error('[Admin Order Detail] Fetch error:', error);
   return Astro.redirect('/admin/orders');
 }
 

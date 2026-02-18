@@ -1,27 +1,28 @@
 ---
 import PublicLayout from '@layouts/PublicLayout.astro';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 ---
 
-<PublicLayout title="The Brand Manifesto - CROMA">
+<PublicLayout title={t('about.title')}>
   <div class="container-custom py-24 min-h-[60vh]">
     <div class="max-w-5xl mx-auto">
         {/* Header Section */}
         <header class="mb-32">
             <div class="flex items-center gap-4 mb-8">
-                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">CORE_IDENTITY_V1</span>
+                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">{t('about.header.tag')}</span>
                 <div class="h-[2px] flex-1 bg-black/10"></div>
             </div>
-            <h1 class="text-7xl md:text-[10rem] font-urban font-black uppercase tracking-tighter text-black leading-[0.75] mb-12">
-                THE<br/>
-                <span class="text-zinc-300">BRAND</span><br/>
-                MANIFESTO
+            <h1 class="text-7xl md:text-[10rem] font-urban font-black uppercase tracking-tighter text-black leading-[0.75] mb-12" set:html={t('about.header.title').replace(' ', '<br/>')}>
             </h1>
             <div class="grid md:grid-cols-2 gap-12 items-end">
                 <p class="text-xl font-urban font-bold uppercase tracking-tight leading-tight text-zinc-600">
-                    CROMA NO ES SOLO UNA MARCA. ES UN PROTOCOLO DE IDENTIDAD URBANA DISEÑADO PARA AQUELLOS QUE NAVEGAN EL CAOS CON PRECISIÓN.
+                    {t('about.header.subtitle')}
                 </p>
                 <div class="flex flex-col gap-2">
-                    <span class="text-[10px] font-mono font-black text-zinc-400">EST_2024 // GLOBAL_REACH</span>
+                    <span class="text-[10px] font-mono font-black text-zinc-400">{t('about.header.metadata')}</span>
                     <div class="h-1 w-full bg-black"></div>
                 </div>
             </div>
@@ -31,20 +32,20 @@ import PublicLayout from '@layouts/PublicLayout.astro';
         <section class="mb-32">
             <div class="grid lg:grid-cols-2 gap-24 items-start">
                 <div>
-                    <h2 class="text-4xl font-black uppercase tracking-tighter mb-8 border-b-8 border-black pb-4 inline-block italic">NUESTRA GÉNESIS</h2>
+                    <h2 class="text-4xl font-black uppercase tracking-tighter mb-8 border-b-8 border-black pb-4 inline-block italic">{t('about.genesis.title')}</h2>
                     <div class="space-y-6 text-zinc-500 font-bold uppercase tracking-widest text-sm leading-relaxed">
-                        <p>Nacidos en el epicentro del movimiento streetwear, CROMA surge como respuesta a la saturación de lo genérico. Nuestra visión fue clara desde el inicio: fusionar la estética industrial con la funcionalidad táctica.</p>
-                        <p>Cada pieza en nuestro inventario es el resultado de un riguroso proceso de decodificación de tendencias, transformado en prendas de alta durabilidad y diseño disruptivo.</p>
+                        <p>{t('about.genesis.p1')}</p>
+                        <p>{t('about.genesis.p2')}</p>
                     </div>
                 </div>
                 <div class="bg-zinc-100 p-12 rounded-[3rem] relative overflow-hidden group">
                     <div class="absolute top-0 right-0 p-8 text-8xl font-black text-white group-hover:text-zinc-200 transition-colors">"</div>
                     <p class="text-2xl font-urban font-black uppercase leading-tight relative z-10">
-                        "DEMOCRATIZAR LA MODA PREMIUM, HACIENDO ACCESIBLE UN ESTILO QUE ANTES ESTABA RESERVADO PARA UNOS POCOS."
+                        {t('about.mission.quote')}
                     </p>
                     <div class="mt-8 flex gap-4 items-center">
                         <div class="w-12 h-[2px] bg-black"></div>
-                        <span class="text-[10px] font-mono font-black uppercase italic">The Mission Protocol</span>
+                        <span class="text-[10px] font-mono font-black uppercase italic">{t('about.mission.label')}</span>
                     </div>
                 </div>
             </div>
@@ -52,34 +53,34 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 
         {/* Values Modular Grid */}
         <section class="mb-32">
-            <h2 class="text-3xl font-black uppercase tracking-tighter mb-16 text-center italic underline decoration-brand-red decoration-4 underline-offset-8">VALORES_DEL_SISTEMA</h2>
+            <h2 class="text-3xl font-black uppercase tracking-tighter mb-16 text-center italic underline decoration-brand-red decoration-4 underline-offset-8">{t('about.values.title')}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
                 <div class="p-10 bg-white border-2 border-black aspect-square flex flex-col justify-between hover:bg-black hover:text-white transition-all group">
-                    <span class="text-xs font-mono font-black text-zinc-300 group-hover:text-zinc-700 leading-none">V_01</span>
+                    <span class="text-xs font-mono font-black text-zinc-300 group-hover:text-zinc-700 leading-none">{t('about.values.v1.tag')}</span>
                     <div>
-                        <h4 class="text-xl font-black uppercase mb-2">CALIDAD_TX</h4>
-                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Materiales de grado industrial testados en entornos urbanos.</p>
+                        <h4 class="text-xl font-black uppercase mb-2">{t('about.values.v1.title')}</h4>
+                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('about.values.v1.desc')}</p>
                     </div>
                 </div>
                 <div class="p-10 bg-black text-white border-2 border-black aspect-square flex flex-col justify-between hover:bg-white hover:text-black transition-all group">
-                    <span class="text-xs font-mono font-black text-zinc-700 group-hover:text-zinc-300 leading-none">V_02</span>
+                    <span class="text-xs font-mono font-black text-zinc-700 group-hover:text-zinc-300 leading-none">{t('about.values.v2.tag')}</span>
                     <div>
-                        <h4 class="text-xl font-black uppercase mb-2 italic">DISRUPCIÓN</h4>
-                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60 group-hover:opacity-60">Diseños que desafían la norma visual del cotidiano.</p>
+                        <h4 class="text-xl font-black uppercase mb-2 italic">{t('about.values.v2.title')}</h4>
+                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60 group-hover:opacity-60">{t('about.values.v2.desc')}</p>
                     </div>
                 </div>
                 <div class="p-10 bg-white border-2 border-black aspect-square flex flex-col justify-between hover:bg-black hover:text-white transition-all group">
-                    <span class="text-xs font-mono font-black text-zinc-300 group-hover:text-zinc-700 leading-none">V_03</span>
+                    <span class="text-xs font-mono font-black text-zinc-300 group-hover:text-zinc-700 leading-none">{t('about.values.v3.tag')}</span>
                     <div>
-                        <h4 class="text-xl font-black uppercase mb-2">ETHOS</h4>
-                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Responsabilidad en cada fase de la cadena de suministro.</p>
+                        <h4 class="text-xl font-black uppercase mb-2">{t('about.values.v3.title')}</h4>
+                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('about.values.v3.desc')}</p>
                     </div>
                 </div>
                 <div class="p-10 bg-[#202020] text-white border-2 border-black aspect-square flex flex-col justify-between hover:bg-black transition-all group">
-                    <span class="text-xs font-mono font-black text-zinc-600 leading-none">V_04</span>
+                    <span class="text-xs font-mono font-black text-zinc-600 leading-none">{t('about.values.v4.tag')}</span>
                     <div>
-                        <h4 class="text-xl font-black uppercase mb-2">SPEED</h4>
-                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Logística acelerada para una gratificación inmediata.</p>
+                        <h4 class="text-xl font-black uppercase mb-2">{t('about.values.v4.title')}</h4>
+                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('about.values.v4.desc')}</p>
                     </div>
                 </div>
             </div>
@@ -87,10 +88,10 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 
         {/* Call to Action */}
         <section class="text-center py-24 border-y-2 border-black mb-32">
-            <h2 class="text-5xl md:text-7xl font-urban font-black uppercase tracking-tighter mb-12">¿LISTO PARA EL PROTOCOLO?</h2>
+            <h2 class="text-5xl md:text-7xl font-urban font-black uppercase tracking-tighter mb-12">{t('about.cta.title')}</h2>
             <div class="flex flex-col md:flex-row gap-6 justify-center">
-                <a href="/category/all" class="px-12 py-5 bg-black text-white font-black uppercase tracking-widest text-sm hover:bg-zinc-800 transition-colors">EXPLORAR_CATÁLOGO</a>
-                <a href="/contact" class="px-12 py-5 border-4 border-black font-black uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-all">SOPORTE_TÉCNICO</a>
+                <a href="/category/all" class="px-12 py-5 bg-black text-white font-black uppercase tracking-widest text-sm hover:bg-zinc-800 transition-colors">{t('about.cta.explore')}</a>
+                <a href="/contact" class="px-12 py-5 border-4 border-black font-black uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-all">{t('about.cta.support')}</a>
             </div>
         </section>
     </div>

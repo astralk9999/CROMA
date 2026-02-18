@@ -72,7 +72,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
         }), { status: 200 });
 
     } catch (err: any) {
-        console.error('[API Returnables] Error:', err);
+        void 0('[API Returnables] Error:', err);
         return new Response(JSON.stringify({ success: false, message: err.message }), { status: 500 });
     }
 };

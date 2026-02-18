@@ -33,13 +33,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             });
 
         if (error) {
-            console.error('Track view error:', error);
+            void 0('Track view error:', error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
         return new Response(JSON.stringify({ success: true }), { status: 200 });
     } catch (error: any) {
-        console.error('Track view critical error:', error);
+        void 0('Track view critical error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

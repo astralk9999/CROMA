@@ -32,7 +32,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }), { status: 200 });
 
     } catch (err: any) {
-        console.error('[Admin API Returns] Error:', err);
+        console.error('Update status error:', err); // Changed
+        console.log('[Admin API Returns] Starting update...');
         return new Response(JSON.stringify({
             success: false,
             message: err.message || 'Error interno'

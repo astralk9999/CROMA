@@ -1,14 +1,18 @@
 import { useStore } from '@nanostores/react';
 import { cartCount, toggleCart } from '@stores/cart';
 
-export default function CartIcon() {
+interface CartIconProps {
+  label?: string;
+}
+
+export default function CartIcon({ label }: CartIconProps) {
   const count = useStore(cartCount);
 
   return (
     <button
       onClick={toggleCart}
       className="relative p-2 hover:bg-cream-300 transition-colors rounded-lg group"
-      aria-label="Abrir carrito"
+      aria-label={label || "Abrir carrito"}
     >
       <svg
         className="w-6 h-6 text-charcoal-800 group-hover:text-navy-800 transition-colors"

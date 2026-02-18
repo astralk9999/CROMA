@@ -2,6 +2,10 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductCard from '@components/product/ProductCard.astro';
 import { supabase } from '@lib/supabase';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 
 const query = Astro.url.searchParams.get('q') || '';
 
@@ -11,18 +15,39 @@ let loading = false;
 if (query) {
   loading = true;
   try {
+    const searchTerm = query.trim().toLowerCase();
+
+    // First query: search by name, description, category, and brand
     const { data: dbProducts, error } = await supabase
       .from('products')
       .select('*, categories(name)')
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`) // Case insensitive search
+      .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
 
-    products = (dbProducts || []).map(p => ({
+    let mappedProducts = (dbProducts || []).map(p => ({
       ...p,
-      category: p.categories?.name || p.category || 'Producto' // Handle joined data with fallback
+      category: p.categories?.name || p.category || t('admin.products')
     }));
+
+    // If no results, try searching by color
+    if (mappedProducts.length === 0) {
+      const { data: colorProducts, error: colorError } = await supabase
+        .from('products')
+        .select('*, categories(name)')
+        .contains('colors', [searchTerm])
+        .order('created_at', { ascending: false });
+
+      if (!colorError && colorProducts) {
+        mappedProducts = colorProducts.map(p => ({
+          ...p,
+          category: p.categories?.name || p.category || t('admin.products')
+        }));
+      }
+    }
+
+    products = mappedProducts;
     
   } catch (err) {
     console.error("Search page error:", err);
@@ -31,22 +56,19 @@ if (query) {
     loading = false;
   }
 }
-
-// Get some random products if no search or no results? 
-// No, just show search bar.
 ---
 
-<PublicLayout title={`Buscar: ${query || 'Productos'}`}>
+<PublicLayout title={`${t('nav.search')}: ${query || t('admin.products')}`}>
   <section class="container-custom py-12">
     <div class="max-w-4xl mx-auto text-center mb-12">
-      <h1 class="text-4xl font-urban font-bold text-gray-900 mb-6 uppercase tracking-tighter">Buscar Productos</h1>
+      <h1 class="text-4xl font-urban font-bold text-gray-900 mb-6 uppercase tracking-tighter">{t('nav.search')}</h1>
       
       <form action="/search" method="get" class="max-w-xl mx-auto relative">
         <input 
           type="text" 
           name="q" 
           value={query}
-          placeholder="Busca por nombre, categoría..." 
+          placeholder={t('nav.search.placeholder')} 
           class="w-full px-6 py-4 text-lg border-2 border-gray-900 rounded-full focus:outline-none focus:ring-0 focus:border-brand-red transition-colors bg-white font-medium"
           autofocus
         />
@@ -54,7 +76,7 @@ if (query) {
           type="submit" 
           class="absolute right-2 top-2 bottom-2 bg-black text-white px-8 rounded-full hover:bg-gray-800 transition-colors font-bold uppercase tracking-wider"
         >
-          Buscar
+          {t('nav.search')}
         </button>
       </form>
     </div>
@@ -62,7 +84,7 @@ if (query) {
     {query && (
       <div class="mb-8">
         <p class="text-gray-600 text-lg">
-          Resultados para "<span class="font-bold text-black">{query}</span>": {products.length} productos encontrados
+          {t('nav.search.results_for')} "<span class="font-bold text-black">{query}</span>": {products.length} {t('nav.search.products_found')}
         </p>
       </div>
     )}
@@ -75,10 +97,10 @@ if (query) {
       </div>
     ) : query ? (
       <div class="text-center py-20 bg-gray-50 rounded-xl">
-        <p class="text-xl text-gray-500 font-medium">No se encontraron productos que coincidan con tu búsqueda.</p>
-        <p class="text-gray-400 mt-2">Intenta con otros términos o navega por las categorías.</p>
+        <p class="text-xl text-gray-500 font-medium">{t('nav.search.no_results_text')}</p>
+        <p class="text-gray-400 mt-2">{t('nav.search.try_other_terms')}</p>
         <a href="/category/all" class="inline-block mt-6 text-black border-b-2 border-black hover:text-brand-red hover:border-brand-red transition-all font-bold">
-            Ver todo el catálogo ->
+            {t('nav.search.view_all_catalog')} ->
         </a>
       </div>
     ) : null}

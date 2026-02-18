@@ -33,7 +33,7 @@ export async function uploadImageToSupabase(
     .upload(filePath, file);
 
   if (uploadError) {
-    console.error('Upload error:', uploadError);
+    void 0('Upload error:', uploadError);
     return null;
   }
 
@@ -58,7 +58,7 @@ export async function uploadImageToCloudinary(file: File): Promise<string | null
   const uploadPreset = import.meta.env.PUBLIC_CLOUDINARY_PRESET || 'croma_uploads';
 
   if (!cloudName) {
-    console.error('Missing Cloudinary cloud name');
+    void 0('Missing Cloudinary cloud name');
     return null;
   }
 
@@ -82,7 +82,7 @@ export async function uploadImageToCloudinary(file: File): Promise<string | null
     const data = await response.json();
     return data.secure_url;
   } catch (error) {
-    console.error('Error subiendo imagen:', error);
+    void 0('Error subiendo imagen:', error);
     return null;
   }
 }

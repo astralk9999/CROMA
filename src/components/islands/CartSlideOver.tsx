@@ -2,7 +2,20 @@ import { useStore } from '@nanostores/react';
 import { cartItems, cartTotal, isCartOpen, closeCart, updateQuantity, removeFromCart } from '@stores/cart';
 import { formatPrice } from '@lib/utils';
 
-export default function CartSlideOver() {
+interface CartSlideOverProps {
+  labels?: {
+    title: string;
+    empty: string;
+    continue: string;
+    total: string;
+    checkout: string;
+    remove: string;
+    size: string;
+    close: string;
+  };
+}
+
+export default function CartSlideOver({ labels }: CartSlideOverProps) {
   const items = useStore(cartItems);
   const total = useStore(cartTotal);
   const isOpen = useStore(isCartOpen);
@@ -31,12 +44,12 @@ export default function CartSlideOver() {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
             <h2 className="text-2xl font-urban font-bold text-gray-900 uppercase tracking-wide">
-              Carrito
+              {labels?.title || 'Carrito'}
             </h2>
             <button
               onClick={closeCart}
               className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label="Cerrar carrito"
+              aria-label={labels?.close || "Cerrar carrito"}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -51,12 +64,12 @@ export default function CartSlideOver() {
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
+                <p className="text-gray-500 mb-4">{labels?.empty || 'Tu carrito está vacío'}</p>
                 <button
                   onClick={closeCart}
                   className="text-black font-bold hover:underline uppercase tracking-wide"
                 >
-                  Continuar comprando
+                  {labels?.continue || 'Continuar comprando'}
                 </button>
               </div>
             ) : (
@@ -70,7 +83,7 @@ export default function CartSlideOver() {
                     />
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900">{item.name}</h3>
-                      <p className="text-sm text-gray-500">Talla: {item.size}</p>
+                      <p className="text-sm text-gray-500">{labels?.size || 'Talla'}: {item.size}</p>
                       <p className="text-sm font-bold text-black mt-1">
                         {formatPrice(item.price)}
                       </p>
@@ -95,7 +108,7 @@ export default function CartSlideOver() {
                           onClick={() => removeFromCart(key)}
                           className="ml-auto text-sm text-red-600 hover:underline font-medium"
                         >
-                          Eliminar
+                          {labels?.remove || 'Eliminar'}
                         </button>
                       </div>
                     </div>
@@ -109,7 +122,7 @@ export default function CartSlideOver() {
           {itemsArray.length > 0 && (
             <div className="border-t-2 border-black p-6 space-y-4 bg-gray-50">
               <div className="flex justify-between items-center text-lg">
-                <span className="font-bold text-gray-700 uppercase tracking-wide">Total:</span>
+                <span className="font-bold text-gray-700 uppercase tracking-wide">{labels?.total || 'Total'}:</span>
                 <span className="text-2xl font-black text-black">{formatPrice(total)}</span>
               </div>
               <a
@@ -117,13 +130,13 @@ export default function CartSlideOver() {
                 onClick={closeCart}
                 className="block w-full py-4 bg-black text-white font-black uppercase tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
-                Proceder al Pago
+                {labels?.checkout || 'Proceder al Pago'}
               </a>
               <button
                 onClick={closeCart}
                 className="w-full py-2 text-black font-bold hover:underline uppercase tracking-wide"
               >
-                Continuar comprando
+                {labels?.continue || 'Continuar comprando'}
               </button>
             </div>
           )}

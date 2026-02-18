@@ -87,7 +87,7 @@ export async function syncFavoritesWithSupabase() {
                 })));
 
             if (upsertError) {
-                console.error('[Favorites Store] Error pushing to remote:', upsertError);
+                console.log('[Favorites Store] Error pushing to remote:', upsertError);
                 // Forensic alert for the user to report back
                 if (typeof window !== 'undefined') {
                     (window as any).showIndustrialAlert?.(`SYNC ERROR: ${upsertError.message}`, 'error');
@@ -97,7 +97,7 @@ export async function syncFavoritesWithSupabase() {
             }
         }
     } catch (e: any) {
-        console.error('[Favorites Store] Critical failure during sync:', e);
+        console.log('[Favorites Store] Critical failure during sync:', e);
         if (typeof window !== 'undefined') {
             (window as any).showIndustrialAlert?.(`CRITICAL SYNC FAILURE: ${e.message}`, 'error');
         }

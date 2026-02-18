@@ -10,7 +10,7 @@ const { data: products, error: fetchError } = await supabaseAdmin
   .order('created_at', { ascending: false });
 
 if (fetchError) {
-  console.error('[Admin Products] Fetch Error:', fetchError);
+  console.log('[Admin Products] Fetch Error:', fetchError);
 }
 
 const rawProductsCount = products?.length || 0;
@@ -554,7 +554,7 @@ const allColors = [...new Set(products?.flatMap(p => p.colors || []) || [])].sor
                     const data = await response.json();
 
                     if (!response.ok || data.success === false) {
-                        console.error('[ADMIN] Error Proxy:', data);
+                        console.log('[ADMIN] Error Proxy:', data);
                         if (data.message === 'CONSTRAINT_ORDER_ITEMS: PRODUCTO TIENE PEDIDOS ASOCIADOS') {
                             throw new Error('FOREIGN_KEY_ORDERS');
                         }
@@ -578,7 +578,7 @@ const allColors = [...new Set(products?.flatMap(p => p.colors || []) || [])].sor
                     setTimeout(() => window.location.href = window.location.href, 900);
 
                 } catch (error: any) {
-                    console.error('[ADMIN] Error fatal en borrado:', error);
+                    console.log('[ADMIN] Error fatal en borrado:', error);
                     const errorMessage = error.message;
 
                     if (errorMessage === 'FOREIGN_KEY_ORDERS') {
@@ -657,7 +657,7 @@ const allColors = [...new Set(products?.flatMap(p => p.colors || []) || [])].sor
                     if (error) throw error;
                     (window as any).showIndustrialAlert(`CONEXIÓN ACTIVA (${end - start}ms)`, 'success');
                 } catch (err: any) {
-                    console.error('[DIAG] Fallo de conexión:', err);
+                    console.log('[DIAG] Fallo de conexión:', err);
                     (window as any).showIndustrialAlert('FALLO DE RED: Supabase no responde', 'error');
                 } finally {
                     btn.textContent = 'Probar Red';

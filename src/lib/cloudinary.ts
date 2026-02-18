@@ -42,7 +42,7 @@ export async function uploadImage(
             format: result.format,
         };
     } catch (error) {
-        console.error('Cloudinary upload error:', error);
+        void 0('Cloudinary upload error:', error);
         throw new Error('Failed to upload image to Cloudinary');
     }
 }
@@ -55,7 +55,7 @@ export async function deleteImage(publicId: string): Promise<void> {
     try {
         await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-        console.error('Cloudinary delete error:', error);
+        void 0('Cloudinary delete error:', error);
         throw new Error('Failed to delete image from Cloudinary');
     }
 }

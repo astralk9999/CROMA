@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
                 });
             }
 
-            console.error('Newsletter subscription error:', error);
+            void 0('Newsletter subscription error:', error);
             return new Response(JSON.stringify({
                 error: 'Error al suscribirse. Inténtalo de nuevo.'
             }), {
@@ -66,11 +66,11 @@ export const POST: APIRoute = async ({ request }) => {
                 try {
                     await sendWelcomeEmail(email.toLowerCase(), couponCode);
                 } catch (emailErr) {
-                    console.error('CRITICAL: Welcome email failed in API:', emailErr);
+                    void 0('CRITICAL: Welcome email failed in API:', emailErr);
                 }
             }
         } catch (couponGenError) {
-            console.error('Coupon generation error:', couponGenError);
+            void 0('Coupon generation error:', couponGenError);
             // We don't fail the registration if coupon fails
         }
 
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
         });
 
     } catch (error) {
-        console.error('Newsletter API error:', error);
+        void 0('Newsletter API error:', error);
         return new Response(JSON.stringify({
             error: 'Error del servidor. Inténtalo de nuevo.'
         }), {

@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { addToCart, cartCount } from '@stores/cart';
 
+const SIZE_ORDER: Record<string, number> = {
+  'XXS': 0, 'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, 'XXXL': 7, 'TU': 8,
+};
+
+function sortSizes(sizes: string[]): string[] {
+  return [...sizes].sort((a, b) => {
+    const orderA = SIZE_ORDER[a.toUpperCase()] ?? 99;
+    const orderB = SIZE_ORDER[b.toUpperCase()] ?? 99;
+    return orderA - orderB;
+  });
+}
+
 interface AddToCartButtonProps {
   product: {
     id: string;
@@ -17,9 +29,21 @@ interface AddToCartButtonProps {
     sale_price?: number;
   };
   isNotYetAvailable?: boolean;
+  translations: {
+    size: string;
+    units: string;
+    lastUnits: string;
+    almostSoldOut: string;
+    selectSizePrompt: string;
+    outOfStock: string;
+    added: string;
+    addToCart: string;
+    selectSizeAlert: string;
+    outOfStockAlert: string;
+  };
 }
 
-export default function AddToCartButton({ product, isNotYetAvailable = false }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, isNotYetAvailable = false, translations }: AddToCartButtonProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -29,11 +53,12 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
     setIsMounted(true);
   }, []);
   // Get available sizes from stockBySizes, product.sizes, or default fallback
-  const availableSizes = (product.stockBySizes && Object.keys(product.stockBySizes).length > 0)
+  const rawSizes = (product.stockBySizes && Object.keys(product.stockBySizes).length > 0)
     ? Object.keys(product.stockBySizes)
     : (product.sizes && product.sizes.length > 0)
       ? product.sizes
       : [];
+  const availableSizes = sortSizes(rawSizes);
 
   // Check for One Size ('TU')
   const isOneSize = availableSizes.length === 1 && availableSizes[0] === 'TU';
@@ -58,7 +83,11 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
       return 0;
     }
 
-    // LEGACY: Assume 0 if strict mode is on.
+    // LEGACY: If stockBySizes is missing but we have overall stock, assume available
+    if (product.stock > 0) {
+      return product.stock;
+    }
+
     return 0;
   };
 
@@ -66,12 +95,12 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      alert('Por favor, selecciona una talla');
+      alert(translations.selectSizeAlert);
       return;
     }
 
     if (selectedSizeStock <= 0) {
-      alert('Este producto está agotado');
+      alert(translations.outOfStockAlert);
       return;
     }
 
@@ -100,9 +129,9 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
       {!isOneSize && availableSizes.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-charcoal-700 mb-2">
-            Talla
+            {translations.size}
           </label>
-          <div className="flex flex-wrap gap-2 min-h-[46px]">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 min-h-[46px]">
             {!isMounted ? (
               // Skeleton for sizes
               [1, 2, 3, 4].map((i) => (
@@ -135,7 +164,7 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
                     <span className="text-sm uppercase tracking-tighter">{size}</span>
                     {!isOutOfStock && (
                       <span className={`text-[10px] mt-0.5 font-bold uppercase ${selectedSize === size ? 'text-white/80' : sizeStock <= 10 ? 'text-amber-600' : 'text-gray-500'}`}>
-                        {sizeStock} ud.
+                        {sizeStock} {translations.units}
                       </span>
                     )}
                     {isOutOfStock && (
@@ -156,7 +185,7 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
         <div className="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg">
           <p className="text-xs text-amber-950 font-black uppercase tracking-widest flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-amber-600 rounded-full animate-pulse"></span>
-            ¡Últimas {selectedSizeStock} unidades!
+            {translations.lastUnits.replace('{stock}', selectedSizeStock.toString())}
           </p>
         </div>
       )}
@@ -165,7 +194,7 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
         <div className="p-3 bg-amber-100 border border-amber-300 rounded-lg animate-in fade-in slide-in-from-top-1">
           <p className="text-xs text-amber-950 font-black uppercase tracking-widest flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-amber-600 rounded-full animate-pulse"></span>
-            ¡Casi agotado! Solo {selectedSizeStock} en {selectedSize}
+            {translations.almostSoldOut.replace('{stock}', selectedSizeStock.toString()).replace('{size}', selectedSize)}
           </p>
         </div>
       )}
@@ -174,17 +203,17 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
       {isNotYetAvailable ? (
         <button
           disabled
-          className="w-full py-5 px-6 font-black uppercase tracking-[0.2em] text-white bg-gray-400 cursor-not-allowed"
+          className="w-full py-5 px-6 font-mono font-black uppercase tracking-[0.2em] text-zinc-400 bg-zinc-100 cursor-not-allowed border-t border-zinc-200"
         >
-          🔒 Próximamente
+          [ SYSTEM_LOCKED ]
         </button>
       ) : (
         <button
           onClick={handleAddToCart}
-          disabled={isAdding || !selectedSize || selectedSizeStock <= 0}
+          disabled={isAdding || (availableSizes.length > 0 && !selectedSize) || (!!selectedSize && selectedSizeStock <= 0)}
           className={`
             w-full py-5 px-6 font-black uppercase tracking-[0.2em] text-white transition-all duration-300 shadow-xl
-            ${!selectedSize || selectedSizeStock <= 0
+            ${(availableSizes.length > 0 && !selectedSize) || (selectedSize && selectedSizeStock <= 0)
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
               : isAdding
                 ? 'bg-green-600 text-white scale-95'
@@ -192,13 +221,13 @@ export default function AddToCartButton({ product, isNotYetAvailable = false }: 
             }
           `}
         >
-          {!selectedSize
-            ? 'Selecciona tu talla'
+          {availableSizes.length > 0 && !selectedSize
+            ? translations.selectSizePrompt
             : selectedSizeStock <= 0
-              ? 'Agotado'
+              ? translations.outOfStock
               : isAdding
-                ? '¡Añadido!'
-                : 'Añadir al Carrito'
+                ? translations.added
+                : translations.addToCart
           }
         </button>
       )}

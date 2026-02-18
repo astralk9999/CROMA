@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error: any) {
-        console.error('Validation error:', error);
+        void 0('Validation error:', error);
         return new Response(JSON.stringify({ valid: false, error: error.message }), { status: 500 });
     }
 };

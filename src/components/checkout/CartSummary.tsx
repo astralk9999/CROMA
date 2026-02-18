@@ -73,12 +73,21 @@ export default function CartSummary() {
                 </div>
 
                 {discountAmount > 0 && (
-                    <div className="flex justify-between text-sm font-black text-red-600 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="flex justify-between items-center text-sm font-black text-red-600 animate-in fade-in slide-in-from-right-4 duration-300">
                         <span className="flex items-center gap-1 italic">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.707 9.293l-5-5a.997.997 0 00-1.414 0l-5 5A.999.999 0 007 11h1v1c0 2.761 2.239 5 5 5s5-2.239 5-5v-1h1a.999.999 0 00.707-1.707z"></path></svg>
                             DESCUENTO ({coupon?.code})
                         </span>
-                        <span>-{formatPrice(discountAmount)}</span>
+                        <span className="flex items-center gap-2">
+                            -{formatPrice(discountAmount)}
+                            <button
+                                onClick={() => appliedCoupon.set(null)}
+                                className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors text-xs font-bold"
+                                title="Quitar cupón"
+                            >
+                                ×
+                            </button>
+                        </span>
                     </div>
                 )}
 

@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     try {
-        const { target, subject, title, body, ctaLink, ctaText, productIds, showStock, couponId } = await request.json();
+        const { target, subject, title, body, ctaLink, ctaText, productIds, showStock, couponId, specificEmails } = await request.json();
 
         if (!target || !subject || !title || !body) {
             return new Response(JSON.stringify({ success: false, message: 'Missing required fields' }), { status: 400 });
@@ -29,6 +29,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (target === 'users' || target === 'all') {
             const { data: profiles } = await supabaseAdmin.from('profiles').select('email, first_name');
             if (profiles) recipients.push(...profiles.map(p => ({ email: p.email, name: p.first_name })));
+        }
+
+        if (target === 'specific' && specificEmails) {
+            const emailList = Array.isArray(specificEmails) ? specificEmails : specificEmails.split(',').map((e: string) => e.trim()).filter((e: string) => e.length > 0);
+            // Verify they are valid emails or just trust admin? Let's generic add.
+            // Optionally try to find names for these emails if they exist in profiles
+            const { data: existingProfiles } = await supabaseAdmin.from('profiles').select('email, first_name').in('email', emailList);
+
+            emailList.forEach((email: string) => {
+                const profile = existingProfiles?.find(p => p.email === email);
+                recipients.push({ email, name: profile?.first_name || 'Cliente' });
+            });
         }
 
         // De-duplicate emails, preferring user profile name if available

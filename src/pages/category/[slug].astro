@@ -5,7 +5,10 @@ import Sidebar from '@components/Sidebar.astro';
 import FavoritesGrid from '@components/islands/FavoritesGrid';
 import ProductGrid from '@components/islands/ProductGrid';
 import { supabase } from '@lib/supabase';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
 
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 const { slug } = Astro.params;
 
 // Normalize slug to handle double dashes or other variations
@@ -41,29 +44,45 @@ let filteredProducts: any[] = [];
 let showLoginPrompt = false;
 
 // Special Filtering Logic
-if (normalizedSlug === 'all') {
-  filteredProducts = allProducts;
-} else if (normalizedSlug === 'viral-trends') {
-  filteredProducts = allProducts.filter((p: any) => p.is_viral_trend === true);
-} else if (normalizedSlug === 'sale' || normalizedSlug === 'discounts' || normalizedSlug === 'rebajas') {
-  filteredProducts = allProducts.filter((p: any) => p.discount_active === true || (p.sale_price && p.sale_price < p.price));
-} else if (normalizedSlug === 'bestsellers') {
-  filteredProducts = allProducts.filter((p: any) => p.is_bestseller === true);
-} else if (normalizedSlug === 'limited-drops') {
-  filteredProducts = allProducts.filter((p: any) => p.is_limited_drop === true);
-} else if (normalizedSlug === 'coming-soon') {
-   const now = new Date();
-   filteredProducts = allProducts.filter((p: any) => p.launch_date && new Date(p.launch_date) > now);
-} else if (normalizedSlug === 'my-favorites') {
-   if (!user) {
-     showLoginPrompt = true;
+const specialCategories: Record<string, any> = {
+  'all': { name: t('nav.all'), desc: t('shop.category.description.generic').replace('{name}', t('nav.all')) },
+  'viral-trends': { name: t('nav.specials.viral'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.viral')) },
+  'limited-drops': { name: t('nav.specials.limited'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.limited')) },
+  'discounts': { name: t('nav.specials.discounts'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.discounts')) },
+  'sale': { name: t('nav.specials.discounts'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.discounts')) },
+  'rebajas': { name: t('nav.specials.discounts'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.discounts')) },
+  'coming-soon': { name: t('nav.specials.coming'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.coming')) },
+  'bestsellers': { name: t('nav.specials.bestsellers'), desc: t('shop.category.description.generic').replace('{name}', t('nav.specials.bestsellers')) },
+  'my-favorites': { name: t('nav.specials.favorites'), desc: t('shop.category.description.favorites') }
+};
+
+let description = '';
+
+if (specialCategories[normalizedSlug]) {
+  name = specialCategories[normalizedSlug].name;
+  description = specialCategories[normalizedSlug].desc;
+  
+  if (normalizedSlug === 'all') {
+    filteredProducts = allProducts;
+  } else if (normalizedSlug === 'viral-trends') {
+    filteredProducts = allProducts.filter((p: any) => p.is_viral_trend === true);
+  } else if (normalizedSlug === 'sale' || normalizedSlug === 'discounts' || normalizedSlug === 'rebajas') {
+    filteredProducts = allProducts.filter((p: any) => p.discount_active === true || (p.sale_price && p.sale_price < p.price));
+  } else if (normalizedSlug === 'bestsellers') {
+    filteredProducts = allProducts.filter((p: any) => p.is_bestseller === true);
+  } else if (normalizedSlug === 'limited-drops') {
+    filteredProducts = allProducts.filter((p: any) => p.is_limited_drop === true);
+  } else if (normalizedSlug === 'coming-soon') {
+     const now = new Date();
+     filteredProducts = allProducts.filter((p: any) => p.launch_date && new Date(p.launch_date) > now);
+  } else if (normalizedSlug === 'my-favorites') {
+     if (!user) {
+       showLoginPrompt = true;
+     }
      filteredProducts = [];
-   } else {
-     filteredProducts = [];
-   }
+  }
 } else {
   // Dynamic Category Lookup
-  // 1. Try to find the category in the DB by slug to get its exact Name
   const { data: categoryData } = await supabase
     .from('categories')
     .select('name')
@@ -71,12 +90,11 @@ if (normalizedSlug === 'all') {
     .single();
 
   if (categoryData) {
-      // If found, filter by the proper name (e.g. "CHAQUETAS")
       name = categoryData.name.toUpperCase();
+      description = t('shop.category.description.generic').replace('{name}', name);
       filteredProducts = allProducts.filter((p: any) => p.category === categoryData.name);
   } else {
-      // Fallback: try matching loosely or normalized
-      // This handles cases where maybe the URL slug matches the category name directly (legacy)
+      description = t('shop.category.description.generic').replace('{name}', name);
       filteredProducts = allProducts.filter((p: any) => 
         p.category === normalizedSlug || 
         p.category?.toLowerCase() === normalizedSlug.replace(/-/g, ' ')
@@ -89,6 +107,13 @@ const { data: colors } = await supabase
   .from('colors')
   .select('*')
   .order('name');
+
+const favoritesLabels = {
+  emptyTitle: t('favorites.empty_title'),
+  emptyText: t('favorites.empty_text'),
+  viewAll: t('favorites.view_all'),
+  loadingMessages: t('favorites.loading_messages') as unknown as string[]
+};
 ---
 
 <PublicLayout title={name}>
@@ -107,10 +132,10 @@ const { data: colors } = await supabase
                 <svg class="w-16 h-16 mx-auto mb-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <h2 class="text-2xl font-black text-gray-900 mb-3 uppercase tracking-tight condensed">INICIA SESIÓN PARA VER TUS FAVORITOS</h2>
-                <p class="text-gray-500 mb-8 font-medium">Guarda tus productos favoritos y accede a ellos en cualquier momento.</p>
+                <h2 class="text-2xl font-black text-gray-900 mb-3 uppercase tracking-tight condensed">{t('shop.filters.login_title')}</h2>
+                <p class="text-gray-500 mb-8 font-medium">{t('shop.filters.login_text')}</p>
                 <a href="/auth/login" class="inline-block bg-black text-white px-10 py-4 rounded-lg hover:bg-gray-800 transition-all font-black uppercase tracking-widest text-sm">
-                    Iniciar sesión
+                    {t('auth.login')}
                 </a>
             </div>
           </div>
@@ -118,7 +143,7 @@ const { data: colors } = await supabase
 
         {/* Favorites - Client Side Rendering */}
         {normalizedSlug === 'my-favorites' && user && (
-          <FavoritesGrid client:load allProducts={allProducts} />
+          <FavoritesGrid client:load allProducts={allProducts} labels={favoritesLabels} />
         )}
 
         {/* Products Grid - React Island with Filters */}
@@ -129,13 +154,35 @@ const { data: colors } = await supabase
                 client:load 
                 products={filteredProducts} 
                 categoryName={name}
-                description={normalizedSlug === 'my-favorites' ? 'Browse our latest collection of my favorites.' : `Browse our latest collection of ${name.toLowerCase()}.`}
+                description={description}
                 isFavoritesPage={normalizedSlug === 'my-favorites'}
                 availableColors={colors || []}
+                labels={{
+                  filterButton: t('shop.filters.filter_button'),
+                  sortBy: t('shop.filters.sort_by'),
+                  sortNewest: t('shop.filters.sort.newest'),
+                  sortPriceLow: t('shop.filters.sort.price_low'),
+                  sortPriceHigh: t('shop.filters.sort.price_high'),
+                  availability: t('shop.filters.availability'),
+                  inStockOnly: t('shop.filters.in_stock'),
+                  sizes: t('shop.filters.sizes'),
+                  priceRange: t('shop.filters.price_range'),
+                  colors: t('shop.filters.colors'),
+                  resetFilters: t('shop.filters.reset'),
+                  noResults: t('shop.filters.no_products'),
+                  newIn: t('product.badge.new'),
+                  loadingMessages: [
+                    t('shop.loading.curating'),
+                    t('shop.loading.syncing'),
+                    t('shop.loading.preparing'),
+                    t('shop.loading.details'),
+                    t('shop.loading.trends')
+                  ]
+                }}
               />
             ) : (
               <div class="text-center py-20">
-                <p class="text-xl text-gray-500">No products found for this category.</p>
+                <p class="text-xl text-gray-500">{t('shop.filters.no_products')}</p>
               </div>
             )}
           </div>

@@ -6,7 +6,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     const profile = locals.profile;
 
-    console.log(`[PROXY] Validando pedido para: ${user?.email} | Rol: ${profile?.role}`);
+    console.log('[PROX] Acceso:', user?.email);
 
     if (!user || profile?.role !== 'admin') {
         console.warn(`[PROXY] Acceso denegado a Pedidos. Usuario: ${user?.email}, Rol: ${profile?.role}`);
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }), { status: 400 });
         }
 
-        console.log(`[PROXY] Iniciando borrado de pedido: ${orderId}`);
+        console.log('[PROX] Iniciando borrado:', orderId);
 
         // 2. Execute Deletion via Admin RPC with Hard Bypass
         const { data, error } = await supabaseAdmin.rpc('admin_delete_order', {
@@ -48,14 +48,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
             return new Response(JSON.stringify(data), { status: 400 });
         }
 
-        console.log(`[PROXY] Borrado de pedido exitoso: ${orderId}`);
+        console.log('[PROX] Borrado exitoso:', orderId);
         return new Response(JSON.stringify({
             success: true,
             message: 'Pedido eliminado correctamente'
         }), { status: 200 });
 
     } catch (err: any) {
-        console.error('[PROXY] Error crítico en API de borrado de pedidos:', err);
+        console.error('[PROX] Error crítico:', err);
         return new Response(JSON.stringify({
             success: false,
             message: err.message || 'Error interno del servidor'

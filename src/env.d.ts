@@ -31,5 +31,6 @@ declare namespace App {
       created_at: string;
       updated_at: string;
     };
+    lang: 'es' | 'en';
   }
 }

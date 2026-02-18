@@ -107,15 +107,15 @@ export default function ConfirmationModal() {
 }
 
 // Global helper to trigger the modal
-export const confirmDialog = (title: string, message: string, variant: 'danger' | 'warning' | 'info' = 'info'): Promise<boolean> => {
+export const confirmDialog = (title: string, message: string, variant: 'danger' | 'warning' | 'info' = 'info', confirmText?: string, cancelText?: string): Promise<boolean> => {
     return new Promise((resolve) => {
         const event = new CustomEvent('open-confirm-modal', {
             detail: {
                 title,
                 message,
                 variant,
-                confirmText: 'Aceptar',
-                cancelText: 'Cancelar',
+                confirmText: confirmText || 'Aceptar',
+                cancelText: cancelText || 'Cancelar',
                 onConfirm: () => resolve(true),
                 onCancel: () => resolve(false)
             }

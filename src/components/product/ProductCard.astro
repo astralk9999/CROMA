@@ -1,6 +1,10 @@
 ---
 import { formatPrice } from '@lib/utils';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
 import FavoriteButton from '@components/islands/FavoriteButton';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 
 interface Props {
   product: {
@@ -37,7 +41,7 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
       {product.launch_date && new Date(product.launch_date) > new Date() && (
           <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
               <div class="bg-[#202020] text-white px-4 py-2 rounded-xl border border-white/20 shadow-2xl transform rotate-[-2deg]">
-                  <span class="text-[10px] font-black uppercase tracking-[0.2em]">Próximamente</span>
+                  <span class="text-[10px] font-black uppercase tracking-[0.2em]">{t('product.badge.soon')}</span>
               </div>
           </div>
       )}
@@ -48,34 +52,45 @@ const mainImage = product.images?.[0] || '/placeholder.jpg';
        {/* Discount / Sale / New In Badge (Black Box Style) */}
        {(product.discount_active || (product.sale_price && product.sale_price < product.price)) && (
            <div class="bg-[#202020] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
-               {product.discount_active && product.discount_percent ? `-${product.discount_percent}%` : 'SALE'}
+               {product.discount_active && product.discount_percent ? `-${product.discount_percent}%` : t('product.badge.sale')}
            </div>
        )}
        
        {/* Limited Drop */}
        {product.is_limited_drop && (
            <div class="bg-brand-red text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider animate-pulse inline-block">
-               LIMITED DROP
+               {t('product.badge.limited')}
            </div>
        )}
 
        {/* Viral */}
        {product.is_viral_trend && (
            <div class="bg-purple-600 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
-               VIRAL
+               {t('product.badge.viral')}
            </div>
        )}
        
        {/* Default New In context */}
        {!product.is_limited_drop && !product.discount_active && product.stock > 0 && (
            <div class="bg-[#202020] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider inline-block">
-               NEW IN
+               {t('product.badge.new')}
            </div>
        )}
     </div>
 
     {/* Favorite Icon - Top Right (Default style for consistency) */}
-    <FavoriteButton client:load productId={product.id} />
+    <FavoriteButton 
+      client:load 
+      productId={product.id} 
+      labels={{
+        title: t('shop.filters.login_title'),
+        text: t('shop.filters.login_text'),
+        login: t('auth.login'),
+        register: t('auth.register'),
+        ariaAdd: t('favorites.aria_add'),
+        ariaRemove: t('favorites.aria_remove')
+      }} 
+    />
   </div>
   
   <a href={`/productos/${product.slug}`} class="block pt-3 text-left">

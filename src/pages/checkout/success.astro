@@ -37,34 +37,36 @@ import PublicLayout from '@layouts/PublicLayout.astro';
 
 <script>
   import { cartItems } from '@stores/cart';
+  import { appliedCoupon } from '@stores/coupon';
   
-  // Clear cart immediately
+  // Clear cart and coupon immediately
   cartItems.set({});
+  appliedCoupon.set(null);
 
-  // Verify Payment Status (Self-healing for local/webhook failures)
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('session_id');
+  const orderId = urlParams.get('order_id');
 
+  // Show invoice button immediately if orderId is available
+  if (orderId) {
+      const container = document.getElementById('invoice-action');
+      if (container) {
+          container.classList.remove('hidden');
+          container.innerHTML = `
+              <a href="/invoices/${orderId}" target="_blank" 
+                 class="block w-full py-3 bg-gray-800 text-white font-semibold rounded-lg hover:bg-black transition-colors mb-4 flex items-center justify-center gap-2">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                 Descargar Factura
+              </a>
+          `;
+      }
+  }
+
+  // Verify payment in background (updates order status to 'processing')
   if (sessionId) {
       fetch(`/api/verify-session?session_id=${sessionId}`)
           .then(res => res.json())
-          .then(data => {
-              console.log("Payment verification status:", data.status);
-              
-              if (data.orderId) {
-                  const container = document.getElementById('invoice-action');
-                  if (container) {
-                      container.classList.remove('hidden');
-                      container.innerHTML = `
-                          <a href="/invoices/${data.orderId}" target="_blank" 
-                             class="block w-full py-3 bg-gray-800 text-white font-semibold rounded-lg hover:bg-black transition-colors mb-4 flex items-center justify-center gap-2">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                             Descargar Factura
-                          </a>
-                      `;
-                  }
-              }
-          })
+          .then(data => console.log("Payment verified:", data.status))
           .catch(err => console.error("Verification failed:", err));
   }
 </script>

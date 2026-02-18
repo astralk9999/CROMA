@@ -7,15 +7,33 @@ import { supabase } from '@lib/supabase';
 interface FavoriteButtonProps {
     productId: string;
     variant?: 'default' | 'red-circle';
+    labels?: {
+        title: string;
+        text: string;
+        login: string;
+        register: string;
+        ariaAdd: string;
+        ariaRemove: string;
+    };
 }
 
-export default function FavoriteButton({ productId, variant = 'default' }: FavoriteButtonProps) {
+export default function FavoriteButton({ productId, variant = 'default', labels }: FavoriteButtonProps) {
     const [mounted, setMounted] = useState(false);
     const favorites = useStore(localFavorites);
     const isReady = useStore(storeReady);
     const isFavorited = favorites.includes(productId);
     const [isAnimating, setIsAnimating] = useState(false);
     const [showLoginPopup, setShowLoginPopup] = useState(false);
+
+    // Fallback labels
+    const text = labels || {
+        title: '¡Guarda tus favoritos!',
+        text: 'Inicia sesión para guardar tus productos favoritos y acceder a ellos desde cualquier dispositivo.',
+        login: 'Iniciar Sesión',
+        register: 'Crear Cuenta',
+        ariaAdd: 'Add to favorites',
+        ariaRemove: 'Remove from favorites'
+    };
 
     useEffect(() => {
         setMounted(true);
@@ -25,41 +43,19 @@ export default function FavoriteButton({ productId, variant = 'default' }: Favor
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('[FavoriteButton] Click detected for product:', productId);
-
-        if (!mounted) {
-            console.log('[FavoriteButton] Not mounted yet');
-            return;
-        }
+        if (!mounted) return;
 
         try {
-            // Check auth on click
             const { data: { session }, error: authError } = await supabase.auth.getSession();
-
-            if (authError) {
-                console.error('[FavoriteButton] Auth check error:', authError);
-                // Fallback to showing login popup if we can't verify session
+            if (authError || !session) {
                 setShowLoginPopup(true);
                 return;
             }
 
-            console.log('[FavoriteButton] Session status:', !!session);
-
-            if (!session) {
-                console.log('[FavoriteButton] No active session, triggering popup');
-                setShowLoginPopup(true);
-                return;
-            }
-
-            // If we have a session, proceed with toggle
             setIsAnimating(true);
             await toggleFavorite(productId);
             setTimeout(() => setIsAnimating(false), 300);
-
         } catch (error) {
-            console.error('[FavoriteButton] Unexpected error in handleToggle:', error);
-            // On unexpected error, it's safer to show the login popup or a generic error
-            // For now, ensuring the user gets some feedback
             setShowLoginPopup(true);
         }
     };
@@ -70,7 +66,6 @@ export default function FavoriteButton({ productId, variant = 'default' }: Favor
         setShowLoginPopup(false);
     };
 
-    // Portal for popup to ensure it renders at body level
     const popupPortal = showLoginPopup && mounted ? createPortal(
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -96,25 +91,25 @@ export default function FavoriteButton({ productId, variant = 'default' }: Favor
                 </div>
 
                 <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
-                    ¡Guarda tus favoritos!
+                    {text.title}
                 </h3>
 
-                <p className="text-gray-600 mb-6">
-                    Inicia sesión para guardar tus productos favoritos y acceder a ellos desde cualquier dispositivo.
+                <p className="text-gray-600 mb-6 text-sm">
+                    {text.text}
                 </p>
 
                 <div className="space-y-3">
                     <a
                         href="/auth/login"
-                        className="block w-full py-3 px-6 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors uppercase tracking-wider"
+                        className="block w-full py-3 px-6 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm"
                     >
-                        Iniciar Sesión
+                        {text.login}
                     </a>
                     <a
                         href="/auth/register"
-                        className="block w-full py-3 px-6 border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:border-black hover:text-black transition-colors uppercase tracking-wider"
+                        className="block w-full py-3 px-6 border-2 border-gray-200 text-gray-700 font-bold rounded-lg hover:border-black hover:text-black transition-colors uppercase tracking-wider text-sm"
                     >
-                        Crear Cuenta
+                        {text.register}
                     </a>
                 </div>
 
@@ -142,7 +137,7 @@ export default function FavoriteButton({ productId, variant = 'default' }: Favor
                 onClick={handleToggle}
                 disabled={!mounted}
                 className={`${buttonClasses} ${isAnimating ? 'scale-125' : 'scale-100'} ${!mounted ? 'opacity-50 cursor-wait' : ''}`}
-                aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-label={isFavorited ? text.ariaRemove : text.ariaAdd}
             >
                 <svg
                     className="w-5 h-5"

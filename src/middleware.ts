@@ -5,6 +5,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const { request, redirect, cookies } = context;
   const url = new URL(request.url);
 
+  // Language Detection
+  const langCookie = cookies.get('preferred_language')?.value;
+  context.locals.lang = (langCookie === 'en' ? 'en' : 'es');
+
   // Get user session for all pages
   const accessToken = cookies.get('sb-access-token')?.value;
   const refreshToken = cookies.get('sb-refresh-token')?.value;
@@ -32,22 +36,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
           .single();
 
         if (profileError) {
-          console.error('[Middleware] Profile Fetch Error:', profileError.message);
+          console.log('[Middleware] Profile Fetch Error:', profileError.message);
         }
 
         context.locals.user = user;
         context.locals.profile = profile;
 
-        if (profile) {
+        /* if (profile) {
           console.log(`[Middleware] Auth Success: ${user.email} (${profile.role})`);
-        }
+        } */
       } else if (error) {
         // Clear invalid cookies
         cookies.delete('sb-access-token', { path: '/' });
         cookies.delete('sb-refresh-token', { path: '/' });
       }
     } catch (error) {
-      console.error('Middleware auth connection error:', error);
+      console.log('Middleware auth connection error:', error);
     }
   }
 

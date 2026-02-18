@@ -1,22 +1,24 @@
 ---
 import PublicLayout from '@layouts/PublicLayout.astro';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 ---
 
-<PublicLayout title="Communication Protocol - CROMA">
+<PublicLayout title={t('contact.title')}>
   <div class="container-custom py-24 min-h-[60vh]">
     <div class="max-w-5xl mx-auto">
         <!-- Header Section -->
         <header class="mb-32">
             <div class="flex items-center gap-4 mb-8">
-                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">COMMS_LINK_V1</span>
+                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">{t('contact.header.tag')}</span>
                 <div class="h-[2px] flex-1 bg-black/10"></div>
             </div>
-            <h1 class="text-7xl md:text-[10rem] font-urban font-black uppercase tracking-tighter text-black leading-[0.75] mb-12">
-                GET IN<br/>
-                <span class="text-zinc-300">TOUCH</span>
+            <h1 class="text-7xl md:text-[10rem] font-urban font-black uppercase tracking-tighter text-black leading-[0.75] mb-12" set:html={t('contact.header.title').replace(' ', '<br/>')}>
             </h1>
             <p class="text-xl font-urban font-bold uppercase tracking-tight leading-tight text-zinc-500 max-w-2xl">
-                ESTABLECE CONTACTO DIRECTO CON NUESTROS DEPARTAMENTOS. RESPUESTAS TÉCNICAS Y COMERCIALES BAJO DEMANDA.
+                {t('contact.header.subtitle')}
             </p>
         </header>
 
@@ -24,51 +26,51 @@ import PublicLayout from '@layouts/PublicLayout.astro';
         <div class="grid md:grid-cols-3 gap-1 border-4 border-black bg-black rounded-[3rem] overflow-hidden mb-32">
             <div class="p-12 bg-white flex flex-col justify-between group hover:bg-zinc-50 transition-colors h-[400px]">
                 <div>
-                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">CH_01 // SUPPORT</span>
-                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">SOPORTE TÉCNICO</h3>
+                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">{t('contact.ch1.tag')}</span>
+                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">{t('contact.ch1.title')}</h3>
                     <p class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em] leading-relaxed">
-                        CONSULTAS SOBRE PEDIDOS, ENVÍOS, DEVOLUCIONES O INCIDENCIAS CON EL PRODUCTO.
+                        {t('contact.ch1.desc')}
                     </p>
                 </div>
                 <div>
                     <p class="text-lg font-black mb-2">support@croma.fashion</p>
-                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">Mon-Fri // 09:00 - 18:00 CET</p>
+                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">{t('contact.ch1.metadata')}</p>
                 </div>
             </div>
 
             <div class="p-12 bg-white flex flex-col justify-between group hover:bg-zinc-50 transition-colors h-[400px]">
                 <div>
-                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">CH_02 // BUSINESS</span>
-                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">RETAIL & VENTAS</h3>
+                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">{t('contact.ch2.tag')}</span>
+                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">{t('contact.ch2.title')}</h3>
                     <p class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em] leading-relaxed">
-                        OPORTUNIDADES DE DISTRIBUCIÓN, RETAIL Y COLABORACIONES B2B.
+                        {t('contact.ch2.desc')}
                     </p>
                 </div>
                 <div>
                     <p class="text-lg font-black mb-2">sales@croma.fashion</p>
-                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">RESPONSE_TIME &lt; 24H</p>
+                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">{t('contact.ch2.metadata')}</p>
                 </div>
             </div>
 
             <div class="p-12 bg-white flex flex-col justify-between group hover:bg-zinc-50 transition-colors h-[400px]">
                 <div>
-                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">CH_03 // PRESS</span>
-                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">PRENSA & MEDIA</h3>
+                    <span class="text-[10px] font-mono font-black text-zinc-300 group-hover:text-black mb-10 block transition-colors">{t('contact.ch3.tag')}</span>
+                    <h3 class="text-3xl font-black uppercase tracking-tighter mb-6 italic">{t('contact.ch3.title')}</h3>
                     <p class="text-xs font-bold text-zinc-400 uppercase tracking-[0.2em] leading-relaxed">
-                        RECURSOS PARA MEDIOS, SOLICITUDES DE ENTREVISTAS Y BRAND ASSETS.
+                        {t('contact.ch3.desc')}
                     </p>
                 </div>
                 <div>
                     <p class="text-lg font-black mb-2">press@croma.fashion</p>
-                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">GLOBAL_COMMUNICATIONS</p>
+                    <p class="text-[10px] font-mono font-black text-zinc-400 uppercase">{t('contact.ch3.metadata')}</p>
                 </div>
             </div>
         </div>
 
         <!-- Footer Link -->
         <div class="text-center py-20 border-t-2 border-black">
-            <h4 class="text-sm font-black uppercase tracking-[0.5em] text-zinc-400 mb-8 italic">FIN_DEL_PROTOCOLO</h4>
-            <a href="/" class="inline-block px-12 py-5 border-4 border-black font-black uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-all">REGRESAR_AL_INICIO</a>
+            <h4 class="text-sm font-black uppercase tracking-[0.5em] text-zinc-400 mb-8 italic">{t('contact.footer.end')}</h4>
+            <a href="/" class="inline-block px-12 py-5 border-4 border-black font-black uppercase tracking-widest text-sm hover:bg-black hover:text-white transition-all">{t('contact.footer.back')}</a>
         </div>
     </div>
   </div>

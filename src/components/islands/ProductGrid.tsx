@@ -31,45 +31,40 @@ interface ProductGridProps {
     description?: string;
     isFavoritesPage?: boolean;
     availableColors?: Color[];
+    labels?: {
+        filterButton: string;
+        sortBy: string;
+        sortNewest: string;
+        sortPriceLow: string;
+        sortPriceHigh: string;
+        availability: string;
+        inStockOnly: string;
+        sizes: string;
+        priceRange: string;
+        colors: string;
+        resetFilters: string;
+        noResults: string;
+        newIn: string;
+        loadingMessages: string[];
+    };
 }
-
-const MESSAGES = [
-    'Curando tu estilo...',
-    'Sincronizando la colección...',
-    'Preparando lo último de CROMA...',
-    'Ajustando los detalles...',
-    'Trayendo la tendencia...',
-    'Desplegando moda urbana...',
-    'Cargando piezas exclusivas...',
-    'Conectando con el Streetwear...',
-    'Escaneando el hype...',
-    'Desbloqueando el próximo drop...',
-    'Sintonizando la cultura urban...',
-    'Preparando la cápsula CROMA...',
-    'Tejiendo el futuro del estilo...',
-    'Definiendo tu estética...',
-    'Buscando inspiración en las calles...',
-    'Filtros de estilo activados...',
-    'La ciudad es tu pasarela...',
-    'Elevando tu outfit...',
-    'Moda con actitud y propósito...',
-    'Cargando el outfit perfecto...'
-];
 
 export default function ProductGrid({
     products,
     categoryName = 'COLLECTION',
     description,
     isFavoritesPage = false,
-    availableColors = []
+    availableColors = [],
+    labels
 }: ProductGridProps) {
     const safeProducts = products ?? [];
+    const messages = labels?.loadingMessages || ['Cargando...'];
 
     const [isMounted, setIsMounted] = useState(false);
     const [showContent, setShowContent] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState(() =>
-        MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
+        messages[Math.floor(Math.random() * messages.length)]
     );
 
     // Filter States
@@ -84,7 +79,7 @@ export default function ProductGrid({
             setLoadingMessage(prev => {
                 let next;
                 do {
-                    next = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+                    next = messages[Math.floor(Math.random() * messages.length)];
                 } while (next === prev);
                 return next;
             });
@@ -99,7 +94,7 @@ export default function ProductGrid({
             clearInterval(messageInterval);
             clearTimeout(mountTimer);
         };
-    }, []);
+    }, [messages]);
 
     // Extract unique sizes from products for the filter UI
     const allAvailableSizes = useMemo(() => {
@@ -125,12 +120,10 @@ export default function ProductGrid({
     const filteredProducts = useMemo(() => {
         let result = [...safeProducts];
 
-        // Stock Filter
         if (hideOutOfStock) {
             result = result.filter(p => p.stock > 0);
         }
 
-        // Price Filter
         result = result.filter(p => {
             const finalPrice = p.discount_active
                 ? p.price * (1 - (p.discount_percent || 0) / 100)
@@ -138,14 +131,12 @@ export default function ProductGrid({
             return finalPrice <= maxPrice;
         });
 
-        // Color Filter
         if (selectedColors.length > 0) {
             result = result.filter(p =>
                 p.colors && p.colors.some(c => selectedColors.includes(c))
             );
         }
 
-        // Size Filter
         if (selectedSizes.length > 0) {
             result = result.filter(p => {
                 if (!p.stock_by_sizes) return false;
@@ -153,7 +144,6 @@ export default function ProductGrid({
             });
         }
 
-        // Sorting
         switch (sortOption) {
             case 'price-low':
                 result.sort((a, b) => {
@@ -169,7 +159,6 @@ export default function ProductGrid({
                     return priceB - priceA;
                 });
                 break;
-            case 'newest':
             default:
                 break;
         }
@@ -205,7 +194,6 @@ export default function ProductGrid({
 
     return (
         <div className="relative min-h-[400px]">
-            {/* Header with Filter Toggle */}
             <div className="mb-8 pb-4 border-b border-gray-200 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-urban font-bold text-gray-900 mb-2 uppercase">{categoryName}</h1>
@@ -217,7 +205,7 @@ export default function ProductGrid({
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                         className={`group px-5 py-2.5 border border-black/10 rounded-full font-bold uppercase tracking-[0.15em] text-[10px] transition-all flex items-center gap-3 ${isFilterOpen ? 'bg-[#202020] text-white border-black' : 'bg-white text-black hover:border-black/30 shadow-sm hover:shadow-md'}`}
                     >
-                        <span className="opacity-80">FILTER</span>
+                        <span className="opacity-80">{labels?.filterButton || 'FILTER'}</span>
                         <div className={`flex flex-col gap-0.5 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`}>
                             <div className={`h-[1px] w-3 bg-current transition-all ${isFilterOpen ? 'translate-y-1 rotate-45' : ''}`}></div>
                             {!isFilterOpen && <div className="h-[1px] w-2 bg-current ml-auto"></div>}
@@ -227,21 +215,19 @@ export default function ProductGrid({
                 )}
             </div>
 
-            {/* Filter Panel */}
             <div className={`overflow-hidden transition-all duration-500 ease-in-out bg-white border-b border-gray-100 mb-12 ${isFilterOpen ? 'max-h-[1600px] opacity-100 py-10' : 'max-h-0 opacity-0'}`}>
                 <div className="grid grid-cols-1 md:grid-cols-4 md:divide-x md:divide-gray-100 gap-y-12 md:gap-x-0">
-                    {/* Sort & Availability */}
                     <div className="space-y-10 pb-10 border-b border-gray-100 md:border-b-0 md:pb-0 md:pr-10">
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-6 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                                SORT BY
+                                {labels?.sortBy || 'SORT BY'}
                             </h4>
                             <div className="flex flex-col gap-4">
                                 {[
-                                    { id: 'newest', label: 'MOST RECENT' },
-                                    { id: 'price-low', label: 'PRICE: LOW TO HIGH' },
-                                    { id: 'price-high', label: 'PRICE: HIGH TO LOW' }
+                                    { id: 'newest', label: labels?.sortNewest || 'MOST RECENT' },
+                                    { id: 'price-low', label: labels?.sortPriceLow || 'PRICE: LOW TO HIGH' },
+                                    { id: 'price-high', label: labels?.sortPriceHigh || 'PRICE: HIGH TO LOW' }
                                 ].map(opt => (
                                     <button
                                         key={opt.id}
@@ -257,7 +243,7 @@ export default function ProductGrid({
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-6 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                                AVAILABILITY
+                                {labels?.availability || 'AVAILABILITY'}
                             </h4>
                             <label className="flex items-center gap-3 cursor-pointer group">
                                 <div className="relative w-10 h-5 bg-gray-100 rounded-full transition-colors group-hover:bg-gray-200">
@@ -269,16 +255,15 @@ export default function ProductGrid({
                                     />
                                     <div className={`absolute top-1 left-1 w-3 h-3 rounded-full transition-all ${hideOutOfStock ? 'translate-x-5 bg-black' : 'bg-gray-400'}`}></div>
                                 </div>
-                                <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600">In Stock Only</span>
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600">{labels?.inStockOnly || 'In Stock Only'}</span>
                             </label>
                         </div>
                     </div>
 
-                    {/* Size Selector */}
                     <div className="md:col-span-1 px-0 md:px-10 border-b border-gray-100 pb-10 md:border-b-0 md:pb-0">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-6 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                            SIZES
+                            {labels?.sizes || 'SIZES'}
                         </h4>
                         <div className="grid grid-cols-4 md:grid-cols-3 gap-2">
                             {allAvailableSizes.map(size => (
@@ -293,11 +278,10 @@ export default function ProductGrid({
                         </div>
                     </div>
 
-                    {/* Price range */}
                     <div className="md:col-span-1 px-0 md:px-10 border-b border-gray-100 pb-10 md:border-b-0 md:pb-0">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-6 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                            PRICE RANGE
+                            {labels?.priceRange || 'PRICE RANGE'}
                         </h4>
                         <div className="relative pt-2">
                             <input
@@ -318,11 +302,10 @@ export default function ProductGrid({
                         </div>
                     </div>
 
-                    {/* Colors */}
                     <div className="pl-0 md:pl-10">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 mb-6 flex items-center gap-2">
                             <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                            COLORS
+                            {labels?.colors || 'COLORS'}
                         </h4>
                         <div className="flex flex-wrap gap-3">
                             {availableColors.map(color => (
@@ -341,14 +324,13 @@ export default function ProductGrid({
                                 className="mt-8 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-black flex items-center gap-1 group"
                             >
                                 <span className="text-lg leading-none group-hover:rotate-90 transition-transform">×</span>
-                                RESET FILTERS
+                                {labels?.resetFilters || 'RESET FILTERS'}
                             </button>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Loading Overlay */}
             <div className={`absolute inset-0 z-20 pointer-events-none transition-opacity duration-500 ease-in-out ${showContent ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="sticky top-[40vh] flex flex-col items-center justify-center">
                     <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
@@ -369,7 +351,6 @@ export default function ProductGrid({
                 </div>
             </div>
 
-            {/* Real Content */}
             {isMounted && (
                 <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10 transition-all duration-700 ease-out ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                     {filteredProducts.map((product: any) => {
@@ -398,7 +379,7 @@ export default function ProductGrid({
                                     </a>
                                     {product.stock > 0 && !hasDiscount && (
                                         <div className="absolute bottom-2 left-2 pointer-events-none bg-[#202020] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-                                            New In
+                                            {labels?.newIn || 'New In'}
                                         </div>
                                     )}
                                     <FavoriteButton productId={product.id} />
@@ -441,7 +422,7 @@ export default function ProductGrid({
 
             {filteredProducts.length === 0 && showContent && (
                 <div className="text-center py-20 bg-gray-50 border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 font-black uppercase tracking-widest text-xs">NO_RESULTS_FOUND_FOR_CRITERIA</p>
+                    <p className="text-gray-400 font-black uppercase tracking-widest text-xs">{labels?.noResults || 'NO_RESULTS_FOUND'}</p>
                 </div>
             )}
         </div>

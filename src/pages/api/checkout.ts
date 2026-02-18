@@ -202,7 +202,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
-            success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
             cancel_url: `${origin}/checkout/cancel`,
             customer_email: customerEmail,
             metadata: {

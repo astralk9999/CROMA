@@ -6,7 +6,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     const profile = locals.profile;
 
-    console.log(`[PROXY] Validando acceso para: ${user?.email} | Rol en Locals: ${profile?.role}`);
+    console.log('[PROX] Validando para:', user?.email);
 
     if (!user || profile?.role !== 'admin') {
         console.warn(`[PROXY] Acceso denegado. Usuario: ${user?.email}, Rol: ${profile?.role}`);
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }), { status: 400 });
         }
 
-        console.log(`[PROXY] Iniciando borrado de producto: ${productId}`);
+        console.log('[PROX] Iniciando borrado:', productId);
 
         // 2. Execute Deletion via Admin RPC with Hard Bypass
         const { data, error } = await supabaseAdmin.rpc('admin_delete_product', {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
 
         if (error) {
-            console.error(`[PROXY] Error RPC Supabase:`, error);
+            console.error('Error deleting product:', error);
             return new Response(JSON.stringify({
                 success: false,
                 message: error.message || 'Error en la comunicación con la base de datos'
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             return new Response(JSON.stringify(data), { status: 400 });
         }
 
-        console.log(`[PROXY] Borrado exitoso: ${productId}`);
+        console.log('[PROX] Borrado exitoso:', productId);
         return new Response(JSON.stringify({
             success: true,
             message: 'Producto eliminado correctamente'

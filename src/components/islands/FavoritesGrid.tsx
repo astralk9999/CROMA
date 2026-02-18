@@ -14,39 +14,24 @@ interface Product {
 
 interface FavoritesGridProps {
     allProducts: Product[];
+    labels?: {
+        emptyTitle: string;
+        emptyText: string;
+        viewAll: string;
+        loadingMessages: string[];
+    };
 }
 
-const MESSAGES = [
-    'Curando tu estilo...',
-    'Sincronizando la colección...',
-    'Preparando lo último de CROMA...',
-    'Ajustando los detalles...',
-    'Trayendo la tendencia...',
-    'Desplegando moda urbana...',
-    'Cargando piezas exclusivas...',
-    'Conectando con el Streetwear...',
-    'Escaneando el hype...',
-    'Desbloqueando el próximo drop...',
-    'Sintonizando la cultura urban...',
-    'Preparando la cápsula CROMA...',
-    'Tejiendo el futuro del estilo...',
-    'Definiendo tu estética...',
-    'Buscando inspiración en las calles...',
-    'Filtros de estilo activados...',
-    'La ciudad es tu pasarela...',
-    'Elevando tu outfit...',
-    'Moda con actitud y propósito...',
-    'Cargando el outfit perfecto...'
-];
-
-export default function FavoritesGrid({ allProducts }: FavoritesGridProps) {
+export default function FavoritesGrid({ allProducts, labels }: FavoritesGridProps) {
     const favorites = useStore(localFavorites);
     const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
     const [isMounted, setIsMounted] = useState(false);
     const [showContent, setShowContent] = useState(false);
 
+    const messages = labels?.loadingMessages || ['Cargando...'];
+
     const [loadingMessage, setLoadingMessage] = useState(() =>
-        MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
+        messages[Math.floor(Math.random() * messages.length)]
     );
 
     useEffect(() => {
@@ -54,7 +39,7 @@ export default function FavoritesGrid({ allProducts }: FavoritesGridProps) {
             setLoadingMessage(prev => {
                 let next;
                 do {
-                    next = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+                    next = messages[Math.floor(Math.random() * messages.length)];
                 } while (next === prev);
                 return next;
             });
@@ -114,10 +99,10 @@ export default function FavoritesGrid({ allProducts }: FavoritesGridProps) {
                             <div className="w-20 h-20 mx-auto mb-6 bg-gray-50 rounded-full flex items-center justify-center">
                                 <img src="/brand/logo_c_horns.png" alt="" className="w-10 h-10 object-contain opacity-20" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">No tienes favoritos aún</h2>
-                            <p className="text-gray-600 mb-6">Explora nuestros productos y añade tus favoritos haciendo clic en el corazón.</p>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">{labels?.emptyTitle || 'No tienes favoritos aún'}</h2>
+                            <p className="text-gray-600 mb-6">{labels?.emptyText || 'Explora nuestros productos y añade tus favoritos haciendo clic en el corazón.'}</p>
                             <a href="/category/all" className="inline-block bg-black text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-all font-bold uppercase tracking-widest text-xs">
-                                Ver todos los productos
+                                {labels?.viewAll || 'Ver todos los productos'}
                             </a>
                         </div>
                     ) : (

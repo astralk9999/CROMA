@@ -11,12 +11,29 @@ interface Product {
     images: string[];
 }
 
-export default function SearchWidget() {
+interface SearchWidgetProps {
+    labels?: {
+        placeholder: string;
+        searching: string;
+        notFound: string;
+        allResults: string;
+        suggestions: string;
+        products: string;
+        trending: string;
+        tags: string[];
+    };
+}
+
+export default function SearchWidget({ labels }: SearchWidgetProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+
+    // Default tags if none provided
+    const defaultTags = ['Jackets', 'T-Shirts', 'Black', 'Hoodie'];
+    const displayTags = labels?.tags || defaultTags;
 
     // Close on click outside
     useEffect(() => {
@@ -35,61 +52,54 @@ export default function SearchWidget() {
             if (query.trim().length > 2) {
                 setLoading(true);
                 try {
-                    // Strategy: Try RPC first, fallback to Client Query
-                    let dbProducts: Product[] = [];
-                    let hasDbError = false;
+                    const searchTerm = query.trim().toLowerCase();
 
-                    // Helper for fetching with timeout
-                    const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
-                        return Promise.race([
-                            promise,
-                            new Promise((_, reject) =>
-                                setTimeout(() => reject(new Error('Timeout')), timeoutMs)
-                            )
-                        ]);
-                    };
+                    // Search across name, description, category slug, and brand
+                    const { data, error } = await supabase
+                        .from('products')
+                        .select('id, name, slug, price, images, category, brand, colors, categories(name)')
+                        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`)
+                        .limit(10);
 
-                    try {
-                        // Directly use Client-Side Query (RPC is unreliable/outdated)
-                        // console.log("Searching for:", query);
+                    let products: Product[] = [];
 
-                        const { data, error } = await withTimeout(
-                            (async () => await supabase
-                                .from('products')
-                                .select('id, name, slug, price, category_id, images, categories(name)')
-                                .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-                                .range(0, 5))(),
-                            3000 // Increased timeout slightly
-                        ) as any;
+                    if (!error && data) {
+                        products = data.map((p: any) => ({
+                            id: p.id,
+                            name: p.name,
+                            slug: p.slug,
+                            price: p.price,
+                            category: Array.isArray(p.categories)
+                                ? p.categories[0]?.name
+                                : p.categories?.name || p.category || 'Producto',
+                            images: p.images || []
+                        }));
+                    }
 
-                        if (!error && data) {
-                            dbProducts = data.map((p: any) => ({
+                    // If no results yet, try searching by color (array contains)
+                    if (products.length === 0) {
+                        const { data: colorData, error: colorError } = await supabase
+                            .from('products')
+                            .select('id, name, slug, price, images, category, brand, colors, categories(name)')
+                            .contains('colors', [searchTerm])
+                            .limit(10);
+
+                        if (!colorError && colorData) {
+                            products = colorData.map((p: any) => ({
                                 id: p.id,
                                 name: p.name,
                                 slug: p.slug,
                                 price: p.price,
-                                // Handle the joined category data safely (it might be an array or object)
                                 category: Array.isArray(p.categories)
                                     ? p.categories[0]?.name
-                                    : p.categories?.name || 'Producto',
+                                    : p.categories?.name || p.category || 'Producto',
                                 images: p.images || []
                             }));
-                        } else {
-                            // If no data or error, just show empty
-                            // console.warn("Search error or no data:", error);
                         }
-                    } catch (err: any) {
-                        console.error("Search processing error:", err?.message || err);
-                        hasDbError = true;
                     }
 
-                    if (!hasDbError && dbProducts.length > 0) {
-                        setResults(dbProducts);
-                    } else {
-                        setResults([]);
-                    }
+                    setResults(products);
                 } catch (err) {
-                    console.error("Critical search failure:", err);
                     setResults([]);
                 } finally {
                     setLoading(false);
@@ -133,7 +143,7 @@ export default function SearchWidget() {
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Buscar productos, colores..."
+                                placeholder={labels?.placeholder || "Buscar productos, colores..."}
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all"
                                 autoFocus
                             />
@@ -155,15 +165,15 @@ export default function SearchWidget() {
                                         <img src="/brand/logo_c_horns.png" alt="Loading" className="w-full h-auto object-contain" />
                                     </div>
                                 </div>
-                                <p className="font-medium text-gray-900">Buscando productos...</p>
+                                <p className="font-medium text-gray-900">{labels?.searching || "Buscando productos..."}</p>
                             </div>
                         ) : query.length > 2 && results.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">
-                                <p>No encontramos nada para "{query}"</p>
+                                <p>{labels?.notFound || "No encontramos nada para"} "{query}"</p>
                             </div>
                         ) : results.length > 0 ? (
                             <div>
-                                <h3 className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50">Productos</h3>
+                                <h3 className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50">{labels?.products || "Productos"}</h3>
                                 {results.map(product => (
                                     <a
                                         key={product.id}
@@ -183,14 +193,14 @@ export default function SearchWidget() {
                                     </a>
                                 ))}
                                 <a href={`/search?q=${query}`} className="block p-3 text-center text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-50 transition-colors border-t border-gray-100">
-                                    Ver todos los resultados
+                                    {labels?.allResults || "Ver todos los resultados"}
                                 </a>
                             </div>
                         ) : (
                             <div className="p-4">
-                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sugerencias</h3>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{labels?.suggestions || "Sugerencias"}</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {['Jackets', 'T-Shirts', 'Black', 'Hoodie'].map(tag => (
+                                    {displayTags.map(tag => (
                                         <button
                                             key={tag}
                                             onClick={() => setQuery(tag)}

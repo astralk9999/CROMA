@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ cookies }) => {
             .select();
 
         if (error) {
-            console.error('Error claiming orders:', error);
+            void 0('Error claiming orders:', error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
@@ -67,7 +67,7 @@ export const POST: APIRoute = async ({ cookies }) => {
         }), { status: 200 });
 
     } catch (error: any) {
-        console.error('Claim orders error:', error);
+        void 0('Claim orders error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

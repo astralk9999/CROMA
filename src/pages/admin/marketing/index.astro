@@ -11,11 +11,7 @@ const { count: userCount } = await supabaseAdmin
   .from('profiles')
   .select('*', { count: 'exact', head: true });
 
-// Fetch all products for selection
-const { data: allProducts } = await supabaseAdmin
-  .from('products')
-  .select('id, name, price, stock, images')
-  .order('created_at', { ascending: false });
+// Products are now fetched async via /api/admin/search-products
 
 // Fetch campaign history
 const { data: history } = await supabaseAdmin
@@ -31,18 +27,24 @@ const { data: coupons } = await supabaseAdmin
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
-const safeProducts = allProducts || [];
 const safeCoupons = coupons || [];
+
+// Fetch categories for filter
+const { data: categories } = await supabaseAdmin
+    .from('categories')
+    .select('id, name')
+    .order('name');
+const safeCategories = categories || [];
 ---
 
-<AdminLayout title="Marketing Protocol 2.0" activeSection="marketing">
+<AdminLayout title="Protocolo Marketing 2.0" activeSection="marketing">
   <div class="max-w-[1600px] mx-auto px-4 lg:px-10 pb-20">
     
     <!-- Header Architecture -->
     <div class="mb-12 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 overflow-hidden">
         <div class="animate-in fade-in slide-in-from-left duration-700 min-w-0 flex-1">
             <div class="flex items-center gap-3 mb-4">
-                <span class="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 tracking-[0.2em] uppercase flex-shrink-0">SYSTEM_ACTIVE</span>
+                <span class="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 tracking-[0.2em] uppercase flex-shrink-0">SISTEMA_ACTIVO</span>
                 <div class="flex gap-1.5">
                     <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
                     <span class="w-1.5 h-1.5 bg-zinc-800 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
@@ -58,10 +60,10 @@ const safeCoupons = coupons || [];
         
         <div class="flex flex-row gap-4 w-full lg:w-auto animate-in fade-in slide-in-from-right duration-700 flex-shrink-0">
             <div class="bg-white p-6 rounded-3xl border border-black/5 shadow-inner min-w-[170px] flex-1 lg:flex-none">
-                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Audience</p>
+                <p class="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Audiencia</p>
                 <div class="flex items-baseline gap-1">
                     <p class="text-3xl md:text-4xl font-black text-black tabular-nums">{(subscriberCount || 0) + (userCount || 0)}</p>
-                    <span class="text-[10px] font-black text-zinc-300 uppercase tracking-tighter">REACH</span>
+                    <span class="text-[10px] font-black text-zinc-300 uppercase tracking-tighter">ALCANCE</span>
                 </div>
                 <div class="h-1 w-full bg-zinc-50 rounded-full mt-4 overflow-hidden">
                     <div class="h-full bg-zinc-800 w-2/3"></div>
@@ -69,8 +71,8 @@ const safeCoupons = coupons || [];
             </div>
             <div class="bg-zinc-900 p-6 rounded-3xl shadow-2xl min-w-[170px] relative overflow-hidden group flex-1 lg:flex-none">
                 <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
-                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1 relative z-10">Live Status</p>
-                <p class="text-3xl md:text-4xl font-black text-emerald-400 uppercase tracking-tighter relative z-10">READY</p>
+                <p class="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1 relative z-10">Estado en Vivo</p>
+                <p class="text-3xl md:text-4xl font-black text-emerald-400 uppercase tracking-tighter relative z-10">LISTO</p>
                 <div class="flex items-center gap-2 mt-3 relative z-10">
                     <div class="relative flex h-2 w-2">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -90,15 +92,25 @@ const safeCoupons = coupons || [];
                     <span class="w-4 h-px bg-black"></span> 01. Plantillas
                 </h3>
                 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="new-collection">
-                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">NEW DROP</span>
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">NUEVO DROP</span>
                         <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Lanzamiento Colección</span>
                     </button>
                     
                     <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="discount-code">
-                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">SECRET CODE</span>
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">CÓDIGO SECRETO</span>
                         <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Cupón Descuento</span>
+                    </button>
+
+                    <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="flash-sale">
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">VENTA FLASH</span>
+                        <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Oferta Limitada</span>
+                    </button>
+
+                    <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="restock-alert">
+                        <span class="block text-[10px] font-black uppercase tracking-widest group-hover:text-white transition-colors truncate">RESTOCK</span>
+                        <span class="block text-[9px] font-bold text-zinc-400 group-hover:text-zinc-500 mt-1 uppercase truncate">Vuelta en Stock</span>
                     </button>
                     
                     <button class="template-btn w-full group py-4 px-6 rounded-2xl border-2 border-zinc-50 hover:border-zinc-900 hover:bg-zinc-900 transition-all duration-300 text-left min-w-0" data-type="custom">
@@ -117,7 +129,7 @@ const safeCoupons = coupons || [];
                 <div class="space-y-8">
                     <div class="space-y-4">
                         <div class="flex items-center justify-between group">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">Stock Status</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">Estado de Stock</span>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="show-stock-toggle" class="sr-only peer">
                                 <div class="w-11 h-6 bg-zinc-800 rounded-full peer peer-checked:bg-emerald-500 transition-all duration-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
@@ -136,7 +148,7 @@ const safeCoupons = coupons || [];
 
                     <div class="pt-6 border-t border-zinc-800">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Selected</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Seleccionados</span>
                             <span id="selected-count" class="text-xl font-black text-white tabular-nums">0</span>
                         </div>
                         <div id="selected-products-preview" class="flex flex-wrap gap-2 min-h-[40px]">
@@ -159,7 +171,7 @@ const safeCoupons = coupons || [];
                                     <div class="flex-1 min-w-0">
                                         <p class="text-[10px] font-black uppercase truncate group-hover:text-emerald-600 transition-colors">{campaign.subject}</p>
                                         <span class="text-[8px] text-zinc-400 font-bold uppercase tracking-tighter">
-                                            {new Date(campaign.created_at).toLocaleDateString()} • {campaign.total_recipients} RECIPIENTS
+                                            {new Date(campaign.created_at).toLocaleDateString()} • {campaign.total_recipients} DESTINATARIOS
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -212,16 +224,33 @@ const safeCoupons = coupons || [];
                                     <div id="target-popover" class="absolute top-full left-0 w-full mt-2 bg-zinc-900 rounded-3xl p-2 shadow-2xl z-50 opacity-0 invisible translate-y-2 transition-all duration-300 border border-white/10 backdrop-blur-xl">
                                         <div class="flex flex-col gap-1">
                                             <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="subscribers">
-                                                <span class="opacity-30 mr-2 tabular-nums">01</span> Newsletter_Recipients
+                                                <span class="opacity-30 mr-2 tabular-nums">01</span> Suscriptores_Newsletter
                                             </button>
                                             <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="users">
-                                                <span class="opacity-30 mr-2 tabular-nums Promo-02">02</span> Registered_Users_DB
+                                                <span class="opacity-30 mr-2 tabular-nums Promo-02">02</span> Usuarios_Registrados
                                             </button>
                                             <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="all">
-                                                <span class="opacity-30 mr-2 tabular-nums">03</span> Force_Transmission_All
+                                                <span class="opacity-30 mr-2 tabular-nums">03</span> Transmisión_Total
+                                            </button>
+                                            <button type="button" class="target-option w-full py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all hover:bg-white hover:text-black text-zinc-400 truncate" data-value="specific">
+                                                <span class="opacity-30 mr-2 tabular-nums">04</span> Objetivos_Específicos
                                             </button>
                                         </div>
                                     </div>
+                                </div>
+                                <div id="specific-emails-container" class="hidden animate-in slide-in-from-top-2 fade-in duration-300">
+                                    <label class="text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2 mb-2 px-2">
+                                        <span class="w-1 h-1 bg-emerald-500 rounded-full"></span> Buscar Usuarios
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" id="user-search-input" placeholder="Buscar por nombre o email..." 
+                                            class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-6 py-4 text-[10px] font-bold tracking-tight focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" autocomplete="off" />
+                                        <div id="user-search-results" class="absolute top-full left-0 w-full mt-1 bg-zinc-900 rounded-2xl p-1.5 shadow-2xl z-50 hidden border border-white/10 max-h-48 overflow-y-auto custom-scrollbar-light"></div>
+                                    </div>
+                                    <div id="selected-users-chips" class="flex flex-wrap gap-2 mt-3 min-h-[32px]">
+                                        <p id="no-users-msg" class="text-[9px] italic text-zinc-400 uppercase tracking-widest">Ningún usuario seleccionado</p>
+                                    </div>
+                                    <input type="hidden" name="specificEmails" id="specific-emails-input" value="" />
                                 </div>
                                 <p class="text-[9px] text-zinc-400 font-bold uppercase px-2 tracking-tighter flex items-center gap-2">
                                     <span class="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -256,36 +285,28 @@ const safeCoupons = coupons || [];
                                 class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-[2.5rem] px-10 py-10 text-[13px] font-medium leading-relaxed tracking-tight focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner"></textarea>
                         </div>
                         
-                        <!-- Product GRID Selector -->
+                        <!-- Product Search Selector -->
                         <div class="space-y-6 pt-6 border-t border-black/[0.03]">
                             <div class="flex items-center justify-between px-2">
                                 <div class="flex flex-col">
                                     <label class="text-[11px] font-black text-black uppercase tracking-widest">Prendas Destacadas</label>
                                     <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-tighter">MAX_SELECT: 06</span>
                                 </div>
-                                <div class="relative">
-                                    <input type="text" id="product-search" placeholder="FILTRAR_CATÁLOGO" class="bg-transparent border-b border-zinc-100 text-[9px] font-black uppercase focus:border-black focus:outline-none w-40 pb-1.5 transition-all text-right placeholder:opacity-30" />
-                                    <span class="absolute right-0 -bottom-3 text-[7px] font-black text-zinc-300">SEARCH_ENGINE_V1</span>
-                                </div>
+                                <span id="selected-product-count" class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">0 / 6</span>
                             </div>
                             
-                            <div class="grid grid-cols-4 md:grid-cols-6 gap-4 max-h-56 overflow-y-auto pr-4 custom-scrollbar">
-                                {safeProducts.map(product => (
-                                    <div 
-                                        class="product-choice group relative cursor-pointer aspect-square bg-zinc-50 rounded-2xl overflow-hidden border-2 border-zinc-100 hover:border-zinc-900 transition-all flex-shrink-0"
-                                        data-id={product.id}
-                                        data-name={product.name}
-                                        data-image={product.images?.[0]}
-                                        data-price={product.price}
-                                        data-stock={product.stock}
-                                    >
-                                        <img src={product.images?.[0]} class="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110" />
-                                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                        <div class="selected-overlay absolute inset-0 bg-black/80 hidden items-center justify-center z-20 backdrop-blur-[2px]">
-                                            <svg class="w-6 h-6 text-emerald-400 animate-in zoom-in duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div class="relative">
+                                <div class="relative">
+                                    <svg class="w-4 h-4 absolute left-5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    <input type="text" id="product-search" placeholder="Buscar prendas por nombre..." autocomplete="off"
+                                        class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl pl-12 pr-6 py-4 text-[11px] font-bold tracking-tight focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
+                                </div>
+                                <div id="product-search-results" class="absolute top-full left-0 w-full mt-1 bg-zinc-900 rounded-2xl p-1.5 shadow-2xl z-50 hidden border border-white/10 max-h-64 overflow-y-auto custom-scrollbar-light"></div>
+                            </div>
+
+                            <!-- Selected products cards -->
+                            <div id="selected-products-grid" class="grid grid-cols-3 md:grid-cols-3 gap-3 min-h-[60px]">
+                                <p id="no-products-msg" class="col-span-full text-[10px] italic text-zinc-400 uppercase tracking-widest text-center py-4">Busca y selecciona prendas para incluir</p>
                             </div>
                         </div>
 
@@ -316,7 +337,7 @@ const safeCoupons = coupons || [];
                                     <div id="coupon-popover" class="absolute bottom-full right-0 w-64 mb-2 bg-zinc-900 rounded-3xl p-3 shadow-2xl z-50 opacity-0 invisible translate-y-2 transition-all duration-300 border border-white/10 backdrop-blur-xl max-h-64 overflow-y-auto custom-scrollbar-light">
                                         <div class="flex flex-col gap-1.5">
                                             <button type="button" class="coupon-option w-full py-3 px-5 rounded-xl text-[9px] font-black uppercase tracking-[2px] text-left transition-all hover:bg-emerald-500 hover:text-black text-zinc-500" data-value="" data-code="SIN_CUPÓN" data-discount="">
-                                                NONE <span class="float-right opacity-20">00</span>
+                                                NINGUNO <span class="float-right opacity-20">00</span>
                                             </button>
                                             {safeCoupons.map((coupon, i) => (
                                                 <button 
@@ -351,7 +372,7 @@ const safeCoupons = coupons || [];
                                 <div class="relative">
                                     <input type="text" name="ctaText" id="cta-text-input" placeholder="EXPLORAR COLECCIÓN" 
                                         class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">CALL_TO_ACTION</span>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">LLAMADA_A_ACCIÓN</span>
                                 </div>
                             </div>
 
@@ -362,7 +383,7 @@ const safeCoupons = coupons || [];
                                 <div class="relative">
                                     <input type="text" name="ctaLink" id="cta-link-input" placeholder="https://croma.shop/..." 
                                         class="w-full bg-zinc-50 border-2 border-zinc-50 rounded-2xl px-8 py-5 text-[11px] font-bold focus:outline-none focus:border-zinc-900 focus:bg-white transition-all shadow-inner" />
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">REDIRECT_URL</span>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[7px] font-black text-zinc-300 pointer-events-none">URL_DESTINO</span>
                                 </div>
                             </div>
                         </div>
@@ -394,7 +415,7 @@ const safeCoupons = coupons || [];
                              <div class="w-2.5 h-2.5 rounded-full bg-zinc-200"></div>
                          </div>
                          <div class="flex items-center gap-2">
-                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em]">Live_Render v2.1</span>
+                            <span class="text-[8px] font-black text-zinc-400 uppercase tracking-[0.2em]">Vista_Previa v2.1</span>
                             <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
                          </div>
                     </div>
@@ -428,15 +449,22 @@ const safeCoupons = coupons || [];
         const titleInput = document.getElementById('title-input') as HTMLInputElement;
         const bodyInput = document.getElementById('body-input') as HTMLTextAreaElement;
         const showStockToggle = document.getElementById('show-stock-toggle') as HTMLInputElement;
-        const productSearch = document.getElementById('product-search') as HTMLInputElement;
-        const productChoices = document.querySelectorAll('.product-choice');
-        const selectedCountEl = document.getElementById('selected-count');
-        const selectedPreview = document.getElementById('selected-products-preview');
-        const noProductsMsg = document.getElementById('no-products-msg');
-
         const ctaTextInput = document.getElementById('cta-text-input') as HTMLInputElement;
         const ctaLinkInput = document.getElementById('cta-link-input') as HTMLInputElement;
         
+        // Product search elements
+        const productSearch = document.getElementById('product-search') as HTMLInputElement;
+        const productSearchResults = document.getElementById('product-search-results');
+        const selectedProductsGrid = document.getElementById('selected-products-grid');
+        const noProductsMsg = document.getElementById('no-products-msg');
+        const selectedProductCountEl = document.getElementById('selected-product-count');
+
+        // User search elements
+        const userSearchInput = document.getElementById('user-search-input') as HTMLInputElement;
+        const userSearchResults = document.getElementById('user-search-results');
+        const selectedUsersChips = document.getElementById('selected-users-chips');
+        const specificEmailsInput = document.getElementById('specific-emails-input') as HTMLInputElement;
+
         // Custom Selector Elements
         const targetHiddenInput = document.getElementById('target-hidden-input') as HTMLInputElement;
         const targetTrigger = document.getElementById('target-custom-trigger');
@@ -444,18 +472,234 @@ const safeCoupons = coupons || [];
         const targetDisplayValue = document.getElementById('target-display-value');
         const targetOptions = document.querySelectorAll('.target-option');
 
+        // Coupon elements
         const couponHiddenId = document.getElementById('coupon-id-input') as HTMLInputElement;
         const couponTrigger = document.getElementById('coupon-custom-trigger');
         const couponPopover = document.getElementById('coupon-popover');
         const couponDisplayValue = document.getElementById('coupon-display-value');
         const couponOptions = document.querySelectorAll('.coupon-option');
 
+        // Sidebar preview
+        const selectedCountEl = document.getElementById('selected-count');
+        const selectedPreview = document.getElementById('selected-products-preview');
+
         const historyReuseBtns = document.querySelectorAll('.history-reuse-btn');
 
         let selectedProducts: any[] = [];
-        let activeCoupon: { code: string, discount: string } | null = null;
+        let selectedUsers: { id: string; email: string; name: string }[] = [];
+        let activeCoupon: { code: string; discount: string } | null = null;
+        let productSearchTimer: any = null;
+        let userSearchTimer: any = null;
 
-        // Custom Selection Logic
+        // ============= ASYNC PRODUCT SEARCH =============
+        productSearch?.addEventListener('input', () => {
+            clearTimeout(productSearchTimer);
+            const q = productSearch.value.trim();
+            if (q.length < 2) {
+                if (productSearchResults) productSearchResults.classList.add('hidden');
+                return;
+            }
+            productSearchTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/admin/search-products?q=${encodeURIComponent(q)}`);
+                    const json = await res.json();
+                    if (!json.success || !json.data) return;
+
+                    const results = json.data.filter((p: any) => !selectedProducts.find((s: any) => s.id === p.id));
+
+                    if (productSearchResults) {
+                        if (results.length === 0) {
+                            productSearchResults.innerHTML = '<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center py-4">Sin resultados</p>';
+                        } else {
+                            productSearchResults.innerHTML = results.map((p: any) => `
+                                <button type="button" class="product-result w-full flex items-center gap-3 py-3 px-4 rounded-xl transition-all hover:bg-white hover:text-black text-zinc-300 text-left"
+                                    data-id="${p.id}" data-name="${p.name}" data-image="${p.image || ''}" data-price="${p.price}" data-stock="${p.stock}">
+                                    <div class="w-10 h-10 rounded-lg bg-zinc-800 overflow-hidden flex-shrink-0">
+                                        ${p.image ? `<img src="${p.image}" class="w-full h-full object-cover" />` : ''}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-[10px] font-black uppercase truncate">${p.name}</p>
+                                        <p class="text-[9px] font-bold text-zinc-500">${Number(p.price).toFixed(2)}€ · Stock: ${p.stock}</p>
+                                    </div>
+                                </button>
+                            `).join('');
+
+                            productSearchResults.querySelectorAll('.product-result').forEach(btn => {
+                                btn.addEventListener('click', () => {
+                                    if (selectedProducts.length >= 6) {
+                                        (window as any).showIndustrialAlert('MÁXIMO 6 PRENDAS', 'warning');
+                                        return;
+                                    }
+                                    const p = {
+                                        id: btn.getAttribute('data-id'),
+                                        name: btn.getAttribute('data-name'),
+                                        image: btn.getAttribute('data-image'),
+                                        price: btn.getAttribute('data-price'),
+                                        stock: parseInt(btn.getAttribute('data-stock') || '0')
+                                    };
+                                    selectedProducts.push(p);
+                                    updateProductsUI();
+                                    updatePreview();
+                                    productSearch.value = '';
+                                    productSearchResults!.classList.add('hidden');
+                                });
+                            });
+                        }
+                        productSearchResults.classList.remove('hidden');
+                    }
+                } catch (e) { console.error('Product search error:', e); }
+            }, 300);
+        });
+
+        // Close product results on outside click
+        document.addEventListener('click', (e) => {
+            if (productSearchResults && !productSearch?.contains(e.target as Node) && !productSearchResults.contains(e.target as Node)) {
+                productSearchResults.classList.add('hidden');
+            }
+            if (userSearchResults && !userSearchInput?.contains(e.target as Node) && !userSearchResults.contains(e.target as Node)) {
+                userSearchResults.classList.add('hidden');
+            }
+            // Close popovers
+            document.querySelectorAll('[id$="-popover"]').forEach(p => {
+                if (!p.contains(e.target as Node)) {
+                    p.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                }
+            });
+        });
+
+        function updateProductsUI() {
+            if (selectedProductCountEl) selectedProductCountEl.textContent = `${selectedProducts.length} / 6`;
+            
+            // Update sidebar count
+            if (selectedCountEl) selectedCountEl.textContent = selectedProducts.length.toString();
+
+            // Update sidebar preview  
+            if (selectedPreview) {
+                selectedPreview.innerHTML = '';
+                if (selectedProducts.length === 0) {
+                    selectedPreview.innerHTML = '<p class="text-[10px] italic text-zinc-700 uppercase tracking-widest">Nada seleccionado todavía</p>';
+                } else {
+                    selectedProducts.forEach(p => {
+                        const chip = document.createElement('div');
+                        chip.className = 'px-3 py-1.5 bg-zinc-800 text-white text-[8px] font-black uppercase rounded-lg shadow-sm flex items-center gap-2 group cursor-default';
+                        chip.innerHTML = `<span>${(p.name || '').substring(0, 10)}...</span><button type="button" class="remove-sp text-zinc-500 hover:text-white" data-id="${p.id}">×</button>`;
+                        chip.querySelector('.remove-sp')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedProducts = selectedProducts.filter(item => item.id !== p.id);
+                            updateProductsUI();
+                            updatePreview();
+                        });
+                        selectedPreview.appendChild(chip);
+                    });
+                }
+            }
+
+            // Update main grid
+            if (selectedProductsGrid) {
+                selectedProductsGrid.innerHTML = '';
+                if (selectedProducts.length === 0) {
+                    selectedProductsGrid.innerHTML = '<p class="col-span-full text-[10px] italic text-zinc-400 uppercase tracking-widest text-center py-4">Busca y selecciona prendas para incluir</p>';
+                } else {
+                    selectedProducts.forEach(p => {
+                        const card = document.createElement('div');
+                        card.className = 'group relative bg-zinc-50 rounded-2xl overflow-hidden border-2 border-zinc-100 hover:border-zinc-900 transition-all';
+                        card.innerHTML = `
+                            <div class="aspect-square bg-zinc-100">
+                                ${p.image ? `<img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />` : '<div class="w-full h-full flex items-center justify-center text-zinc-300 text-[9px] font-bold uppercase">Sin img</div>'}
+                            </div>
+                            <div class="p-3">
+                                <p class="text-[9px] font-black uppercase truncate">${p.name}</p>
+                                <p class="text-[9px] font-bold text-zinc-400">${Number(p.price).toFixed(2)}€</p>
+                            </div>
+                            <button type="button" class="remove-product absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500" data-id="${p.id}">×</button>
+                        `;
+                        card.querySelector('.remove-product')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedProducts = selectedProducts.filter(item => item.id !== p.id);
+                            updateProductsUI();
+                            updatePreview();
+                        });
+                        selectedProductsGrid.appendChild(card);
+                    });
+                }
+            }
+        }
+
+        // ============= ASYNC USER SEARCH =============
+        userSearchInput?.addEventListener('input', () => {
+            clearTimeout(userSearchTimer);
+            const q = userSearchInput.value.trim();
+            if (q.length < 2) {
+                if (userSearchResults) userSearchResults.classList.add('hidden');
+                return;
+            }
+            userSearchTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/admin/search-users?q=${encodeURIComponent(q)}`);
+                    const json = await res.json();
+                    if (!json.success || !json.data) return;
+
+                    const results = json.data.filter((u: any) => !selectedUsers.find(s => s.email === u.email));
+
+                    if (userSearchResults) {
+                        if (results.length === 0) {
+                            userSearchResults.innerHTML = '<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center py-4">Sin resultados</p>';
+                        } else {
+                            userSearchResults.innerHTML = results.map((u: any) => `
+                                <button type="button" class="user-result w-full flex items-center gap-3 py-3 px-4 rounded-xl transition-all hover:bg-white hover:text-black text-zinc-300 text-left"
+                                    data-id="${u.id}" data-email="${u.email}" data-name="${u.name}">
+                                    <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-black text-zinc-500 flex-shrink-0 uppercase">${(u.name || u.email)[0]}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-[10px] font-black uppercase truncate">${u.name}</p>
+                                        <p class="text-[9px] font-bold text-zinc-500 truncate">${u.email}</p>
+                                    </div>
+                                </button>
+                            `).join('');
+
+                            userSearchResults.querySelectorAll('.user-result').forEach(btn => {
+                                btn.addEventListener('click', () => {
+                                    selectedUsers.push({
+                                        id: btn.getAttribute('data-id') || '',
+                                        email: btn.getAttribute('data-email') || '',
+                                        name: btn.getAttribute('data-name') || ''
+                                    });
+                                    updateUsersUI();
+                                    userSearchInput.value = '';
+                                    userSearchResults!.classList.add('hidden');
+                                });
+                            });
+                        }
+                        userSearchResults.classList.remove('hidden');
+                    }
+                } catch (e) { console.error('User search error:', e); }
+            }, 300);
+        });
+
+        function updateUsersUI() {
+            if (specificEmailsInput) {
+                specificEmailsInput.value = selectedUsers.map(u => u.email).join(',');
+            }
+            if (selectedUsersChips) {
+                selectedUsersChips.innerHTML = '';
+                if (selectedUsers.length === 0) {
+                    selectedUsersChips.innerHTML = '<p class="text-[9px] italic text-zinc-400 uppercase tracking-widest">Ningún usuario seleccionado</p>';
+                } else {
+                    selectedUsers.forEach(u => {
+                        const chip = document.createElement('div');
+                        chip.className = 'px-3 py-1.5 bg-zinc-900 text-white text-[9px] font-black uppercase rounded-lg flex items-center gap-2';
+                        chip.innerHTML = `<span class="truncate max-w-[120px]">${u.name || u.email}</span><button type="button" class="remove-user text-zinc-500 hover:text-red-400 text-xs" data-email="${u.email}">×</button>`;
+                        chip.querySelector('.remove-user')?.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedUsers = selectedUsers.filter(s => s.email !== u.email);
+                            updateUsersUI();
+                        });
+                        selectedUsersChips.appendChild(chip);
+                    });
+                }
+            }
+        }
+
+        // ============= CUSTOM SELECTOR LOGIC =============
         function setupCustomSelector(trigger: HTMLElement | null, popover: HTMLElement | null, hiddenInput: HTMLInputElement | null, displayEl: HTMLElement | null, options: NodeListOf<Element>, onSelect?: (val: string, label: string, data?: any) => void) {
             if (!trigger || !popover) return;
 
@@ -463,7 +707,6 @@ const safeCoupons = coupons || [];
                 e.stopPropagation();
                 const isVisible = !popover.classList.contains('invisible');
                 
-                // Close others
                 document.querySelectorAll('[id$="-popover"]').forEach(p => {
                     p.classList.add('invisible', 'opacity-0', 'translate-y-2');
                 });
@@ -480,7 +723,7 @@ const safeCoupons = coupons || [];
                     
                     if (hiddenInput) hiddenInput.value = val;
                     if (displayEl) {
-                        displayEl.textContent = label.replace(/^\d+\s+/, ''); // Remove the 01/02 prefix for display
+                        displayEl.textContent = label.replace(/^\d+\s+/, '');
                         displayEl.classList.remove('opacity-40');
                     }
 
@@ -496,7 +739,19 @@ const safeCoupons = coupons || [];
             });
         }
 
-        setupCustomSelector(targetTrigger, targetPopover, targetHiddenInput, targetDisplayValue, targetOptions);
+        setupCustomSelector(targetTrigger, targetPopover, targetHiddenInput, targetDisplayValue, targetOptions, (val) => {
+             const container = document.getElementById('specific-emails-container');
+             if (container) {
+                 if (val === 'specific') {
+                     container.classList.remove('hidden');
+                 } else {
+                     container.classList.add('hidden');
+                     selectedUsers = [];
+                     updateUsersUI();
+                 }
+             }
+        });
+
         setupCustomSelector(couponTrigger, couponPopover, couponHiddenId, couponDisplayValue, couponOptions, (val, label, data) => {
             if (val) {
                 activeCoupon = { code: data.code, discount: data.discount };
@@ -509,23 +764,33 @@ const safeCoupons = coupons || [];
             }
         });
 
-        // Close popovers on outside click
-        document.addEventListener('click', () => {
-            document.querySelectorAll('[id$="-popover"]').forEach(p => {
-                p.classList.add('invisible', 'opacity-0', 'translate-y-2');
+        // ============= COUPON SEARCH =============
+        const couponSearchInput = document.createElement('input');
+        couponSearchInput.type = 'text';
+        couponSearchInput.placeholder = 'Filtrar cupones...';
+        couponSearchInput.className = 'w-full bg-zinc-800 border-none rounded-xl px-4 py-2.5 text-[9px] font-bold text-white uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-white/20 mb-2 placeholder:text-zinc-600';
+        const couponList = couponPopover?.querySelector('.flex.flex-col');
+        if (couponList && couponPopover) {
+            couponPopover.insertBefore(couponSearchInput, couponList);
+        }
+        couponSearchInput.addEventListener('input', (e) => {
+            const val = (e.target as HTMLInputElement).value.toLowerCase();
+            couponOptions.forEach(opt => {
+                const code = opt.getAttribute('data-code')?.toLowerCase() || '';
+                const label = opt.textContent?.toLowerCase() || '';
+                (opt as HTMLElement).style.display = (code.includes(val) || label.includes(val) || val === '') ? 'flex' : 'none';
             });
         });
+        couponSearchInput.addEventListener('click', (e) => e.stopPropagation());
 
-        // Real-time Preview Engine
+        // ============= PREVIEW ENGINE =============
         function updatePreview() {
             if (!previewEl) return;
 
             const title = titleInput.value || 'EL TÍTULO IRÁ AQUÍ';
             const body = bodyInput.value || 'Redacte aquí el mensaje de su campaña. Este panel muestra una previsualización aproximada del resultado final...';
             const ctaText = ctaTextInput.value || 'IR A LA WEB';
-            const showStock = showStockToggle.checked;
 
-            // Coupon preview logic
             let couponHtml = '';
             if (activeCoupon) {
                 couponHtml = `
@@ -546,7 +811,7 @@ const safeCoupons = coupons || [];
                         ${selectedProducts.map(p => `
                             <div style="border: 1px solid #e5e5e5; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                                 <div style="aspect-ratio: 1/1; background: #f3f3f3;">
-                                    <img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    ${p.image ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;" />` : ''}
                                 </div>
                                 <div style="padding: 12px; text-align: left;">
                                     <p style="margin: 0; font-size: 10px; font-weight: 900; color: #000; text-transform: uppercase;">${p.name}</p>
@@ -573,7 +838,6 @@ const safeCoupons = coupons || [];
                     </div>
 
                     ${couponHtml}
-
                     ${productsHtml}
 
                     <div style="margin-top: 48px; border-top: 2px solid #000; padding-top: 48px;">
@@ -585,87 +849,27 @@ const safeCoupons = coupons || [];
             `;
         }
 
-        // History Reuse Logic
+        // ============= HISTORY REUSE =============
         historyReuseBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const campaign = JSON.parse(btn.getAttribute('data-campaign') || '{}');
                 if (!campaign.subject) return;
-
                 subjectInput.value = campaign.subject;
                 titleInput.value = campaign.title;
                 bodyInput.value = campaign.body;
                 ctaTextInput.value = campaign.cta_text || '';
                 ctaLinkInput.value = campaign.cta_link || '';
-                
-                // Visual feedback
                 (window as any).showIndustrialAlert('CAMPAÑA CARGADA EN EL EDITOR', 'success');
                 updatePreview();
-                
-                // Scroll to top of form
                 form.scrollIntoView({ behavior: 'smooth' });
             });
         });
 
-        // Event listeners for live update
+        // ============= LIVE UPDATE LISTENERS =============
         [titleInput, bodyInput, ctaTextInput].forEach(el => el?.addEventListener('input', updatePreview));
-        [titleInput, bodyInput, ctaTextInput].forEach(el => el?.addEventListener('change', updatePreview));
         showStockToggle?.addEventListener('change', updatePreview);
 
-        // Product selection with enhanced UI logic
-        productChoices.forEach(choice => {
-            choice.addEventListener('click', () => {
-                const id = choice.getAttribute('data-id');
-                const name = choice.getAttribute('data-name');
-                const image = choice.getAttribute('data-image');
-                const price = choice.getAttribute('data-price');
-                const stock = choice.getAttribute('data-stock');
-                if (!id) return;
-
-                const index = selectedProducts.findIndex(p => p.id === id);
-                if (index > -1) {
-                    selectedProducts.splice(index, 1);
-                    choice.querySelector('.selected-overlay')?.classList.replace('flex', 'hidden');
-                } else {
-                    if (selectedProducts.length >= 6) {
-                        (window as any).showIndustrialAlert('SISTEMA BLOQUEADO: MÁXIMO 6 PRENDAS', 'warning');
-                        return;
-                    }
-                    selectedProducts.push({ id, name, image, price, stock: parseInt(stock || '0') });
-                    choice.querySelector('.selected-overlay')?.classList.replace('hidden', 'flex');
-                }
-
-                updateSelectedUI();
-                updatePreview();
-            });
-        });
-
-        function updateSelectedUI() {
-            if (selectedCountEl) selectedCountEl.textContent = selectedProducts.length.toString();
-            if (selectedPreview) {
-                selectedPreview.innerHTML = '';
-                if (selectedProducts.length === 0) {
-                    if (noProductsMsg) selectedPreview.appendChild(noProductsMsg);
-                } else {
-                    selectedProducts.forEach(p => {
-                        const chip = document.createElement('div');
-                        chip.className = 'px-3 py-1.5 bg-zinc-800 text-white text-[8px] font-black uppercase rounded-lg shadow-sm flex items-center gap-2 group cursor-default';
-                        chip.innerHTML = `<span>${p.name.substring(0, 10)}...</span><button type="button" class="remove-p text-zinc-500 hover:text-white" data-id="${p.id}">×</button>`;
-                        
-                        chip.querySelector('.remove-p')?.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            selectedProducts = selectedProducts.filter(item => item.id !== p.id);
-                            const choice = Array.from(productChoices).find(c => c.getAttribute('data-id') === p.id);
-                            choice?.querySelector('.selected-overlay')?.classList.replace('flex', 'hidden');
-                            updateSelectedUI();
-                            updatePreview();
-                        });
-                        selectedPreview.appendChild(chip);
-                    });
-                }
-            }
-        }
-
-        // Template Logic 2.0
+        // ============= TEMPLATE LOGIC =============
         templateBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.getAttribute('data-type');
@@ -674,37 +878,46 @@ const safeCoupons = coupons || [];
                 btn.classList.add('border-zinc-900', 'bg-zinc-900');
 
                 if (type === 'new-collection') {
-                    subjectInput.value = 'ACCESO EXCLUSIVO: NUEVO DROP 🏳️';
+                    subjectInput.value = 'ACCESO EXCLUSIVO: NUEVO DROP';
                     titleInput.value = 'THE MODULAR FUTURE DROP';
                     bodyInput.value = 'Hola {{name}},\n\nUna nueva cápsula ha aterrizado en nuestro almacén. Diseños brutalistas y materiales técnicos de alta resistencia.\n\nHemos bloqueado estas unidades para ti durante las próximas 24 horas.';
-                    if (couponHiddenId) couponHiddenId.value = '';
-                    if (couponDisplayValue) {
-                        couponDisplayValue.textContent = 'SIN_CUPÓN_ACTIVO';
-                        couponDisplayValue.classList.add('opacity-40');
-                    }
+                    ctaTextInput.value = 'VER COLECCIÓN';
                 } else if (type === 'discount-code') {
-                    subjectInput.value = 'CÓDIGO SECRETO DETECTADO 🖤';
-                    titleInput.value = '{{name}}, TIENES UN -15% EXTRA';
-                    bodyInput.value = 'Hemos detectado que el colectivo requiere un incentivo. Usa el protocolo de descuento CROMA-OVERRIDE en tu siguiente compra.\n\nAplicable a toda la plataforma.';
+                    subjectInput.value = 'CÓDIGO SECRETO DETECTADO';
+                    titleInput.value = '{{name}}, TIENES UN DESCUENTO EXTRA';
+                    bodyInput.value = 'Hemos detectado que el colectivo requiere un incentivo. Usa el protocolo de descuento en tu siguiente compra.\n\nAplicable a toda la plataforma.';
+                    ctaTextInput.value = 'USAR CÓDIGO';
+                } else if (type === 'flash-sale') {
+                    subjectInput.value = 'FLASH SALE — SOLO 24 HORAS';
+                    titleInput.value = 'VENTA RELÁMPAGO ACTIVADA';
+                    bodyInput.value = 'Hola {{name}},\n\nDurante las próximas 24 horas, las prendas seleccionadas tienen un descuento especial solo para miembros CROMA.\n\nNo esperes — cuando el tiempo se acabe, los precios vuelven a la normalidad.';
+                    ctaTextInput.value = 'COMPRAR AHORA';
+                } else if (type === 'restock-alert') {
+                    subjectInput.value = 'RESTOCK: DE VUELTA EN STOCK';
+                    titleInput.value = 'LO QUE ESPERABAS HA VUELTO';
+                    bodyInput.value = 'Hola {{name}},\n\nLas prendas que se agotaron están de vuelta. Stock limitado — una vez vendidas, no hay reposición.\n\nReserva tu talla antes de que desaparezcan otra vez.';
+                    ctaTextInput.value = 'VER DISPONIBILIDAD';
                 } else {
                     subjectInput.value = '';
                     titleInput.value = '';
                     bodyInput.value = '';
+                    ctaTextInput.value = '';
+                }
+
+                // Reset coupon for non-discount templates
+                if (type !== 'discount-code') {
+                    if (couponHiddenId) couponHiddenId.value = '';
+                    activeCoupon = null;
+                    if (couponDisplayValue) {
+                        couponDisplayValue.textContent = 'SIN_CUPÓN_ACTIVO';
+                        couponDisplayValue.classList.add('opacity-40');
+                    }
                 }
                 updatePreview();
             });
         });
 
-        // Product search 2.0
-        productSearch?.addEventListener('input', (e) => {
-            const val = (e.target as HTMLInputElement).value.toLowerCase();
-            productChoices.forEach(choice => {
-                const name = choice.getAttribute('data-name')?.toLowerCase() || '';
-                (choice as HTMLElement).style.display = name.includes(val) ? 'block' : 'none';
-            });
-        });
-
-        // Form Submit with Protocol Effect
+        // ============= FORM SUBMIT =============
         form?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(form);
@@ -714,6 +927,7 @@ const safeCoupons = coupons || [];
             (data as any).showStock = showStockToggle.checked;
             (data as any).couponId = couponHiddenId?.value || '';
             (data as any).target = targetHiddenInput?.value || 'subscribers';
+            (data as any).specificEmails = specificEmailsInput?.value || '';
 
             const confirmed = await customConfirm(
                 'EJECUTAR PROTOCOLO',

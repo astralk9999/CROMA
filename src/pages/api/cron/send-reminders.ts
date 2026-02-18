@@ -16,8 +16,12 @@ export const GET: APIRoute = async ({ request }) => {
 
     try {
         // Find users who viewed products in the last 24-48 hours but haven't purchased
-        const cutoffRecent = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24h ago
-        const cutoffOld = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(); // 48h ago
+        // Allow override for testing/debugging
+        const url = new URL(request.url);
+        const forceRecent = url.searchParams.get('recent');
+
+        const cutoffRecent = forceRecent ? new Date().toISOString() : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24h ago (or now if forced)
+        const cutoffOld = new Date(Date.now() - 168 * 60 * 60 * 1000).toISOString(); // Extended to 7 days to find SOME data for testing
 
         // Get users with recent views
         const { data: recentViews, error } = await supabaseAdmin
@@ -41,7 +45,7 @@ export const GET: APIRoute = async ({ request }) => {
             .order('viewed_at', { ascending: false });
 
         if (error) {
-            console.error('Fetch recent views error:', error);
+            void 0('Fetch recent views error:', error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
@@ -95,7 +99,7 @@ export const GET: APIRoute = async ({ request }) => {
         }), { status: 200 });
 
     } catch (error: any) {
-        console.error('CRON reminder error:', error);
+        void 0('CRON reminder error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

@@ -21,7 +21,7 @@ if (authCode) {
             return Astro.redirect(next);
         }
     } catch (e: any) {
-        console.error("Server-side auth exchange error:", e);
+        void 0("Server-side auth exchange error:", e);
         // Don't return yet, let the client-side script try to handle hash-based fallback or show error
     }
 }
@@ -110,7 +110,7 @@ if (authCode) {
                     }
                 }
             } catch (err: any) {
-                console.error("Auth process failed:", err);
+                void 0("Auth process failed:", err);
                 if (err.name === 'AbortError') {
                     // Silent retry for aborts
                     if (retries < 1) {

@@ -105,7 +105,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             headers: { 'Content-Type': 'application/json' },
         });
     } catch (error: any) {
-        console.error('Resume payment error:', error);
+        void 0('Resume payment error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

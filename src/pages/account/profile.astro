@@ -1,6 +1,10 @@
 ---
 import PublicLayout from '@layouts/PublicLayout.astro';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
 import { supabase } from '@lib/supabase';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 
 const user = Astro.locals.user;
 const profile = Astro.locals.profile;
@@ -16,8 +20,6 @@ if (Astro.request.method === 'POST') {
   const phone = formData.get('phone')?.toString() || '';
 
   // IMPORTANT: Use a stateless request with the access token
-  // This prevents consuming the Refresh Token on the server, which causes
-  // the client's session to be invalidated (Reuse Detection).
   const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
   if (!accessToken) {
@@ -57,122 +59,144 @@ if (Astro.request.method === 'POST') {
 }
 
 const errorMsg = Astro.url.searchParams.get('error');
-
 const success = Astro.url.searchParams.get('success');
 ---
 
-<PublicLayout title="Mi Perfil">
-  <section class="container-custom py-12">
-    <div class="max-w-2xl mx-auto">
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">Mi Perfil</h1>
+<PublicLayout title={t('account.profile.title')}>
+  <section class="container-custom py-24 min-h-screen bg-white">
+    <div class="max-w-4xl mx-auto px-4 md:px-0">
+      {/* Mega Header Section */}
+      <div class="flex flex-col mb-16 gap-8">
+          <div class="flex items-center gap-4">
+              <span class="w-16 h-0.5 bg-zinc-400"></span>
+              <span class="text-xs font-bold uppercase tracking-[0.5em] text-zinc-500">{t('account.profile.terminal_config')}</span>
+          </div>
+          
+          <h1 class="text-6xl md:text-8xl lg:text-9xl font-urban font-black text-zinc-900 tracking-tighter uppercase leading-[0.8] italic">
+              {t('account.profile.header_title')}
+          </h1>
+
+          <div class="border-b border-zinc-300 pb-12">
+              <p class="text-zinc-600 font-bold text-lg md:text-xl uppercase tracking-tight leading-snug">
+                  {t('account.profile.header')}
+              </p>
+          </div>
+      </div>
 
       {success && (
-        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded">
-          <p class="text-sm text-green-700">Perfil actualizado exitosamente</p>
+        <div class="mb-12 p-8 bg-black border-l-8 border-white rounded-3xl flex items-center gap-8 group">
+            <div class="w-12 h-12 bg-white text-black rounded-xl flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            </div>
+            <p class="text-xl font-urban font-black text-white uppercase italic tracking-tighter">{t('common.success')}: PERFIL_ACTUALIZADO</p>
         </div>
       )}
 
       {errorMsg && (
-        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
-          <p class="text-sm text-red-700">Error al guardar: {errorMsg}</p>
+        <div class="mb-12 p-8 bg-red-600 border-l-8 border-black rounded-3xl flex items-center gap-8 group">
+             <div class="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            </div>
+            <p class="text-xl font-urban font-black text-white uppercase italic tracking-tighter">{t('common.error')}: {errorMsg}</p>
         </div>
       )}
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <form method="POST" class="space-y-6">
-          <div>
-            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={user.email}
-              disabled
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-            />
-            <p class="text-xs text-gray-500 mt-1">El email no se puede cambiar</p>
-          </div>
+      <div class="grid md:grid-cols-[1fr_300px] gap-12">
+        <div class="bg-white rounded-[2.5rem] border border-zinc-200 p-10 md:p-14 shadow-2xl shadow-zinc-200/50">
+            <h2 class="text-xs font-bold text-zinc-400 uppercase tracking-[0.5em] mb-10 border-b border-zinc-100 pb-4">{t('account.profile.section.info')}</h2>
+            
+            <form method="POST" class="space-y-10">
+              <div class="group">
+                <label for="email" class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 px-2">
+                  {t('account.profile.email_protocol')}
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={user.email}
+                  disabled
+                  class="w-full px-6 py-4 bg-zinc-50 border border-zinc-200 rounded-2xl text-zinc-400 font-mono text-sm"
+                />
+              </div>
 
-          <div>
-            <label for="full_name" class="block text-sm font-semibold text-gray-700 mb-2">
-              Nombre Completo
-            </label>
-            <input
-              type="text"
-              id="full_name"
-              name="full_name"
-              value={profile?.full_name || ''}
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="Tu nombre completo"
-            />
-          </div>
+              <div class="group">
+                <label for="full_name" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2">
+                  {t('account.profile.section.info')}
+                </label>
+                <input
+                  type="text"
+                  id="full_name"
+                  name="full_name"
+                  value={profile?.full_name || ''}
+                  class="w-full px-6 py-4 border border-zinc-300 rounded-2xl focus:border-black focus:ring-0 transition-all font-bold uppercase tracking-tight"
+                  placeholder={t('auth.register.placeholder.name')}
+                />
+              </div>
 
-          <div>
-            <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">
-              Teléfono
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={profile?.phone || ''}
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-              placeholder="+34 600 000 000"
-            />
-          </div>
+              <div class="group">
+                <label for="phone" class="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2">
+                  {t('account.profile.phone_terminal')}
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={profile?.phone || ''}
+                  class="w-full px-6 py-4 border border-zinc-300 rounded-2xl focus:border-black focus:ring-0 transition-all font-bold tracking-tight"
+                  placeholder="+34 600 000 000"
+                />
+              </div>
 
-          {profile?.role === 'admin' && (
-            <div class="p-4 bg-black text-white rounded-lg">
-              <p class="text-sm font-medium">Rol: Administrador</p>
-              <p class="text-xs mt-1 text-gray-300">Tienes acceso al panel de administración</p>
+              <div class="flex items-center justify-between pt-10 border-t border-zinc-100 mt-10">
+                <a
+                  href="/category/all"
+                  class="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-900 transition-colors"
+                >
+                  {t('account.profile.cancel')}
+                </a>
+                <button
+                  type="submit"
+                  class="px-10 py-5 bg-zinc-900 text-white rounded-full hover:bg-black transition-all font-bold uppercase tracking-widest shadow-xl"
+                >
+                  {t('account.profile.button.save')}
+                </button>
+              </div>
+            </form>
+        </div>
+
+        <div class="space-y-8">
+            <div class="bg-zinc-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+                    <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                </div>
+                <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] mb-8">{t('account.profile.section.security')}</h3>
+                <div class="space-y-6">
+                    <a href="/auth/update-password" class="block w-full py-4 px-6 border border-white/20 rounded-xl text-[10px] font-bold uppercase tracking-widest text-center hover:bg-white hover:text-black transition-all">
+                        {t('account.profile.button.update_pass')}
+                    </a>
+                    <a href="/auth/logout" class="block w-full py-4 px-6 bg-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest text-center hover:bg-red-700 transition-all">
+                        {t('auth.logout')}
+                    </a>
+                </div>
             </div>
-          )}
 
-          <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-            <a
-              href="/category/all"
-              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors font-medium"
-            >
-              Cancelar
-            </a>
-            <button
-              type="submit"
-              class="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
-            >
-              Guardar Cambios
-            </button>
-          </div>
-        </form>
-
-        <div class="mt-8 pt-8 border-t border-gray-200">
-          <h3 class="text-lg font-bold text-gray-900 mb-4">Acciones de Cuenta</h3>
-          <div class="flex flex-wrap gap-4">
-              <a
-                href="/account/orders"
-                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
-              >
-                Mis Pedidos
-              </a>
-              <a
-                href="/account/returns"
-                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
-              >
-                Mis Devoluciones
-              </a>
-              <a
-                href="/category/my-favorites"
-                class="inline-block px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-900 hover:text-gray-900 transition-colors font-bold uppercase tracking-wide text-xs"
-              >
-                Favoritos
-              </a>
-              <a
-                href="/auth/logout"
-            class="inline-block px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-          >
-            Cerrar Sesión
-          </a>
-          </div>
+            <nav class="bg-zinc-50 rounded-[2.5rem] p-8 border border-zinc-200">
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.4em] mb-6 px-4">NAVIGATION</h3>
+                <div class="flex flex-col gap-2">
+                    <a href="/account/orders" class="p-4 hover:bg-white rounded-2xl flex items-center justify-between group transition-all">
+                        <span class="text-xs font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black">{t('account.orders')}</span>
+                        <svg class="w-4 h-4 text-zinc-300 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                    <a href="/account/returns" class="p-4 hover:bg-white rounded-2xl flex items-center justify-between group transition-all">
+                        <span class="text-xs font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black">{t('account.returns')}</span>
+                        <svg class="w-4 h-4 text-zinc-300 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                    <a href="/category/my-favorites" class="p-4 hover:bg-white rounded-2xl flex items-center justify-between group transition-all">
+                        <span class="text-xs font-bold uppercase tracking-widest text-zinc-600 group-hover:text-black">{t('account.favorites')}</span>
+                        <svg class="w-4 h-4 text-zinc-300 group-hover:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                </div>
+            </nav>
         </div>
       </div>
     </div>

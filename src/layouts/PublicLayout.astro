@@ -7,6 +7,9 @@ import MobileMenu from '@components/islands/MobileMenu';
 import SearchWidget from '@components/islands/SearchWidget';
 import NewsletterPopup from '@components/islands/NewsletterPopup';
 import IndustrialToast from '@components/admin/IndustrialToast.astro';
+import LanguageToggle from '@components/LanguageToggle.astro';
+
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
 
 interface Props {
   title: string;
@@ -14,17 +17,97 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
+
+const userMenuLabels = {
+  login: t('auth.login'),
+  register: t('auth.register'),
+  logout: t('auth.logout'),
+  orders: t('account.orders'),
+  returns: t('account.returns'),
+  favorites: t('account.favorites'),
+  profile: t('account.profile'),
+  admin: t('account.admin_panel'),
+  welcome: t('account.welcome')
+};
+
+const searchLabels = {
+  placeholder: t('nav.search.placeholder'),
+  searching: t('nav.search.searching'),
+  notFound: t('nav.search.not_found'),
+  allResults: t('nav.search.all_results'),
+  suggestions: t('nav.search.suggestions'),
+  products: t('admin.products'),
+  trending: t('search.widget.trending'),
+  tags: t('search.widget.tags') as unknown as string[]
+};
+
+const mobileMenuLabels = {
+    specials: t('nav.specials'),
+    limited: t('nav.specials.limited'),
+    discounts: t('nav.specials.discounts'),
+    coming: t('nav.specials.coming'),
+    viral: t('nav.specials.viral'),
+    bestsellers: t('nav.specials.bestsellers'),
+    favorites: t('nav.specials.favorites'),
+    all: t('nav.all'),
+    allAccess: t('nav.all.access'),
+    categories: t('nav.categories'),
+    categoriesEmpty: t('nav.categories.empty'),
+    brands: t('nav.brands'),
+    brandsEmpty: t('nav.brands.empty'),
+    colors: t('nav.colors'),
+    colorsEmpty: t('nav.colors.empty'),
+    account: t('nav.account'),
+    profile: t('nav.profile'),
+    admin: t('nav.admin'),
+    adminConsole: t('nav.admin.console'),
+    help: t('nav.help'),
+    service: t('nav.help.service'),
+    size: t('nav.help.size'),
+    returns: t('nav.help.returns'),
+    faq: t('nav.help.faq'),
+    about: t('nav.help.about'),
+    shipping: t('nav.help.shipping'),
+};
+
+const cartLabels = {
+    title: t('cart.title'),
+    empty: t('cart.empty'),
+    continue: t('cart.button.continue'),
+    total: t('cart.total'),
+    checkout: t('cart.checkout'),
+    remove: t('cart.button.remove'),
+    size: t('cart.label.size'),
+    close: t('cart.button.close')
+};
+
+const newsletterLabels = {
+    offer: t('newsletter.popup.offer'),
+    subtitle: t('newsletter.popup.subtitle'),
+    successTitle: t('newsletter.popup.success_title'),
+    successMsg: t('newsletter.popup.success_msg'),
+    alreadySub: t('newsletter.popup.already_sub'),
+    error: t('newsletter.popup.error'),
+    cta: t('newsletter.popup.cta'),
+    subscribing: t('newsletter.popup.subscribing'),
+    shopNow: t('newsletter.popup.shop_now'),
+    privacyMsg: t('newsletter.popup.privacy_msg'),
+    bodyText: t('newsletter.popup.body_text'),
+    placeholder: t('home.newsletter.placeholder')
+};
 ---
 
 <BaseLayout title={title} description={description}>
   {/* Header */}
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-[60]">
     <nav class="container-custom py-2 md:py-4">
       <div class="relative flex items-center justify-between">
         
         {/* Left: Hamburger Menu */}
-        <div class="flex items-center z-50">
-            <MobileMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
+        <div class="flex items-center z-[70]">
+            <MobileMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} labels={mobileMenuLabels} />
         </div>
 
         {/* Center: Logo (Restored Absolute Centering) */}
@@ -38,22 +121,26 @@ const { title, description } = Astro.props;
           <span class="hidden text-3xl font-black tracking-tighter text-gray-900 uppercase">Croma</span>
         </a>
 
-        {/* Right: Actions */}
+      {/* Right: Actions */}
         <div class="flex items-center space-x-2 md:space-x-4 z-50">
           
-          {/* Search Widget */}
+          {/* Language Toggle */}
+          <div class="hidden md:block relative z-50">
+            <LanguageToggle />
+          </div>
+
           <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
-            <SearchWidget client:load />
+            <SearchWidget client:load labels={searchLabels} />
           </div>
           
           {/* User Menu Widget */}
           <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
-            <UserMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} />
+            <UserMenu client:load initialProfile={Astro.locals.profile} currentPath={Astro.url.pathname} labels={userMenuLabels} />
           </div>
 
           {/* Cart Icon */}
           <div class="flex items-center justify-center w-8 h-8 md:w-10 md:h-10">
-            <CartIcon client:load />
+            <CartIcon client:load label={t('nav.cart.open')} />
           </div>
         </div>
       </div>
@@ -71,32 +158,32 @@ const { title, description } = Astro.props;
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <h3 class="text-2xl font-urban font-bold mb-4">CROMA</h3>
-          <p class="text-gray-400">Premium urban fashion for the modern era.</p>
+          <p class="text-gray-400">{t('footer.description')}</p>
         </div>
         <div>
-          <h4 class="font-semibold mb-4 uppercase tracking-wide">Customer Service / Contact</h4>
+          <h4 class="font-semibold mb-4 uppercase tracking-wide">{t('nav.contact')}</h4>
           <ul class="space-y-2 text-gray-400">
-            <li><a href="/size-guide" class="hover:text-white transition-colors">Size Guide</a></li>
-            <li><a href="/returns" class="hover:text-white transition-colors">Returns</a></li>
-            <li><a href="/faq" class="hover:text-white transition-colors">FAQ</a></li>
-            <li><a href="/about" class="hover:text-white transition-colors">About Us</a></li>
-            <li><a href="/shipping" class="hover:text-white transition-colors">Shipping & Returns</a></li>
+            <li><a href="/size-guide" class="hover:text-white transition-colors">{t('footer.size_guide')}</a></li>
+            <li><a href="/returns" class="hover:text-white transition-colors">{t('footer.returns')}</a></li>
+            <li><a href="/faq" class="hover:text-white transition-colors">{t('footer.faq')}</a></li>
+            <li><a href="/about" class="hover:text-white transition-colors">{t('nav.about')}</a></li>
+            <li><a href="/shipping" class="hover:text-white transition-colors">{t('footer.shipping')}</a></li>
           </ul>
         </div>
         <div>
           <h4 class="font-semibold mb-4 uppercase tracking-wide">Legal</h4>
           <ul class="space-y-2 text-gray-400">
-            <li><a href="/privacy" class="hover:text-white transition-colors">Privacy Policy</a></li>
-            <li><a href="/terms" class="hover:text-white transition-colors">Terms of Service</a></li>
+            <li><a href="/privacy" class="hover:text-white transition-colors">{t('footer.privacy')}</a></li>
+            <li><a href="/terms" class="hover:text-white transition-colors">{t('footer.terms')}</a></li>
           </ul>
         </div>
       </div>
       <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm">
-        <p>&copy; {new Date().getFullYear()} CROMA. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} CROMA. {t('footer.rights')}</p>
         
         {Astro.locals.profile?.role === 'admin' && (
           <a href="/admin/dashboard" class="mt-4 md:mt-0 text-brand-red font-bold uppercase tracking-widest hover:underline">
-            Panel de Administración →
+            {t('user.menu.admin')} →
           </a>
         )}
       </div>
@@ -105,8 +192,11 @@ const { title, description } = Astro.props;
   
   <IndustrialToast />
 
+  {/* Newsletter Popup */}
+  <NewsletterPopup client:idle labels={newsletterLabels} />
+
   {/* Cart Slide Over */}
-  <CartSlideOver client:load />
+  <CartSlideOver client:load labels={cartLabels} />
 
   <script>
     import { syncFavoritesWithSupabase } from '@stores/favorites';

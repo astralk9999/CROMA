@@ -160,7 +160,7 @@ export async function sendWelcomeEmail(to: string, couponCode: string) {
         });
         console.log(`Welcome email sent to ${to}`);
     } catch (error) {
-        console.error('Error sending welcome email:', error);
+        console.log('Error sending welcome email:', error);
     }
 }
 
@@ -191,7 +191,7 @@ export async function sendOrderConfirmationEmail(
                             </p>
                         </td>
                         <td align="right" style="padding: 16px; vertical-align: middle;">
-                            <p style="margin: 0; font-family: monospace; font-size: 13px; font-weight: 600; color: #000000;">${Number(item.price).toFixed(2)}€</p>
+                            <p style="margin: 0; font-family: monospace; font-size: 13px; font-weight: 600; color: #000000;">${(+item.price).toFixed(2)}€</p>
                         </td>
                     </tr>
                 </table>
@@ -257,7 +257,7 @@ export async function sendOrderConfirmationEmail(
         });
         console.log(`Order confirmation email sent to ${to}`);
     } catch (error) {
-        console.error('Error sending order confirmation email:', error);
+        console.log('Error sending order confirmation email:', error);
     }
 }
 
@@ -304,12 +304,21 @@ export async function sendOrderStatusEmail(to: string, orderId: string, status: 
         });
         console.log(`Status update email (${status}) sent to ${to}`);
     } catch (error) {
-        console.error('Error sending status email:', error);
+        console.log('Error sending status email:', error);
     }
 }
 
 export async function sendRecentlyViewedEmail(to: string, products: any[]) {
-    if (!SMTP_PASS || products.length === 0) return;
+    if (!SMTP_PASS) {
+        console.log("❌ SMTP_PASS is missing. Cannot send recently viewed email.");
+        return;
+    }
+    if (products.length === 0) {
+        console.warn("⚠️ No products to send in recently viewed email.");
+        return;
+    }
+
+    console.log(`📧 Preparing recently viewed email for ${to} with ${products.length} products...`);
 
     const productsHtml = products.slice(0, 2).map(product => `
         <a href="https://croma.shop/productos/${product.slug}" style="text-decoration: none; display: block; margin-bottom: 16px;">
@@ -323,7 +332,7 @@ export async function sendRecentlyViewedEmail(to: string, products: any[]) {
                     </td>
                     <td style="padding: 16px; verbose-align: middle;">
                         <h4 style="margin: 0 0 4px 0; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 800; color: #000000; text-transform: uppercase;">${product.name}</h4>
-                        <p style="margin: 0; font-family: monospace; font-size: 14px; font-weight: 600; color: #444444;">${Number(product.price).toFixed(2)}€</p>
+                        <p style="margin: 0; font-family: monospace; font-size: 14px; font-weight: 600; color: #444444;">${(+product.price).toFixed(2)}€</p>
                     </td>
                     <td width="40" align="center" style="color: #000000; font-size: 18px;">→</td>
                 </tr>
@@ -351,7 +360,7 @@ export async function sendRecentlyViewedEmail(to: string, products: any[]) {
         });
         console.log(`Recently viewed reminder sent to ${to}`);
     } catch (error) {
-        console.error('Error sending recently viewed email:', error);
+        console.log('Error sending recently viewed email:', error);
     }
 }
 
@@ -425,7 +434,7 @@ export async function sendMarketingEmail(
         });
         return { success: true };
     } catch (error) {
-        console.error('Error sending marketing email:', error);
+        console.log('Error sending marketing email:', error);
         return { success: false, error };
     }
 }
@@ -471,7 +480,7 @@ function generateProductItemHtml(product: any, showStock: boolean) {
             </div>
             <div style="padding: 15px; text-align: left;">
                 <h4 style="margin: 0 0 4px 0; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 900; color: #000000; text-transform: uppercase; letter-spacing: 0.5px;">${product.name}</h4>
-                <p style="margin: 0; font-family: monospace; font-size: 13px; font-weight: 600; color: #333333;">${Number(product.price).toFixed(2)}€</p>
+                <p style="margin: 0; font-family: monospace; font-size: 13px; font-weight: 600; color: #333333;">${(+product.price).toFixed(2)}€</p>
                 ${stockStatus}
             </div>
         </a>

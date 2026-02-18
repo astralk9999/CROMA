@@ -21,6 +21,10 @@ const { data: categories } = await supabase
 
 // Shuffle local pool for randomness on каждый load
 const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5);
+
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 ---
 
 <PublicLayout title="Urban Collective">
@@ -38,17 +42,17 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
     
     <div class="relative z-20 text-center container-custom">
       <h1 class="text-6xl md:text-8xl font-urban font-black mb-6 tracking-tighter uppercase text-white drop-shadow-2xl">
-        URBAN <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-white">COLLECTIVE</span>
+        <Fragment set:html={t('home.hero.title')} />
       </h1>
       <p class="text-xl md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-medium tracking-wide">
-        Elevando el streetwear a una nueva dimensión de sofisticación y exclusividad.
+        {t('home.hero.subtitle')}
       </p>
       <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
         <Button href="/category/all" variant="primary" size="lg" class="px-12 py-5 text-xl font-black italic">
-          SHOP NOW
+          {t('home.shop_now')}
         </Button>
         <Button href="/category/viral-trends" variant="secondary" size="lg" class="px-12 py-5 text-xl font-black italic border-4">
-          EXPLORE TRENDS
+          {t('home.explore_trends')}
         </Button>
       </div>
     </div>
@@ -63,7 +67,7 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
                 <span class="text-white/20">/</span>
                 <span>SYSTEM_ID:{(Math.random()*10000).toFixed(0)}</span>
                 <span class="text-white/20">/</span>
-                <span>STOCK_ACTIVE</span>
+                <span>STOCK_DISPONIBLE</span>
                 <span class="w-16 h-[2px] bg-white/30"></span>
             </div>
         ))}
@@ -74,19 +78,19 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
   <section class="bg-white py-24 border-y border-gray-100">
     <div class="container-custom flex flex-col md:flex-row items-center gap-16">
         <div class="flex-1">
-            <h2 class="text-xs font-black tracking-[0.5em] text-gray-400 uppercase mb-4">The Manifesto</h2>
-            <h3 class="text-5xl font-urban font-black text-gray-900 mb-8 leading-tight">MÁS QUE MODA, <br/>UN ESTILO DE VIDA.</h3>
+            <h2 class="text-xs font-black tracking-[0.5em] text-gray-400 uppercase mb-4">{t('home.manifesto.title')}</h2>
+            <h3 class="text-5xl font-urban font-black text-gray-900 mb-8 leading-tight"><Fragment set:html={t('home.manifesto.headline')} /></h3>
             <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                En CROMA creemos que la ropa es el lienzo de tu identidad. Cada pieza está diseñada con una atención obsesiva al detalle, mezclando la rudeza de la calle con la precisión de la alta costura.
+                {t('home.manifesto.text')}
             </p>
             <div class="flex gap-8">
                 <div class="flex flex-col">
                     <span class="text-4xl font-black text-gray-900">10k+</span>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Original Styles</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('home.stats.styles')}</span>
                 </div>
                 <div class="flex flex-col">
                     <span class="text-4xl font-black text-gray-900">100%</span>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Premium Quality</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('home.stats.quality')}</span>
                 </div>
             </div>
         </div>
@@ -107,11 +111,11 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
       <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 md:mb-12 border-b-[3px] border-black pb-4 gap-4">
         <div>
             <h2 class="text-5xl md:text-8xl font-urban font-black text-gray-900 uppercase italic tracking-tighter leading-none">
-                DROPS <span class="text-gray-200">/ 2026</span>
+                {t('home.drops.title')} <span class="text-gray-200">/ 2026</span>
             </h2>
-            <p class="text-sm md:text-base font-bold text-gray-400 mt-2 uppercase tracking-[0.2em]">THE MOST WANTED PIECES</p>
+            <p class="text-sm md:text-base font-bold text-gray-400 mt-2 uppercase tracking-[0.2em]">{t('home.drops.subtitle')}</p>
         </div>
-        <a href="/category/all" class="text-sm font-black uppercase tracking-widest hover:underline transition-all duration-300 self-start md:self-end md:mb-2">SEE ALL →</a>
+        <a href="/category/all" class="text-sm font-black uppercase tracking-widest hover:underline transition-all duration-300 self-start md:self-end md:mb-2">{t('home.drops.see_all')} →</a>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
         {featuredProducts.map((product) => (
@@ -125,13 +129,13 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
   <section class="bg-black py-12 md:py-24 text-white overflow-hidden">
       <div class="container-custom relative">
         <h2 class="hidden md:block text-6xl md:text-8xl font-urban font-black text-white absolute -top-8 md:-top-12 -left-4 md:-left-12 pointer-events-none uppercase italic leading-none z-20">
-            CATEGORIES
+            {t('home.categories.title')}
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 relative z-10">
           {[
-            { name: 'VIRAL TRENDS', image: '/images/viral-trends.png', link: 'viral-trends' },
-            { name: 'SALE / OFF', image: '/images/sale.png', link: 'sale' },
-            { name: 'BESTSELLERS', image: '/images/bestsellers.png', link: 'bestsellers' }
+            { name: t('home.categories.viral'), image: '/images/viral-trends.png', link: 'viral-trends' },
+            { name: t('home.categories.sale'), image: '/images/sale.png', link: 'sale' },
+            { name: t('home.categories.bestsellers'), image: '/images/bestsellers.png', link: 'bestsellers' }
           ].map((category) => (
             <a 
               href={`/category/${category.link}`}
@@ -156,8 +160,8 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
       <div class="px-6 md:px-12 lg:px-24">
           <div class="flex items-center justify-between mb-16 border-l-8 border-black pl-6">
               <div>
-                  <h3 class="text-4xl font-urban font-black text-black uppercase italic italic tracking-tighter leading-none">RAW_INVENTORY</h3>
-                  <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-[0.4em]">LIVE_POOL_TRANSMISSION</p>
+                  <h3 class="text-4xl font-urban font-black text-black uppercase italic italic tracking-tighter leading-none">{t('home.inventory.title')}</h3>
+                  <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-[0.4em]">{t('home.inventory.subtitle')}</p>
               </div>
           </div>
 
@@ -187,28 +191,28 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
                                   <div class="absolute top-4 right-4 flex flex-col items-end gap-2 z-20">
                                       {isUpcoming && (
                                           <div class="bg-[#202020] text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] border border-white/20">
-                                              PRÓXIMAMENTE
+                                              {t('product.badge.soon.raw')}
                                           </div>
                                       )}
                                       {hasDiscount && !isUpcoming && (
                                           <div class="bg-[#202020] text-white text-[10px] font-black px-3 py-1 uppercase tracking-[0.2em] transform rotate-3 shadow-lg border border-white/20">
-                                              SALE_OFF
+                                              {t('product.badge.sale.raw')}
                                           </div>
                                       )}
                                       {isLimited && (
                                           <div class="bg-brand-red text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em] animate-pulse">
-                                              LIMITED_DROP
+                                              {t('product.badge.limited.raw')}
                                           </div>
                                       )}
                                       {isViral && (
                                           <div class="bg-purple-600 text-white text-[9px] font-black px-3 py-1 uppercase tracking-[0.2em]">
-                                              VIRAL_TREND
+                                              {t('product.badge.viral.raw')}
                                           </div>
                                       )}
                                   </div>
 
                                   <div class="absolute bottom-0 left-0 bg-[#202020] text-white text-[9px] font-black px-4 py-2 uppercase tracking-widest translate-y-full group-hover/item:translate-y-0 transition-transform">
-                                      VIEW_ITEM
+                                      {t('product.view_item')}
                                   </div>
                               </div>
                               <div class="p-6 flex flex-col justify-between">
@@ -311,11 +315,11 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
           <div class="max-w-2xl mx-auto p-12 bg-white border-2 border-black relative">
               <div class="absolute -top-4 -left-4 w-8 h-8 bg-black"></div>
               <div class="absolute -bottom-4 -right-4 w-8 h-8 bg-black text-white flex items-center justify-center font-bold font-urban">!</div>
-              <h2 class="text-4xl font-urban font-black text-gray-900 mb-4 uppercase italic italic">Unete a la Resistencia</h2>
-              <p class="text-gray-500 mb-8 font-bold uppercase tracking-widest text-sm">Get exclusive access to the next drops and 15% off</p>
+              <h2 class="text-4xl font-urban font-black text-gray-900 mb-4 uppercase italic italic">{t('home.newsletter.title')}</h2>
+              <p class="text-gray-500 mb-8 font-bold uppercase tracking-widest text-sm">{t('home.newsletter.subtitle')}</p>
               <form id="newsletter-form" class="flex flex-col sm:flex-row gap-2">
-                  <input type="email" id="footer-newsletter-email" placeholder="YOUR@EMAIL.COM" class="flex-1 px-6 py-4 border-4 border-black font-black uppercase tracking-widest focus:outline-none" required />
-                  <button type="submit" id="footer-newsletter-btn" class="px-8 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-gray-800 transition-colors">JOIN</button>
+                  <input type="email" id="footer-newsletter-email" placeholder={t('home.newsletter.placeholder')} class="flex-1 px-6 py-4 border-4 border-black font-black uppercase tracking-widest focus:outline-none" required />
+                  <button type="submit" id="footer-newsletter-btn" data-original-text={t('home.newsletter.join')} class="px-8 py-4 bg-black text-white font-black uppercase tracking-widest hover:bg-gray-800 transition-colors">{t('home.newsletter.join')}</button>
               </form>
               <p id="newsletter-message" class="mt-4 text-sm font-medium hidden"></p>
           </div>
@@ -327,43 +331,43 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
     <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-black divide-y-2 md:divide-y-0 md:divide-x-2 divide-black">
       <div class="p-12 transition-colors hover:bg-[#202020] hover:text-white group relative overflow-hidden">
         <div class="flex items-center gap-4 mb-6 relative z-10">
-            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_01</span>
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">{t('home.value.quality.tag')}</span>
             <div class="h-[2px] flex-1 bg-[#202020] group-hover:bg-white/20 transition-colors"></div>
             <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
             </svg>
         </div>
-        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Calidad Premium</h3>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">{t('home.value.quality.title')}</h3>
         <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
-            Materiales de grado industrial seleccionados bajo protocolos de máxima precisión.
+            {t('home.value.quality.text')}
         </p>
       </div>
       
       <div class="p-12 transition-colors hover:bg-[#202020] hover:text-white group relative overflow-hidden">
         <div class="flex items-center gap-4 mb-6 relative z-10">
-            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_02</span>
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">{t('home.value.shipping.tag')}</span>
             <div class="h-[2px] flex-1 bg-[#202020] group-hover:bg-white/20 transition-colors"></div>
             <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
         </div>
-        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Envío Rápido</h3>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">{t('home.value.shipping.title')}</h3>
         <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
-            Logística optimizada: entrega express en 24-48 horas en todo el territorio nacional.
+            {t('home.value.shipping.text')}
         </p>
       </div>
 
       <div class="p-12 transition-colors hover:bg-[#202020] hover:text-white group relative overflow-hidden">
         <div class="flex items-center gap-4 mb-6 relative z-10">
-            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">UTILITY_03</span>
+            <span class="text-[10px] font-mono font-black px-2 py-1 bg-[#202020] text-white group-hover:bg-white group-hover:text-black transition-colors">{t('home.value.returns.tag')}</span>
             <div class="h-[2px] flex-1 bg-[#202020] group-hover:bg-white/20 transition-colors"></div>
             <svg class="w-6 h-6 text-black group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
         </div>
-        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">Devolución Fácil</h3>
+        <h3 class="text-3xl font-urban font-black uppercase italic mb-4 tracking-tighter relative z-10">{t('home.value.returns.title')}</h3>
         <p class="text-xs font-bold uppercase tracking-widest text-gray-500 group-hover:text-white/60 transition-colors leading-relaxed relative z-10">
-            Protocolo de retorno simplificado: 30 días para devoluciones sin compromiso.
+            {t('home.value.returns.text')}
         </p>
       </div>
     </div>
@@ -474,7 +478,7 @@ const randomProducts = (randomProductsPool || []).sort(() => Math.random() - 0.5
             messageEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
           } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'JOIN';
+            submitBtn.textContent = submitBtn.getAttribute('data-original-text') || 'JOIN';
           }
         });
     }

@@ -75,14 +75,14 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
 
 ---
 
-<AdminLayout title="Protocolo de Usuarios" activeSection="users">
+<AdminLayout title="Gestión de Usuarios" activeSection="users">
   <!-- Stats Insights -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
     <div class="bg-white p-8 rounded-[2rem] border border-black/5 shadow-sm">
-        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-3">Sujetos Totales</p>
+        <p class="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] mb-3">Total Usuarios</p>
         <div class="flex items-end gap-3">
             <p class="text-4xl font-black text-black tracking-tighter leading-none">{totalUsers}</p>
-            <span class="text-[10px] font-bold text-zinc-300 mb-1 uppercase tracking-widest">Base_Activa</span>
+            <span class="text-[10px] font-bold text-zinc-300 mb-1 uppercase tracking-widest">Activos</span>
         </div>
     </div>
     <div class="bg-white p-8 rounded-[2rem] border border-black/5 shadow-sm">
@@ -104,7 +104,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
     </div>
     <div class="bg-zinc-900 p-8 rounded-[2rem] shadow-xl relative overflow-hidden group">
         <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
-        <p class="relative z-10 text-[9px] font-black text-white uppercase tracking-[0.3em] mb-3">Protocolo de Red</p>
+        <p class="relative z-10 text-[9px] font-black text-white uppercase tracking-[0.3em] mb-3">Estado del Sistema</p>
         <div class="relative z-10 flex items-center gap-3">
             <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                 <svg class="w-5 h-5 text-white animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
@@ -121,7 +121,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
   <div class="mb-12 sticky top-0 z-[100] px-0 pt-4 pb-12 bg-zinc-50/80 backdrop-blur-xl transition-all duration-300">
     <div class="bg-zinc-800 rounded-2xl p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative border border-white/10">
         <div class="absolute -top-10 left-0 text-[8px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 px-3 py-1 rounded-t-lg border border-b-0 border-zinc-200">
-            Comando de Búsqueda Multiparamétrica | {totalUsers} Registros Localizados
+            Búsqueda de Usuarios | {totalUsers} Registros Localizados
         </div>
         
         <div class="relative z-10 flex flex-col xl:flex-row flex-wrap gap-4 items-center p-2 px-4 lg:px-6">
@@ -149,7 +149,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
             <div class="flex flex-wrap items-center gap-2 p-1">
                 <!-- Role Filter -->
                 <div class="relative group/dropdown">
-                    <button type="button" class="dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 bg-white/0 hover:bg-white/5 border-white/10 !text-white hover:border-white/30 {roleFilter ? 'bg-white !text-black border-white' : ''}">
+                    <button type="button" class={`dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 hover:bg-white/5 hover:border-white/30 ${roleFilter ? 'bg-white !text-black border-white' : 'bg-white/0 border-white/10 !text-white'}`}>
                         <svg class="w-3.5 h-3.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         {roleFilter ? roleFilter.toUpperCase() : 'ROL'}
                         <svg class="w-3 h-3 opacity-20 transition-transform arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
@@ -165,7 +165,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
 
                 <!-- Date Filter -->
                 <div class="relative group/dropdown">
-                    <button type="button" class="dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 bg-white/0 hover:bg-white/5 border-white/10 !text-white hover:border-white/30 {dateFilter ? 'bg-white !text-black border-white' : ''}">
+                    <button type="button" class={`dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 hover:bg-white/5 hover:border-white/30 ${dateFilter ? 'bg-white !text-black border-white' : 'bg-white/0 border-white/10 !text-white'}`}>
                         <svg class="w-3.5 h-3.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         {dateFilter === 'today' ? 'HOY' : dateFilter === 'week' ? 'ESTA SEMANA' : dateFilter === 'month' ? 'ESTE MES' : 'FECHA'}
                         <svg class="w-3 h-3 opacity-20 transition-transform arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
@@ -182,7 +182,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
 
                 <!-- Sort Filter -->
                 <div class="relative group/dropdown">
-                    <button type="button" class="dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 bg-white/0 hover:bg-white/5 border-white/10 !text-white hover:border-white/30 {sortBy !== 'created_at_desc' && sortBy !== '' ? 'bg-white !text-black border-white' : ''}">
+                    <button type="button" class={`dropdown-trigger h-14 px-6 rounded-xl flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest transition-all border-2 hover:bg-white/5 hover:border-white/30 ${sortBy !== 'created_at_desc' && sortBy !== '' ? 'bg-white !text-black border-white' : 'bg-white/0 border-white/10 !text-white'}`}>
                         <svg class="w-3.5 h-3.5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
                         ORDENAR
                         <svg class="w-3 h-3 opacity-20 transition-transform arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg>
@@ -214,9 +214,9 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
       <table class="w-full text-left border-collapse">
         <thead class="bg-zinc-50 border-b-2 border-zinc-100">
           <tr>
-            <th class="px-10 py-6 text-[11px] font-black text-black uppercase tracking-[0.2em]">Sujeto / Identidad</th>
-            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Privilegios</th>
-            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Análisis / Métricas</th>
+            <th class="px-10 py-6 text-[11px] font-black text-black uppercase tracking-[0.2em]">Usuario</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Rol</th>
+            <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Actividad</th>
             <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Fecha de Alta</th>
             <th class="px-10 py-6 text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] text-right">Acciones</th>
           </tr>
@@ -231,7 +231,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
                         {user.full_name?.charAt(0) || user.email?.charAt(0) || '?'}
                       </div>
                       <div>
-                        <p class="text-sm font-black text-black uppercase tracking-tight mb-1">{user.full_name || 'IDENTIDAD NO DEFINIDA'}</p>
+                        <p class="text-sm font-black text-black uppercase tracking-tight mb-1">{user.full_name || 'Nombre Desconocido'}</p>
                         <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{user.email}</p>
                       </div>
                     </div>
@@ -249,7 +249,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
                     <div class="flex items-center gap-6">
                         <div class="flex flex-col">
                             <span class="text-[11px] font-black text-black uppercase tracking-tighter">{Number(user.total_spent).toLocaleString()}€</span>
-                            <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Inversión Total</span>
+                            <span class="text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">Total Gastado</span>
                         </div>
                         <div class="w-px h-6 bg-zinc-100"></div>
                         <div class="flex flex-col">
@@ -292,10 +292,10 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM4.5 18a8.5 8.5 0 0115 0h-15z"/></svg>
                     </div>
                     <div class="space-y-2">
-                        <p class="text-xs font-black text-black uppercase tracking-[0.4em]">Sin Resultados de Manifiesto</p>
+                        <p class="text-xs font-black text-black uppercase tracking-[0.4em]">No se encontraron usuarios</p>
                         <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ajuste los parámetros de búsqueda o limpie los filtros actuales</p>
                     </div>
-                    <a href="/admin/users" class="mt-4 px-8 py-4 bg-zinc-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">Limpiar Protocolo</a>
+                    <a href="/admin/users" class="mt-4 px-8 py-4 bg-zinc-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">Limpiar Filtros</a>
                  </div>
               </td>
             </tr>
@@ -310,6 +310,7 @@ const newThisMonth = users?.filter(u => new Date(u.created_at) >= firstDayOfMont
     const SCROLL_KEY = 'admin_users_scroll_pos';
 
     function initPage() {
+        console.log('[ADMIN] Iniciando protocolo de usuarios...');
         if (isInitialized) return;
         const triggers = document.querySelectorAll('.dropdown-trigger');
         

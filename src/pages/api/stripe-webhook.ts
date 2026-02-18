@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
             console.warn('⚠️ Webhook signature verification skipped (no secret configured)');
         }
     } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
+        void 0('Webhook signature verification failed:', err.message);
         return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
     }
 
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
         case 'checkout.session.completed': {
             const session = event.data.object as Stripe.Checkout.Session;
 
-            console.log('✅ Payment successful for session:', session.id);
+            void 0('✅ Payment successful for session:', session.id);
 
             const orderId = session.metadata?.order_id;
 
@@ -59,9 +59,9 @@ export const POST: APIRoute = async ({ request }) => {
                     .eq('id', orderId);
 
                 if (updateError) {
-                    console.error('Failed to update order:', updateError);
+                    void 0('Failed to update order:', updateError);
                 } else {
-                    console.log(`✅ Order ${orderId} updated to 'processing'`);
+                    void 0(`✅ Order ${orderId} updated to 'processing'`);
                     // Note: Stock was already reserved at checkout.
                 }
             } else {
@@ -75,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
             const orderId = session.metadata?.order_id;
 
             if (orderId) {
-                console.log(`⚠️ Order ${orderId} session expired. Restoring stock...`);
+                void 0(`⚠️ Order ${orderId} session expired. Restoring stock...`);
 
                 // Restore Stock
                 await supabaseAdmin.rpc('restore_stock', { p_order_id: orderId });
@@ -86,13 +86,13 @@ export const POST: APIRoute = async ({ request }) => {
                     .update({ status: 'cancelled' })
                     .eq('id', orderId);
 
-                console.log(`⚠️ Order ${orderId} cancelled`);
+                void 0(`⚠️ Order ${orderId} cancelled`);
             }
             break;
         }
 
         default:
-            console.log(`Unhandled event type: ${event.type}`);
+            void 0(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

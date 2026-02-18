@@ -177,7 +177,7 @@ if (!user || profile?.role !== 'admin') {
                 (window as any).showIndustrialAlert('CUPÓN CREADO EXITOSAMENTE', 'success');
                 setTimeout(() => navigate('/admin/coupons'), 500);
             } catch (error: any) {
-                console.error('Error creating coupon:', error);
+                console.log('Error creating coupon:', error);
                 (window as any).showIndustrialAlert('ERROR: ' + error.message, 'error');
                 isSubmitting = false;
                 if (submitBtn) {

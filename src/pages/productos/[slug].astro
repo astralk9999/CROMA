@@ -6,6 +6,10 @@ import Countdown from '@components/islands/Countdown';
 import StockStatus from '@components/islands/StockStatus';
 import { supabase } from '@lib/supabase';
 import { formatPrice } from '@lib/utils';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 
 const { slug } = Astro.params;
 
@@ -51,13 +55,13 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
     {/* Industrial Breadcrumbs */}
     <nav class="mb-10">
       <div class="flex items-center gap-4 mb-3">
-        <span class="px-2 py-0.5 bg-black text-white text-[7px] font-mono font-black uppercase tracking-widest">PRODUCT_LINK_V5</span>
+        <span class="px-2 py-0.5 bg-black text-white text-[7px] font-mono font-black uppercase tracking-widest">{t('product.detail.label.ref')}</span>
         <div class="h-[1px] flex-1 bg-black/10"></div>
       </div>
       <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
-        <li><a href="/" class="hover:text-black transition-colors">ROOT</a></li>
+        <li><a href="/" class="hover:text-black transition-colors">{t('product.breadcrumbs.home')}</a></li>
         <li class="text-zinc-200">/</li>
-        <li><a href="/productos" class="hover:text-black transition-colors">COLLECTION</a></li>
+        <li><a href="/productos" class="hover:text-black transition-colors">{t('product.breadcrumbs.collection')}</a></li>
         {product.categories && (
           <>
             <li class="text-zinc-200">/</li>
@@ -83,15 +87,19 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
       <div class="lg:col-span-5 lg:sticky lg:top-24 self-start">
         {/* Release Status */}
         {isNotYetAvailable && (
-          <div class="mb-6 flex items-center gap-2">
-            <span class="flex h-1.5 w-1.5 rounded-full bg-brand-red animate-pulse"></span>
-            <span class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-brand-red">DROP_SCHEDULED</span>
+          <div class="mb-2.5">
+            <span class="px-1.5 py-0.5 bg-brand-red text-white text-[7px] font-mono font-black uppercase tracking-[0.2em]">{t('product.badge.soon')}</span>
           </div>
         )}
 
         <div class="mb-8">
+            {product.is_limited_drop && (
+              <div class="mb-2.5">
+                <span class="px-1.5 py-0.5 bg-indigo-600 text-white text-[7px] font-mono font-black tracking-[0.2em]">{t('product.badge.limited')}</span>
+              </div>
+            )}
             <div class="flex items-center gap-2 mb-3">
-                <span class="text-[9px] font-mono font-black text-zinc-300">REF_{product.id.toString().slice(0,8).toUpperCase()}</span>
+                <span class="text-[9px] font-mono font-black text-zinc-300">{t('product.detail.label.ref')}_{product.id.toString().slice(0,8).toUpperCase()}</span>
                 <div class="h-[1px] w-6 bg-zinc-200"></div>
             </div>
             <h1 class="text-4xl md:text-5xl font-urban font-black uppercase tracking-tighter text-black leading-[0.85] mb-4 italic">
@@ -128,7 +136,7 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
 
         {product.description && (
           <div class="mb-10">
-            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-3 italic underline decoration-zinc-100 underline-offset-4">MANIFESTO_DESCRIPTION</h3>
+            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-3 italic underline decoration-zinc-100 underline-offset-4">{t('product.detail.label.description')}</h3>
             <p class="text-xs font-bold uppercase tracking-wider leading-relaxed text-zinc-500 italic max-w-lg">
               {product.description}
             </p>
@@ -148,11 +156,37 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
 
         {/* Stock Status */}
         <div class="mb-10">
-            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-4 italic underline decoration-zinc-100 underline-offset-4">INVENTORY_PROTOCOL</h3>
+            <h3 class="text-[9px] font-mono font-black uppercase tracking-[0.3em] text-zinc-300 mb-4 italic underline decoration-zinc-100 underline-offset-4">{t('product.detail.label.stock')}</h3>
             <StockStatus 
                 client:load 
                 stock={effectiveStock} 
                 isNotYetAvailable={isNotYetAvailable} 
+                isLimitedDrop={product.is_limited_drop}
+                translations={{
+                    loading: t('stock.status.loading') as unknown as string[],
+                    notAvailable: {
+                        title: t('stock.status.not_available.title'),
+                        subtitle: t('stock.status.not_available.subtitle'),
+                        badge: t('stock.status.not_available.badge')
+                    },
+                    limited: {
+                        title: t('stock.status.limited.title'),
+                        subtitle: t('stock.status.limited.subtitle'),
+                        badge: t('stock.status.limited.badge')
+                    },
+                    inStock: {
+                        title: t('stock.status.in_stock.title'),
+                        subtitle: t('stock.status.in_stock.subtitle')
+                    },
+                    lowStock: {
+                        title: t('stock.status.low_stock.title'),
+                        subtitle: t('stock.status.low_stock.subtitle')
+                    },
+                    outOfStock: {
+                        title: t('stock.status.out_of_stock.title'),
+                        subtitle: t('stock.status.out_of_stock.subtitle')
+                    }
+                }}
             />
         </div>
 
@@ -174,20 +208,32 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
                     sale_price: product.sale_price
                 }}
                 isNotYetAvailable={isNotYetAvailable}
+                translations={{
+                    size: t('product.add.size'),
+                    units: t('product.add.units'),
+                    lastUnits: t('product.add.last_units'),
+                    almostSoldOut: t('product.add.almost_sold_out'),
+                    selectSizePrompt: t('product.add.select_size_prompt'),
+                    outOfStock: t('product.add.out_of_stock'),
+                    added: t('product.add.added'),
+                    addToCart: t('product.add.add_to_cart'),
+                    selectSizeAlert: t('product.add.select_size_alert'),
+                    outOfStockAlert: t('product.add.out_of_stock_alert')
+                }}
             />
         </div>
 
         {/* System Perks */}
         <div class="mt-12 pt-8 border-t-2 border-black grid grid-cols-2 gap-6">
             <div class="space-y-1">
-                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">LOGISTICS_01</span>
-                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">ENVÍO_EXPRESS_GRATIS</p>
-                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">ORDERS > 50€ // 24H_ETA</p>
+                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">{t('product.shipping.title')}</span>
+                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">{t('product.shipping.text')}</p>
+                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">{t('product.shipping.subtext')}</p>
             </div>
             <div class="space-y-1">
-                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">REVERSE_02</span>
-                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">RETURN_PROTOCOL_ACTIVE</p>
-                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">30_DÍAS // RISK_FREE</p>
+                <span class="text-[7px] font-mono font-black text-zinc-300 block mb-1 uppercase">{t('product.returns.title')}</span>
+                <p class="text-[9px] font-black uppercase tracking-widest text-black italic">{t('product.returns.text')}</p>
+                <p class="text-[8px] font-bold text-zinc-400 uppercase tracking-wider">{t('product.returns.subtext')}</p>
             </div>
         </div>
       </div>

@@ -1,22 +1,24 @@
 ---
 import PublicLayout from '@layouts/PublicLayout.astro';
+import { ui, defaultLang, useTranslations } from '@lib/i18n';
+
+const lang = Astro.locals.lang || defaultLang;
+const t = useTranslations(lang as keyof typeof ui);
 ---
 
-<PublicLayout title="Terms & Conditions Protocol - CROMA">
+<PublicLayout title={t('terms.title')}>
   <div class="container-custom py-24 min-h-[60vh]">
     <div class="max-w-4xl mx-auto">
         {/* Header Section */}
         <header class="mb-20">
             <div class="flex items-center gap-4 mb-6">
-                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">TERMS_OF_SERVICE_V2</span>
+                <span class="px-3 py-1 bg-[#202020] text-white text-[10px] font-mono font-black uppercase tracking-[0.3em]">{t('terms.header.tag')}</span>
                 <div class="h-[2px] flex-1 bg-black/10"></div>
             </div>
-            <h1 class="text-5xl md:text-7xl font-urban font-black uppercase tracking-tighter text-black leading-[0.85] mb-6">
-                TERMS &<br/>
-                <span class="text-zinc-300">CONDITIONS</span>
+            <h1 class="text-5xl md:text-7xl font-urban font-black uppercase tracking-tighter text-black leading-[0.85] mb-6" set:html={t('terms.header.title').replace(' ', '<br/>')}>
             </h1>
             <p class="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-                ÚLTIMA ACTUALIZACIÓN: ENERO 2026 // ACUERDO_DE_USUARIO_FINAL
+                {t('terms.header.subtitle')}
             </p>
         </header>
 
@@ -25,23 +27,23 @@ import PublicLayout from '@layouts/PublicLayout.astro';
             <section>
                 <div class="flex gap-6 items-start mb-6">
                     <span class="text-2xl font-black text-zinc-200">01</span>
-                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">ACEPTACIÓN DEL PROTOCOLO</h2>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">{t('terms.s1.title')}</h2>
                 </div>
                 <div class="pl-12 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
-                    <p>AL ACCEDER Y UTILIZAR ESTE SITIO WEB, OPERADO BAJO LA MARCA CROMA, ACEPTAS VINCULARTE LEGALMENTE POR ESTOS TÉRMINOS. SI NO ESTÁS DE ACUERDO CON ALGUNA PARTE DEL PROTOCOLO, DEBES CESAR TU ACTIVIDAD EN LA PLATAFORMA DE INMEDIATO.</p>
+                    <p>{t('terms.s1.p1')}</p>
                 </div>
             </section>
 
             <section>
                 <div class="flex gap-6 items-start mb-6">
                     <span class="text-2xl font-black text-zinc-200">02</span>
-                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">REQUISITOS DE ACCESO</h2>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">{t('terms.s2.title')}</h2>
                 </div>
                 <div class="pl-12 space-y-4 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
                     <ul class="space-y-2 border-l-2 border-zinc-100 pl-6">
-                        <li>MAYORÍA DE EDAD TÉCNICA (18 AÑOS) PARA EJECUTAR TRANSACCIONES.</li>
-                        <li>VERACIDAD ABSOLUTA EN LA INFORMACIÓN DE PERFIL Y ENVÍO.</li>
-                        <li>RESPONSABILIDAD TOTAL SOBRE LAS CREDENCIALES DE ACCESO AL SISTEMA.</li>
+                        <li>{t('terms.s2.i1')}</li>
+                        <li>{t('terms.s2.i2')}</li>
+                        <li>{t('terms.s2.i3')}</li>
                     </ul>
                 </div>
             </section>
@@ -49,10 +51,10 @@ import PublicLayout from '@layouts/PublicLayout.astro';
             <section>
                 <div class="flex gap-6 items-start mb-6">
                     <span class="text-2xl font-black text-zinc-200">03</span>
-                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">OPERATIVA COMERCIAL</h2>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">{t('terms.s3.title')}</h2>
                 </div>
                 <div class="pl-12 space-y-4 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
-                    <p>TODOS LOS PRECIOS SE EXPRESAN EN EUROS (€) E INCLUYEN LOS IMPUESTOS LEGALES VIGENTES (IVA). CROMA SE RESERVA EL DERECHO DE MODIFICAR PRECIOS O CANCELAR ÓRDENES POR ERRORES CRÍTICOS EN EL SISTEMA O FALTA DE STOCK.</p>
+                    <p>{t('terms.s3.p1')}</p>
                 </div>
             </section>
 
@@ -60,10 +62,10 @@ import PublicLayout from '@layouts/PublicLayout.astro';
                 <div class="p-10 bg-black text-white rounded-[2rem]">
                     <div class="flex gap-6 items-start mb-6">
                         <span class="text-2xl font-black text-zinc-700">04</span>
-                        <h2 class="text-xl font-black uppercase tracking-tight pt-1 italic">PROPIEDAD INTELECTUAL</h2>
+                        <h2 class="text-xl font-black uppercase tracking-tight pt-1 italic">{t('terms.s4.title')}</h2>
                     </div>
                     <div class="pl-12 space-y-4 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 leading-loose">
-                        <p>TODO EL CONTENIDO VISUAL, LOGOTIPOS, DISEÑOS DE PRODUCTO Y CÓDIGO DE INTERFAZ SON PROPIEDAD EXCLUSIVA DE CROMA. CUALQUIER REPRODUCCIÓN NO AUTORIZADA SERÁ CONSIDERADA UNA VIOLACIÓN DEL PROTOCOLO DE MARCA.</p>
+                        <p>{t('terms.s4.p1')}</p>
                     </div>
                 </div>
             </section>
@@ -71,18 +73,18 @@ import PublicLayout from '@layouts/PublicLayout.astro';
             <section>
                 <div class="flex gap-6 items-start mb-6">
                     <span class="text-2xl font-black text-zinc-200">05</span>
-                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">LIMITACIÓN DE RESPONSABILIDAD</h2>
+                    <h2 class="text-xl font-black uppercase tracking-tight pt-1">{t('terms.s5.title')}</h2>
                 </div>
                 <div class="pl-12 text-sm font-bold uppercase tracking-wider text-zinc-500 leading-relaxed">
-                    <p>CROMA NO SE HACE RESPONSABLE DE INTERRUPCIONES TÉCNICAS DERIVADAS DE TERCEROS O DEL USO INCORRECTO DE LAS PRENDAS FUERA DE SUS ESPECIFICACIONES DE DISEÑO.</p>
+                    <p>{t('terms.s5.p1')}</p>
                 </div>
             </section>
         </div>
 
         {/* Action Link */}
         <div class="mt-24 pt-12 border-t border-zinc-100 flex justify-between items-center">
-            <span class="text-[10px] font-mono font-black text-zinc-300">SYSTEM_EXIT // TERMS_V2.0</span>
-            <a href="/contact" class="text-[10px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">CONSULTA_LEGAL</a>
+            <span class="text-[10px] font-mono font-black text-zinc-300">{t('terms.footer.exit')}</span>
+            <a href="/contact" class="text-[10px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-4">{t('terms.footer.legal')}</a>
         </div>
     </div>
   </div>

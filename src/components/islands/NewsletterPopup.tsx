@@ -6,7 +6,24 @@ const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function NewsletterPopup() {
+interface NewsletterPopupProps {
+    labels?: {
+        offer: string;
+        subtitle: string;
+        successTitle: string;
+        successMsg: string;
+        alreadySub: string;
+        error: string;
+        cta: string;
+        subscribing: string;
+        shopNow: string;
+        privacyMsg: string;
+        bodyText: string;
+        placeholder: string;
+    };
+}
+
+export default function NewsletterPopup({ labels }: NewsletterPopupProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -36,7 +53,7 @@ export default function NewsletterPopup() {
             if (error) {
                 if (error.code === '23505') { // Unique violation
                     setStatus('success');
-                    setMessage('¡Ya estás suscrito! Usa el código WELCOME10.');
+                    setMessage((labels?.alreadySub || '¡Ya estás suscrito! Usa el código {code}.').replace('{code}', 'WELCOME10'));
                     localStorage.setItem('newsletter_dismissed', 'true');
                     return;
                 }
@@ -44,16 +61,13 @@ export default function NewsletterPopup() {
             }
 
             setStatus('success');
-            setMessage('¡Gracias! Tu código de descuento es: WELCOME10');
-            // Here we could also create a generated coupon via RPC if needed, 
-            // but simpler to use a static one for now as per "simple" reqs or create it in migration manually?
-            // User asked for "Send code", showing it here works.
+            setMessage((labels?.successMsg || '¡Gracias! Tu código de descuento es: {code}').replace('{code}', 'WELCOME10'));
             localStorage.setItem('newsletter_dismissed', 'true');
 
         } catch (err: any) {
             console.error(err);
             setStatus('error');
-            setMessage('Error al suscribirse. Inténtalo de nuevo.');
+            setMessage(labels?.error || 'Error al suscribirse. Inténtalo de nuevo.');
         }
     };
 
@@ -79,11 +93,11 @@ export default function NewsletterPopup() {
                 </button>
 
                 <div className="flex flex-col">
-                    {/* Image Side (or Top) */}
+                    {/* Header Side */}
                     <div className="h-32 bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center p-6 text-white text-center">
                         <div>
-                            <h3 className="text-2xl font-bold mb-1">¡Consigue un 10% OFF!</h3>
-                            <p className="text-white/80 text-sm">Suscríbete a nuestra newsletter</p>
+                            <h3 className="text-2xl font-bold mb-1">{labels?.offer || '¡Consigue un 10% OFF!'}</h3>
+                            <p className="text-white/80 text-sm">{labels?.subtitle || 'Suscríbete a nuestra newsletter'}</p>
                         </div>
                     </div>
 
@@ -95,7 +109,7 @@ export default function NewsletterPopup() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <h4 className="text-xl font-bold text-gray-900 mb-2">¡Suscripción Exitosa!</h4>
+                                <h4 className="text-xl font-bold text-gray-900 mb-2">{labels?.successTitle || '¡Suscripción Exitosa!'}</h4>
                                 <p className="text-gray-600 mb-4">{message}</p>
                                 <div className="bg-gray-100 p-3 rounded-lg border border-dashed border-gray-300 font-mono text-lg font-bold text-gray-800 tracking-wider">
                                     WELCOME10
@@ -104,13 +118,13 @@ export default function NewsletterPopup() {
                                     onClick={handleClose}
                                     className="mt-6 w-full bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
                                 >
-                                    Ir a la Tienda
+                                    {labels?.shopNow || 'Ir a la Tienda'}
                                 </button>
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <p className="text-gray-600 text-center mb-2">
-                                    Recibe las últimas tendencias y ofertas exclusivas directamente en tu email.
+                                    {labels?.bodyText || 'Recibe las últimas tendencias y ofertas exclusivas directamente en tu email.'}
                                 </p>
 
                                 <div>
@@ -118,7 +132,7 @@ export default function NewsletterPopup() {
                                     <input
                                         type="email"
                                         id="popup-newsletter-email"
-                                        placeholder="tucorreo@ejemplo.com"
+                                        placeholder={labels?.placeholder || 'tucorreo@ejemplo.com'}
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -135,11 +149,11 @@ export default function NewsletterPopup() {
                                     disabled={status === 'loading'}
                                     className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-transform active:scale-95 disabled:opacity-70"
                                 >
-                                    {status === 'loading' ? 'Suscribiendo...' : 'Suscribirme Ahora'}
+                                    {status === 'loading' ? (labels?.subscribing || 'Suscribiendo...') : (labels?.cta || 'Suscribirme Ahora')}
                                 </button>
 
                                 <p className="text-xs text-center text-gray-400 mt-4">
-                                    Al suscribirte aceptas nuestra política de privacidad. Puedes cancelar cuando quieras.
+                                    {labels?.privacyMsg || 'Al suscribirte aceptas nuestra política de privacidad. Puedes cancelar cuando quieras.'}
                                 </p>
                             </form>
                         )}

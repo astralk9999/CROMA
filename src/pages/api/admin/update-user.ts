@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const { userId, updates } = await request.json();
-        console.log(`[API Update User] Processing update for ID: ${userId}`);
+        console.log('[PROX] Validando para:', user?.email);
 
         if (!userId) {
             return new Response(JSON.stringify({
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             .eq('id', userId);
 
         if (error) {
-            console.error('[API Update User] Database Error:', error);
+            console.error('Update user error:', error);
             return new Response(JSON.stringify({
                 success: false,
                 message: 'Error al actualizar el usuario en la base de datos.',

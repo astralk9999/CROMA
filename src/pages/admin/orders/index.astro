@@ -241,8 +241,8 @@ const statusLabels: Record<string, string> = {
   </div>
 
   <!-- Orders List: Industrial Table -->
-  <div class="bg-white rounded-[3rem] border border-zinc-200/60 shadow-xl overflow-hidden mb-20 animate-fade-in">
-    <div class="overflow-x-auto min-h-[400px]">
+  <div class="bg-white rounded-[3rem] border border-zinc-200/60 shadow-xl overflow-visible mb-20 animate-fade-in relative z-0">
+    <div class="overflow-x-auto min-h-[400px] pb-40">
       <table class="w-full text-left border-collapse">
         <thead class="bg-zinc-50 border-b-2 border-zinc-100 sticky top-0 z-10">
           <tr>
@@ -474,14 +474,27 @@ const statusLabels: Record<string, string> = {
                 const arrow = container?.querySelector('.status-arrow');
 
                 document.querySelectorAll('.status-dropdown-menu, [id^="ord-"][id$="-menu"]').forEach(m => {
-                    if (m !== menu) m.classList.add('hidden');
+                    if (m !== menu) {
+                        m.classList.add('hidden');
+                        const wrapper = m.closest('.relative');
+                        if (wrapper && wrapper.classList.contains('w-40')) {
+                            (wrapper as HTMLElement).style.zIndex = '0';
+                        }
+                    }
                 });
                 document.querySelectorAll('.status-arrow, [id^="ord-"][id$="-arrow"]').forEach(a => {
                     if (a !== arrow) a.classList.remove('rotate-180');
                 });
 
-                menu?.classList.toggle('hidden');
-                arrow?.classList.toggle('rotate-180');
+                if (menu?.classList.contains('hidden')) {
+                    menu.classList.remove('hidden');
+                    if (container) (container as HTMLElement).style.zIndex = '50';
+                    arrow?.classList.add('rotate-180');
+                } else {
+                    menu?.classList.add('hidden');
+                    if (container) (container as HTMLElement).style.zIndex = '0';
+                    arrow?.classList.remove('rotate-180');
+                }
                 return;
             }
 
@@ -517,7 +530,13 @@ const statusLabels: Record<string, string> = {
             }
 
             // Global close
-            document.querySelectorAll('[id^="ord-"][id$="-menu"], .status-dropdown-menu').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('[id^="ord-"][id$="-menu"], .status-dropdown-menu').forEach(m => {
+                m.classList.add('hidden');
+                const wrapper = m.closest('.relative');
+                if (wrapper && wrapper.classList.contains('w-40')) {
+                    (wrapper as HTMLElement).style.zIndex = '0';
+                }
+            });
             document.querySelectorAll('[id^="ord-"][id$="-arrow"], .status-arrow').forEach(a => a.classList.remove('rotate-180'));
         });
 

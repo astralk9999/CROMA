@@ -6,22 +6,21 @@ import { sendRecentlyViewedEmail } from '@lib/email';
 // Security: Add a secret header check in production
 
 export const GET: APIRoute = async ({ request }) => {
-    // Optional: Add secret validation for CRON security
-    const cronSecret = request.headers.get('x-cron-secret');
+    // Validate Vercel CRON authorization
+    const authHeader = request.headers.get('Authorization');
     const expectedSecret = import.meta.env.CRON_SECRET || 'dev-secret';
 
-    if (cronSecret !== expectedSecret && import.meta.env.PROD) {
+    if (authHeader !== `Bearer ${expectedSecret}` && import.meta.env.PROD) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     try {
-        // Find users who viewed products in the last 24-48 hours but haven't purchased
-        // Allow override for testing/debugging
+        // Restrict window to exactly [48h ago -> 24h ago] to avoid spam overlapping
         const url = new URL(request.url);
         const forceRecent = url.searchParams.get('recent');
 
-        const cutoffRecent = forceRecent ? new Date().toISOString() : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24h ago (or now if forced)
-        const cutoffOld = new Date(Date.now() - 168 * 60 * 60 * 1000).toISOString(); // Extended to 7 days to find SOME data for testing
+        const cutoffRecent = forceRecent ? new Date().toISOString() : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24h ago
+        const cutoffOld = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(); // 48h ago
 
         // Get users with recent views
         const { data: recentViews, error } = await supabaseAdmin
@@ -45,7 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
             .order('viewed_at', { ascending: false });
 
         if (error) {
-            void 0('Fetch recent views error:', error);
+            console.error('Fetch recent views error:', error);
             return new Response(JSON.stringify({ error: error.message }), { status: 500 });
         }
 
@@ -64,8 +63,9 @@ export const GET: APIRoute = async ({ request }) => {
                 };
             }
 
-            // Only add up to 3 products per user
-            if (userProducts[userId].products.length < 3) {
+            // deduplicate checking if product already exists
+            const alreadyAdded = userProducts[userId].products.some(p => p.id === product.id);
+            if (!alreadyAdded && userProducts[userId].products.length < 3) {
                 userProducts[userId].products.push(product);
             }
         }
@@ -99,7 +99,7 @@ export const GET: APIRoute = async ({ request }) => {
         }), { status: 200 });
 
     } catch (error: any) {
-        void 0('CRON reminder error:', error);
+        console.error('CRON reminder error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

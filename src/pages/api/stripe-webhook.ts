@@ -1,14 +1,17 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@lib/supabase-admin';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+    throw new Error('CRITICAL_INFRA_FAILURE: STRIPE_SECRET_KEY is missing from environment variables');
+}
+
+const stripe = new Stripe(stripeKey, {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET || '';
-
-import { supabaseAdmin } from '@lib/supabase-admin';
 
 export const POST: APIRoute = async ({ request }) => {
     const signature = request.headers.get('stripe-signature');
@@ -22,16 +25,15 @@ export const POST: APIRoute = async ({ request }) => {
     try {
         const body = await request.text();
 
-        // Verify webhook signature
         if (webhookSecret) {
             event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
         } else {
-            // For development without signature verification
-            event = JSON.parse(body) as Stripe.Event;
-            console.warn('⚠️ Webhook signature verification skipped (no secret configured)');
+            // SECURITY: Block unverified webhooks in production
+            console.error('CRITICAL: STRIPE_WEBHOOK_SECRET not configured. Rejecting webhook.');
+            return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), { status: 500 });
         }
     } catch (err: any) {
-        void 0('Webhook signature verification failed:', err.message);
+        console.error('Webhook signature verification failed:', err.message);
         return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
     }
 
@@ -40,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
         case 'checkout.session.completed': {
             const session = event.data.object as Stripe.Checkout.Session;
 
-            void 0('✅ Payment successful for session:', session.id);
+            console.log('✅ Payment successful for session:', session.id);
 
             const orderId = session.metadata?.order_id;
 
@@ -59,9 +61,9 @@ export const POST: APIRoute = async ({ request }) => {
                     .eq('id', orderId);
 
                 if (updateError) {
-                    void 0('Failed to update order:', updateError);
+                    console.error('Failed to update order:', updateError);
                 } else {
-                    void 0(`✅ Order ${orderId} updated to 'processing'`);
+                    console.log(`✅ Order ${orderId} updated to 'processing'`);
                     // Note: Stock was already reserved at checkout.
                 }
             } else {
@@ -75,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
             const orderId = session.metadata?.order_id;
 
             if (orderId) {
-                void 0(`⚠️ Order ${orderId} session expired. Restoring stock...`);
+                console.warn(`⚠️ Order ${orderId} session expired. Restoring stock...`);
 
                 // Restore Stock
                 await supabaseAdmin.rpc('restore_stock', { p_order_id: orderId });
@@ -86,13 +88,13 @@ export const POST: APIRoute = async ({ request }) => {
                     .update({ status: 'cancelled' })
                     .eq('id', orderId);
 
-                void 0(`⚠️ Order ${orderId} cancelled`);
+                console.log(`⚠️ Order ${orderId} cancelled`);
             }
             break;
         }
 
         default:
-            void 0(`Unhandled event type: ${event.type}`);
+            console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

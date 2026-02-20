@@ -225,6 +225,7 @@ const profile = Astro.locals.profile;
   <div id="checkout-translations" class="hidden"
     data-empty={t('checkout.empty')}
     data-error={t('common.error')}
+    data-attention={t('modal.attention')}
     data-submit={t('checkout.button.submit')}
     data-processing={t('checkout.button.processing')}
   ></div>
@@ -237,6 +238,7 @@ const profile = Astro.locals.profile;
     const i18nEl = document.getElementById('checkout-translations');
     const t_empty = i18nEl?.dataset.empty || 'Tu carrito está vacío';
     const t_error = i18nEl?.dataset.error || 'Error';
+    const t_attention = i18nEl?.dataset.attention || 'Atención';
     const t_submit = i18nEl?.dataset.submit || 'Finalizar compra';
     const t_processing = i18nEl?.dataset.processing || 'Procesando...';
     
@@ -331,7 +333,7 @@ const profile = Astro.locals.profile;
             const currentItems = Object.values(cartItems.get());
 
             if (currentItems.length === 0) {
-                 alert(t_empty);
+                 window.webAlert(t_empty, t_attention);
                  if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = t_submit;
@@ -359,7 +361,7 @@ const profile = Astro.locals.profile;
                     appliedCoupon.set(null);
                     window.location.href = data.url;
                 } else {
-                    alert(`${t_error}: ` + (data.error || 'Unknown error'));
+                    window.webAlert((data.error || 'Unknown error'), t_error, true);
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.textContent = t_submit;
@@ -367,7 +369,7 @@ const profile = Astro.locals.profile;
                 }
             } catch (error) {
                 console.error('Checkout error:', error);
-                alert(`${t_error}: Connection failed`);
+                window.webAlert('Connection failed', t_error, true);
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = t_submit;

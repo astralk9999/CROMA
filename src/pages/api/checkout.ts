@@ -2,7 +2,12 @@ import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+    throw new Error('CRITICAL_INFRA_FAILURE: STRIPE_SECRET_KEY is missing from environment variables');
+}
+
+const stripe = new Stripe(stripeKey, {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
@@ -62,35 +67,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             if (guestEmail) {
                 customerEmail = guestEmail;
 
-                // WORKAROUND: Since schema 'user_id' might be NOT NULL, use a placeholder Guest User
-                const GUEST_ACCOUNT_EMAIL = 'guest@croma.shop';
-                const GUEST_PASSWORD = 'GuestPassword123!@#';
-
-                // 1. Try to find the Guest User ID via direct query
-                const { data: existingGuest } = await supabaseAdmin
-                    .from('profiles')
-                    .select('id')
-                    .eq('email', GUEST_ACCOUNT_EMAIL)
-                    .single();
-
-                if (existingGuest) {
-                    userId = existingGuest.id;
+                // Use the pre-existing guest user ID (set via env var or lookup)
+                const guestUserId = import.meta.env.GUEST_USER_ID;
+                if (guestUserId) {
+                    userId = guestUserId;
                 } else {
-                    // 2. Create if not exists using clean Admin API (No signIn)
-                    const { data: createUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-                        email: GUEST_ACCOUNT_EMAIL,
-                        password: GUEST_PASSWORD,
-                        email_confirm: true,
-                        user_metadata: { full_name: 'Guest User' }
-                    });
+                    // Fallback: find guest user by email in profiles
+                    const { data: existingGuest } = await supabaseAdmin
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', 'guest@croma.shop')
+                        .single();
 
-                    if (createUser?.user) {
-                        userId = createUser.user.id;
-                        // Profile should be created automatically by DB trigger, 
-                        // but let's ensure it has the customer role if needed.
+                    if (existingGuest) {
+                        userId = existingGuest.id;
                     } else {
-                        console.error('Guest creation error:', createError);
-                        return new Response(JSON.stringify({ error: 'Error initializing guest system.' }), { status: 500 });
+                        console.error('Guest user not found. Set GUEST_USER_ID env var.');
+                        return new Response(JSON.stringify({ error: 'Error en el sistema de invitados.' }), { status: 500 });
                     }
                 }
             } else {
@@ -98,8 +91,38 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             }
         }
 
-        // Calculate total
-        let totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        // IMPORTANT: Validate products and calculate total securely
+        const productIds = items.map((item: CartItem) => item.id);
+
+        // Ensure all IDs are valid UUIDs to prevent Postgres syntax errors
+        const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (!productIds.every(isValidUUID)) {
+            return new Response(JSON.stringify({ error: 'Se han detectado productos inválidos en tu carrito. Por favor elimínalos y vuelve a añadirlos.' }), { status: 400 });
+        }
+
+        const { data: dbProducts, error: dbError } = await supabaseAdmin
+            .from('products')
+            .select('id, name, price, stock_by_sizes, is_hidden')
+            .in('id', productIds);
+
+        if (dbError) {
+            console.error('Database error fetching products:', dbError);
+            return new Response(JSON.stringify({ error: 'Error validating cart products.' }), { status: 500 });
+        }
+
+        // Check if any product is missing or archived
+        let subtotal = 0;
+        for (const item of items) {
+            const dbProduct = dbProducts?.find(p => p.id === item.id);
+            if (!dbProduct || dbProduct.is_hidden) {
+                return new Response(JSON.stringify({ error: `El producto "${item.name}" ya no está disponible en la tienda.` }), { status: 400 });
+            }
+            // Update item price to real DB price
+            item.price = dbProduct.price;
+            subtotal += item.price * item.quantity;
+        }
+
+        let totalAmount = subtotal; // Base for coupon
         let discountAmount = 0;
         let appliedCoupon = null;
 
@@ -116,19 +139,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             } else if (couponData && couponData.valid) {
                 appliedCoupon = couponData;
                 if (couponData.type === 'percentage') {
-                    discountAmount = totalAmount * (couponData.value / 100);
-                } else {
+                    discountAmount = subtotal * (couponData.value / 100);
+                } else if (couponData.type === 'fixed') {
                     discountAmount = couponData.value;
                 }
-                totalAmount = Math.max(0, totalAmount - discountAmount);
             }
         }
+
+        // Ensure discount doesn't exceed subtotal
+        discountAmount = Math.min(discountAmount, subtotal);
+        totalAmount = parseFloat((subtotal - discountAmount).toFixed(2));
 
         // Create order in database with status 'pending'
         const { data: order, error: orderError } = await supabaseAdmin
             .from('orders')
             .insert({
-                user_id: userId, // Can be null now
+                user_id: userId,
                 status: 'pending',
                 total_amount: totalAmount,
                 shipping_address: { ...shippingAddress, email: customerEmail },
@@ -160,10 +186,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         if (itemsError) {
             console.error('Order items creation error:', itemsError);
             await supabaseAdmin.from('orders').delete().eq('id', order.id);
-            return new Response(JSON.stringify({ error: 'Failed to create order items' }), { status: 500 });
+            return new Response(JSON.stringify({ error: `Failed to create order items: ${itemsError.message} - ${itemsError.details} - ${itemsError.hint}` }), { status: 500 });
         }
 
         // Reserve Stock (Decrement immediately)
+        const decrementedItems: CartItem[] = [];
         for (const item of items) {
             const { data: stockResult, error: stockError } = await supabaseAdmin
                 .rpc('decrement_stock', {
@@ -174,14 +201,24 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
             if (stockError || (stockResult && !stockResult.success)) {
                 console.error(`Stock reservation failed for ${item.name}:`, stockError || stockResult);
+                // Rollback previously decremented stock
+                for (const prev of decrementedItems) {
+                    try {
+                        await supabaseAdmin.rpc('decrement_stock', {
+                            p_product_id: prev.id,
+                            p_size: prev.size,
+                            p_quantity: -prev.quantity  // Negative to restore
+                        });
+                    } catch (restoreErr) {
+                        console.error('Stock restore failed for', prev.name, restoreErr);
+                    }
+                }
                 // Rollback Order
+                await supabaseAdmin.from('order_items').delete().eq('order_id', order.id);
                 await supabaseAdmin.from('orders').delete().eq('id', order.id);
-                // Note: We might want to restore previous items if partially successful, 
-                // but for simplicity we assume all-or-nothing or manual fix. 
-                // In a real app, we'd loop back to restore.
-                // For now, fail hard.
                 return new Response(JSON.stringify({ error: `Sin stock suficiente para ${item.name} (${item.size})` }), { status: 400 });
             }
+            decrementedItems.push(item);
         }
 
         // Create Stripe line items
@@ -190,7 +227,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 currency: 'eur',
                 product_data: {
                     name: `${item.name} (Talla: ${item.size})`,
-                    images: item.image ? [item.image] : [],
+                    images: item.image && item.image.startsWith('http') ? [item.image] : [],
                 },
                 unit_amount: Math.round(item.price * 100),
             },
@@ -212,7 +249,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             discounts: appliedCoupon ? [
                 {
                     coupon: await (async () => {
-                        // Create a temporary Stripe coupon for this transaction
                         const stripeCoupon = await stripe.coupons.create({
                             percent_off: appliedCoupon.type === 'percentage' ? appliedCoupon.value : undefined,
                             amount_off: appliedCoupon.type === 'fixed' ? Math.round(appliedCoupon.value * 100) : undefined,
@@ -245,6 +281,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         });
     } catch (error: any) {
         console.error('Checkout error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ error: 'Error procesando el pago. Inténtalo de nuevo.' }), { status: 500 });
     }
 };

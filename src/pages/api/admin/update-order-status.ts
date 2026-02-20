@@ -24,6 +24,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }), { status: 400 });
         }
 
+        // Validate status against allowed values
+        const VALID_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        if (!VALID_STATUSES.includes(status)) {
+            return new Response(JSON.stringify({
+                success: false,
+                message: `Estado inválido. Valores permitidos: ${VALID_STATUSES.join(', ')}`
+            }), { status: 400 });
+        }
+
         // 2. Fetch Current Order State
         const { data: order, error: fetchError } = await supabaseAdmin
             .from('orders')
@@ -48,17 +57,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }), { status: 404 });
         }
 
-        // 3. ENFORCE BUSINESS RULES
-        // Rule: Cannot cancel/reset if already shipped or delivered
-        const restrictedStatuses = ['shipped', 'delivered'];
-        const targetBlocks = ['cancelled', 'pending'];
-
-        if (restrictedStatuses.includes(order.status) && targetBlocks.includes(status)) {
-            return new Response(JSON.stringify({
-                success: false,
-                message: `BLOQUEO DE SEGURIDAD: No se puede cancelar un pedido que ya está en estado ${order.status.toUpperCase()}`
-            }), { status: 403 });
-        }
 
         // 4. Update Order Status
         const { error: updateError } = await supabaseAdmin
@@ -108,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         console.error('Update status error:', err);
         return new Response(JSON.stringify({
             success: false,
-            message: err.message || 'Error interno del servidor'
+            message: 'Error interno del servidor'
         }), { status: 500 });
     }
 };

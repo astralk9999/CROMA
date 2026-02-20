@@ -7,7 +7,7 @@ export const POST: APIRoute = async ({ request }) => {
         const body = await request.json();
         const { email } = body;
 
-        if (!email || !email.includes('@')) {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return new Response(JSON.stringify({
                 error: 'Por favor, introduce un email válido'
             }), {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
                 });
             }
 
-            void 0('Newsletter subscription error:', error);
+            console.error('Newsletter subscription error:', error);
             return new Response(JSON.stringify({
                 error: 'Error al suscribirse. Inténtalo de nuevo.'
             }), {
@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
 
         // --- NEW: Generate Welcome Coupon ---
         try {
-            const couponCode = `WELCOME-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            const couponCode = `WELCOME-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 30); // 30 days validity
 
@@ -66,11 +66,11 @@ export const POST: APIRoute = async ({ request }) => {
                 try {
                     await sendWelcomeEmail(email.toLowerCase(), couponCode);
                 } catch (emailErr) {
-                    void 0('CRITICAL: Welcome email failed in API:', emailErr);
+                    console.error('CRITICAL: Welcome email failed in API:', emailErr);
                 }
             }
         } catch (couponGenError) {
-            void 0('Coupon generation error:', couponGenError);
+            console.error('Coupon generation error:', couponGenError);
             // We don't fail the registration if coupon fails
         }
 
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
         });
 
     } catch (error) {
-        void 0('Newsletter API error:', error);
+        console.error('Newsletter API error:', error);
         return new Response(JSON.stringify({
             error: 'Error del servidor. Inténtalo de nuevo.'
         }), {

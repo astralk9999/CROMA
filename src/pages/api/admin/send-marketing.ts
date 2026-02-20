@@ -89,32 +89,45 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }
         }
 
-        // 4. Send Emails
+        // 4. Send Emails in Batches (to avoid server timeouts)
+        const BATCH_SIZE = 50;
+        const BATCH_DELAY_MS = 1000;
+
         let results = {
             total: uniqueRecipients.length,
             sent: 0,
             failed: 0
         };
 
-        for (const recipient of uniqueRecipients) {
-            const result = await sendMarketingEmail(
-                recipient.email,
-                subject,
-                title,
-                body,
-                ctaLink,
-                ctaText,
-                productsData,
-                !!showStock,
-                recipient.name,
-                couponData?.code,
-                couponData?.discount
+        for (let i = 0; i < uniqueRecipients.length; i += BATCH_SIZE) {
+            const batch = uniqueRecipients.slice(i, i + BATCH_SIZE);
+
+            const batchResults = await Promise.all(
+                batch.map(async (recipient) => {
+                    const result = await sendMarketingEmail(
+                        recipient.email,
+                        subject,
+                        title,
+                        body,
+                        ctaLink,
+                        ctaText,
+                        productsData,
+                        !!showStock,
+                        recipient.name,
+                        couponData?.code,
+                        couponData?.discount
+                    );
+                    return result?.success;
+                })
             );
 
-            if (result?.success) {
-                results.sent++;
-            } else {
-                results.failed++;
+            batchResults.forEach(success => {
+                if (success) results.sent++;
+                else results.failed++;
+            });
+
+            if (i + BATCH_SIZE < uniqueRecipients.length) {
+                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
             }
         }
 
@@ -142,6 +155,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     } catch (error: any) {
         console.error('Marketing API Error:', error);
-        return new Response(JSON.stringify({ success: false, message: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ success: false, message: 'Error enviando la campaña' }), { status: 500 });
     }
 };

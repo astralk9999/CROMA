@@ -37,8 +37,12 @@ export const GET: APIRoute = async ({ request }) => {
             if (!userProducts[userId]) {
                 userProducts[userId] = { email, products: [] };
             }
-            // @ts-ignore
-            userProducts[userId].products.push(view.products);
+            // deduplicate checking if product already exists
+            const productData = view.products as any;
+            const alreadyAdded = userProducts[userId].products.some(p => p.id === productData.id);
+            if (!alreadyAdded) {
+                userProducts[userId].products.push(productData);
+            }
         }
 
         // 3. Send Emails

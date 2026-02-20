@@ -1,5 +1,5 @@
 import { useStore } from '@nanostores/react';
-import { cartItems, cartTotal } from '@stores/cart';
+import { cartItems, cartTotal, updateQuantity, removeFromCart } from '@stores/cart';
 import { appliedCoupon } from '@stores/coupon';
 import { formatPrice } from '@lib/utils';
 import { useEffect, useState } from 'react';
@@ -21,7 +21,7 @@ export default function CartSummary() {
         setMounted(true);
     }, []);
 
-    const itemsArray = Object.values(items);
+    const itemsEntries = Object.entries(items);
 
     // Calculate Discount
     let discountAmount = 0;
@@ -43,15 +43,15 @@ export default function CartSummary() {
         );
     }
 
-    if (itemsArray.length === 0) {
+    if (itemsEntries.length === 0) {
         return <p className="text-center py-4 text-gray-500">Tu carrito está vacío.</p>;
     }
 
     return (
         <>
             <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                {itemsArray.map((item: any) => (
-                    <div key={`${item.id}-${item.size}`} className="flex gap-3 pb-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors rounded-lg p-1">
+                {itemsEntries.map(([key, item]: [string, any]) => (
+                    <div key={key} className="flex gap-3 pb-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors rounded-lg p-1">
                         <img
                             src={item.image}
                             alt={item.name}
@@ -59,8 +59,30 @@ export default function CartSummary() {
                         />
                         <div className="flex-1">
                             <p className="font-bold text-gray-900 text-sm line-clamp-1">{item.name}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Talla: {item.size} | Qty: {item.quantity}</p>
-                            <p className="text-sm font-black text-black mt-1">{formatPrice(item.price * item.quantity)}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Talla: {item.size}</p>
+                            <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateQuantity(key, item.quantity - 1, item.maxStock || 99)}
+                                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded text-gray-600 hover:border-black hover:text-black transition-colors"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => updateQuantity(key, item.quantity + 1, item.maxStock || 99)}
+                                        disabled={item.quantity >= (item.maxStock || 99)}
+                                        className={`w-6 h-6 flex items-center justify-center border rounded transition-colors ${item.quantity >= (item.maxStock || 99) ? 'border-gray-100 text-gray-200 cursor-not-allowed' : 'border-gray-300 text-gray-600 hover:border-black hover:text-black'}`}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-black">{formatPrice(item.price * item.quantity)}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ))}

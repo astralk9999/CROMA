@@ -265,7 +265,29 @@ export async function sendOrderStatusEmail(to: string, orderId: string, status: 
     if (!SMTP_PASS) return;
 
     const itemsSummary = items.map(item => `
-        <span style="display: inline-block; padding: 4px 8px; background-color: #f0f0f0; margin: 0 4px 4px 0; font-size: 10px; color: #444444;">${item.product?.name || item.product_name}</span>
+        <tr>
+            <td style="padding-bottom: 16px;">
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border: 1px solid #f0f0f0;">
+                    <tr>
+                        <td width="80" style="vertical-align: top; background-color: #f9f9f9;">
+                            ${item.product_image
+            ? `<img src="${item.product_image}" width="80" height="100" style="display: block; object-fit: cover;" />`
+            : `<div style="width: 80px; height: 100px; background-color: #eeeeee;"></div>`
+        }
+                        </td>
+                        <td style="padding: 16px; vertical-align: middle;">
+                            <p style="margin: 0 0 4px 0; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #000000; text-transform: uppercase;">${item.product_name}</p>
+                            <p style="margin: 0; font-family: 'Inter', sans-serif; font-size: 10px; color: #666666; text-transform: uppercase;">
+                                ${item.size || 'N/A'} <span style="color: #cccccc;">|</span> Qty: ${item.quantity || 1}
+                            </p>
+                        </td>
+                        <td align="right" style="padding: 16px; vertical-align: middle;">
+                            <p style="margin: 0; font-family: monospace; font-size: 13px; font-weight: 600; color: #000000;">${Number(item.price || 0).toFixed(2)}€</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
     `).join('');
 
     const statusColor = statusColors[status] || '#000000';
@@ -281,11 +303,13 @@ export async function sendOrderStatusEmail(to: string, orderId: string, status: 
             </tr>
             
             <tr>
-                <td style="padding: 24px; border: 1px solid #f0f0f0; text-align: center;">
-                    <p style="margin: 0 0 16px 0; font-size: 10px; color: #666666;">Artículos en este pedido:</p>
-                    <div>${itemsSummary}</div>
+                <td style="padding-bottom: 8px;">
+                     <p style="margin: 0; font-size: 9px; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 1px;">Artículos en este pedido</p>
                 </td>
             </tr>
+            
+            ${itemsSummary}
+
             
             <tr>
                 <td align="center" style="padding-top: 32px;">

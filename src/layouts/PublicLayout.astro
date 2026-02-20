@@ -8,6 +8,7 @@ import SearchWidget from '@components/islands/SearchWidget';
 import NewsletterPopup from '@components/islands/NewsletterPopup';
 import IndustrialToast from '@components/admin/IndustrialToast.astro';
 import LanguageToggle from '@components/LanguageToggle.astro';
+import PublicModal from '@components/islands/PublicModal';
 
 import { ui, defaultLang, useTranslations } from '@lib/i18n';
 
@@ -191,6 +192,13 @@ const newsletterLabels = {
   </footer>
   
   <IndustrialToast />
+
+  {/* Public Modal System */}
+  <PublicModal 
+    client:load 
+    defaultConfirmText={t('modal.accept')} 
+    defaultCancelText={t('modal.cancel')} 
+  />
 
   {/* Newsletter Popup */}
   <NewsletterPopup client:idle labels={newsletterLabels} />

@@ -5,9 +5,9 @@ const supabaseServiceRoleKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
     const errorMsg = `CRITICAL: Falta configurar variables de entorno de Supabase (${!supabaseUrl ? 'URL' : ''} ${!supabaseServiceRoleKey ? 'ServiceRoleKey' : ''})`;
-    void 0(errorMsg);
+    console.error(errorMsg);
     if (typeof window !== 'undefined') {
-        void 0('CRITICAL ERROR: supabaseAdmin initialized in browser context! This is a security risk.');
+        console.error('CRITICAL ERROR: supabaseAdmin initialized in browser context! This is a security risk.');
     }
 }
 

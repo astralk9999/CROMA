@@ -82,8 +82,10 @@ const vat = order.total_amount - subtotal;
                 </div>
             </div>
             <div class="invoice-details">
-                <h1 style="font-size: 32px; font-weight: 900; margin: 0;">FACTURA</h1>
-                <p>#{order.id.slice(0,8).toUpperCase()}</p>
+                <h1 style="font-size: 32px; font-weight: 900; margin: 0; max-width: 400px; line-height: 1.1;">
+                    {order.status === 'cancelled' ? 'FACTURA RECTIFICATIVA (ABONO)' : 'FACTURA'}
+                </h1>
+                <p style="margin-top: 8px;">{order.id.slice(0,8).toUpperCase()}</p>
                 <p style="color: #666; font-size: 14px;">{formatDate(order.created_at)}</p>
                 <div style="margin-top: 8px; display: inline-block; padding: 4px 8px; background: #eee; border-radius: 4px; font-size: 12px; font-weight: bold;">
                     {order.status.toUpperCase()}

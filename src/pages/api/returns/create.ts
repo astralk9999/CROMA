@@ -96,7 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             // Rollback? Supabase doesn't support easy rollback in HTTP API without stored procedures.
             // We'll log it and user calls support, or we leave the header empty (not ideal).
             // For now, throw.
-            void 0('Error inserting items:', itemsInsertError);
+            console.error('Error inserting items:', itemsInsertError);
             throw new Error('Error al registrar artículos de la devolución');
         }
 
@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }), { status: 200 });
 
     } catch (err: any) {
-        void 0('[API Returns] Error:', err);
+        console.error('[API Returns] Error:', err);
         return new Response(JSON.stringify({
             success: false,
             message: err.message || 'Error interno'

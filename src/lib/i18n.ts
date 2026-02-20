@@ -653,6 +653,13 @@ export const ui = {
         'return.modal.alert_no_reason': 'POR FAVOR, SELECCIONA UN MOTIVO',
         'return.modal.alert_success': 'SOLICITUD DE DEVOLUCIÓN ENVIADA. EL PROTOCOLO HA SIDO ACTIVADO.',
         'return.modal.alert_error': 'ERROR EN EL PROTOCOLO: {error}',
+        'modal.confirm': 'Confirmar',
+        'modal.cancel': 'Cancelar',
+        'modal.accept': 'Aceptar',
+        'modal.attention': 'Atención',
+        'modal.error': 'Error',
+        'order.action.cancel_title': 'Cancelar Pedido',
+        'order.action.cancel_success_title': 'Pedido Cancelado Exitosamente',
     },
     en: {
         'nav.home': 'Home',
@@ -1297,6 +1304,13 @@ export const ui = {
         'return.modal.alert_no_reason': 'PLEASE SELECT A REASON',
         'return.modal.alert_success': 'RETURN REQUEST SENT. PROTOCOL HAS BEEN ACTIVATED.',
         'return.modal.alert_error': 'PROTOCOL ERROR: {error}',
+        'modal.confirm': 'Confirm',
+        'modal.cancel': 'Cancel',
+        'modal.accept': 'Accept',
+        'modal.attention': 'Attention',
+        'modal.error': 'Error',
+        'order.action.cancel_title': 'Cancel Order',
+        'order.action.cancel_success_title': 'Order Cancelled Successfully',
     },
 } as const;
 

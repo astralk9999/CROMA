@@ -77,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
         return new Response(JSON.stringify({ success: true, message: `Test email (${type}) sent to ${targetEmail}` }), { status: 200 });
 
     } catch (error: any) {
-        void 0('Test email error:', error);
+        console.error('Test email error:', error);
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 };

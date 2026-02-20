@@ -213,7 +213,7 @@ const redirect = Astro.url.searchParams.get('redirect') || '/';
 
         if (error) throw error;
       } catch (error: any) {
-        void 0('OAuth error:', error);
+        console.error('OAuth error:', error);
         showStatus(error.message || 'Error al iniciar sesión con Google', true);
       }
     });
@@ -257,7 +257,7 @@ const redirect = Astro.url.searchParams.get('redirect') || '/';
           window.location.href = `/auth/login?message=Cuenta creada exitosamente. Por favor inicia sesión.&redirect=${encodeURIComponent(redirect)}`;
         }, 2000);
       } catch (error: any) {
-        void 0('Registration error:', error);
+        console.error('Registration error:', error);
         showStatus(error.message || 'Error al crear la cuenta', true);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Crear Cuenta';

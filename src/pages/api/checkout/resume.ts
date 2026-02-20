@@ -2,7 +2,12 @@ import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+    console.error('CRITICAL: STRIPE_SECRET_KEY is not configured');
+}
+
+const stripe = new Stripe(stripeKey || '', {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
@@ -105,7 +110,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             headers: { 'Content-Type': 'application/json' },
         });
     } catch (error: any) {
-        void 0('Resume payment error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        console.error('Resume payment error:', error);
+        return new Response(JSON.stringify({ error: 'Error reanudando el pago' }), { status: 500 });
     }
 };

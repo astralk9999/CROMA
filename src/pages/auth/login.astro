@@ -182,7 +182,7 @@ const redirect = Astro.url.searchParams.get('redirect') || '/';
 
         if (error) throw error;
       } catch (error: any) {
-        void 0('OAuth error:', error);
+        console.error('OAuth error:', error);
         showStatus(error.message || 'Error al iniciar sesión con Google', true);
       }
     });
@@ -228,7 +228,7 @@ const redirect = Astro.url.searchParams.get('redirect') || '/';
           window.location.href = redirect || '/';
         }
       } catch (error: any) {
-        void 0('Login error:', error);
+        console.error('Login error:', error);
         showStatus(error.message || 'Error al iniciar sesión', true);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Iniciar Sesión';

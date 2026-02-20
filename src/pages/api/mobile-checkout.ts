@@ -2,7 +2,12 @@ import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY, {
+const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+    console.error('CRITICAL: STRIPE_SECRET_KEY is not configured');
+}
+
+const stripe = new Stripe(stripeKey || '', {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
@@ -13,7 +18,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         if (!items || items.length === 0) return new Response(JSON.stringify({ error: 'No items' }), { status: 400 });
 
-        // User Resolution (similar to checkout.ts)
+        // User Resolution
         let userId = paramUserId;
         let customerEmail = email || shippingAddress?.email;
 
@@ -25,21 +30,25 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             }
         }
 
-        // Guest handling fallback (simplified for mobile)
+        // Guest handling: use env var or profile lookup (no listUsers!)
         if (!userId) {
-            // For mobile, we might just allow null or create guest
-            // Adapting logic from checkout.ts:
-            const GUEST_ACCOUNT_EMAIL = 'guest@croma.shop';
-            // If guest, we just assign to the Guest User ID if we can find it
-            // Or leave user_id null if DB allows. checkout.ts ensures user_id is set.
-            // We will query the guest user.
-            const { data } = await supabaseAdmin.from('users').select('id').eq('email', GUEST_ACCOUNT_EMAIL).single();
-            // Note: 'users' table might not be accessible, usually auth.users. 
-            // checkout.ts used signIn to get ID. We'll skip complex guest auth for now and try to insert with null if allowed, or fail.
-            // Accessing auth.users directly via admin:
-            const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-            const guestUser = users.find(u => u.email === GUEST_ACCOUNT_EMAIL);
-            if (guestUser) userId = guestUser.id;
+            const guestUserId = import.meta.env.GUEST_USER_ID;
+            if (guestUserId) {
+                userId = guestUserId;
+            } else {
+                const { data: guestProfile } = await supabaseAdmin
+                    .from('profiles')
+                    .select('id')
+                    .eq('email', 'guest@croma.shop')
+                    .single();
+
+                if (guestProfile) {
+                    userId = guestProfile.id;
+                } else {
+                    console.error('Guest user not found. Set GUEST_USER_ID env var.');
+                    return new Response(JSON.stringify({ error: 'Error en sistema de invitados' }), { status: 500 });
+                }
+            }
         }
 
         // Calculate Amount
@@ -53,12 +62,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 status: 'pending',
                 total_amount: amount / 100,
                 shipping_address: shippingAddress,
-                platform: 'mobile_app'
             })
             .select()
             .single();
 
-        if (orderError) throw new Error(`Order create failed: ${orderError.message}`);
+        if (orderError) {
+            console.error('Order create failed:', orderError);
+            return new Response(JSON.stringify({ error: 'Error creando el pedido' }), { status: 500 });
+        }
 
         // 2. Create Order Items
         const orderItems = items.map((item: any) => ({
@@ -71,23 +82,59 @@ export const POST: APIRoute = async ({ request, cookies }) => {
             price: item.price
         }));
 
-        await supabaseAdmin.from('order_items').insert(orderItems);
+        const { error: itemsError } = await supabaseAdmin.from('order_items').insert(orderItems);
 
-        // 3. Create Payment Intent
+        if (itemsError) {
+            console.error('Order items creation error:', itemsError);
+            await supabaseAdmin.from('orders').delete().eq('id', order.id);
+            return new Response(JSON.stringify({ error: 'Error creando los items del pedido' }), { status: 500 });
+        }
+
+        // 3. Reserve Stock (same logic as checkout.ts)
+        const decrementedItems: any[] = [];
+        for (const item of items) {
+            const { data: stockResult, error: stockError } = await supabaseAdmin
+                .rpc('decrement_stock', {
+                    p_product_id: item.id,
+                    p_size: item.size,
+                    p_quantity: item.quantity
+                });
+
+            if (stockError || (stockResult && !stockResult.success)) {
+                console.error(`Stock reservation failed for ${item.name}:`, stockError || stockResult);
+                // Rollback previously decremented stock
+                for (const prev of decrementedItems) {
+                    try {
+                        await supabaseAdmin.rpc('decrement_stock', {
+                            p_product_id: prev.id,
+                            p_size: prev.size,
+                            p_quantity: -prev.quantity
+                        });
+                    } catch (restoreErr) {
+                        console.error('Stock restore failed:', restoreErr);
+                    }
+                }
+                await supabaseAdmin.from('order_items').delete().eq('order_id', order.id);
+                await supabaseAdmin.from('orders').delete().eq('id', order.id);
+                return new Response(JSON.stringify({ error: `Sin stock suficiente para ${item.name} (${item.size})` }), { status: 400 });
+            }
+            decrementedItems.push(item);
+        }
+
+        // 4. Create Payment Intent
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount,
             currency: 'eur',
-            customer: undefined, // We could create a customer object here
             metadata: {
                 order_id: order.id,
                 user_id: userId || 'guest'
             },
-            payment_method_types: ['card'], // Add others if needed
+            payment_method_types: ['card'],
         });
 
-        // 4. Update Order with PI ID
+        // 5. Update Order with PI ID
         await supabaseAdmin.from('orders').update({
-            notes: { stripe_payment_intent: paymentIntent.id }
+            notes: JSON.stringify({ stripe_payment_intent: paymentIntent.id })
         }).eq('id', order.id);
 
         return new Response(JSON.stringify({
@@ -96,6 +143,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         }), { status: 200 });
 
     } catch (e: any) {
-        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+        console.error('Mobile checkout error:', e);
+        return new Response(JSON.stringify({ error: 'Error procesando el pago móvil' }), { status: 500 });
     }
 };

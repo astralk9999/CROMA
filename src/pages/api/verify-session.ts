@@ -4,7 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@lib/supabase-admin';
 import { sendOrderConfirmationEmail } from '@lib/email';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+    console.error('CRITICAL: STRIPE_SECRET_KEY is not configured');
+}
+
+const stripe = new Stripe(stripeKey || '', {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
@@ -87,6 +92,6 @@ export const GET: APIRoute = async ({ request }) => {
         }), { status: 200 });
     } catch (error: any) {
         console.error('Verify Session Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ error: 'Error verificando la sesión de pago' }), { status: 500 });
     }
 };

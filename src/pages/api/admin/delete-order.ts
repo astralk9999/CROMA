@@ -28,10 +28,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         console.log('[PROX] Iniciando borrado:', orderId);
 
-        // 2. Execute Deletion via Admin RPC with Hard Bypass
+        // 2. Execute Deletion via Admin RPC
         const { data, error } = await supabaseAdmin.rpc('admin_delete_order', {
-            p_order_id: orderId,
-            p_admin_bypass: 'SECURE_SERVER_BYPASS'
+            p_order_id: orderId
         });
 
 
@@ -58,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         console.error('[PROX] Error crítico:', err);
         return new Response(JSON.stringify({
             success: false,
-            message: err.message || 'Error interno del servidor'
+            message: 'Error interno del servidor'
         }), { status: 500 });
     }
 };

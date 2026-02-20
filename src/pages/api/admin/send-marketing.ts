@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../../../lib/supabase-admin';
 import { sendMarketingEmail } from '../../../lib/email';
+import { MarketingService } from '../../../lib/marketing-service';
 
 export const POST: APIRoute = async ({ request, locals }) => {
     // 1. Authorization Check
@@ -89,50 +90,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }
         }
 
-        // 4. Send Emails in Batches (to avoid server timeouts)
-        const BATCH_SIZE = 50;
-        const BATCH_DELAY_MS = 1000;
-
-        let results = {
-            total: uniqueRecipients.length,
-            sent: 0,
-            failed: 0
-        };
-
-        for (let i = 0; i < uniqueRecipients.length; i += BATCH_SIZE) {
-            const batch = uniqueRecipients.slice(i, i + BATCH_SIZE);
-
-            const batchResults = await Promise.all(
-                batch.map(async (recipient) => {
-                    const result = await sendMarketingEmail(
-                        recipient.email,
-                        subject,
-                        title,
-                        body,
-                        ctaLink,
-                        ctaText,
-                        productsData,
-                        !!showStock,
-                        recipient.name,
-                        couponData?.code,
-                        couponData?.discount
-                    );
-                    return result?.success;
-                })
-            );
-
-            batchResults.forEach(success => {
-                if (success) results.sent++;
-                else results.failed++;
-            });
-
-            if (i + BATCH_SIZE < uniqueRecipients.length) {
-                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
-            }
-        }
+        // 4. Send Emails via MarketingService (Refactor P1: SRP/Batching)
+        const results = await MarketingService.sendCampaign(uniqueRecipients, {
+            subject,
+            title,
+            body,
+            ctaLink,
+            ctaText,
+            products: productsData,
+            showStock: !!showStock,
+            couponCode: couponData?.code,
+            couponDiscount: couponData?.discount
+        }, {
+            batchSize: 50,
+            delayMs: 1000
+        });
 
         // 5. Record History
-        await supabaseAdmin.from('marketing_campaigns').insert({
+        const { error: historyError } = await supabaseAdmin.from('marketing_campaigns').insert({
             subject,
             title,
             body,
@@ -146,6 +121,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
             coupon_code: couponData?.code,
             coupon_discount: couponData?.discount
         });
+
+        if (historyError) {
+            console.error('Failed to record campaign history:', historyError);
+        }
 
         return new Response(JSON.stringify({
             success: true,

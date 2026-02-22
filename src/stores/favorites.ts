@@ -33,6 +33,19 @@ if (typeof window !== 'undefined') {
             syncFavoritesWithSupabase();
         }
     });
+
+    // Listen for auth changes to clear local storage on logout
+    supabase.auth.onAuthStateChange((event, session) => {
+        console.log(`[Favorites Store] Auth event: ${event}`);
+        if (event === 'SIGNED_OUT') {
+            console.log('[Favorites Store] User signed out, clearing local favorites');
+            localFavorites.set([]);
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            if (session) {
+                syncFavoritesWithSupabase();
+            }
+        }
+    });
 } else {
     storeReady.set(true);
 }

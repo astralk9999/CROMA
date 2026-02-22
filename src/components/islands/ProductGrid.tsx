@@ -87,8 +87,12 @@ export default function ProductGrid({
     };
 
     useEffect(() => {
+        // Only start the interval if we have messages and the component is not yet content-ready
+        if (!messages || messages.length === 0 || showContent) return;
+
         const messageInterval = setInterval(() => {
             setLoadingMessage(prev => {
+                if (messages.length <= 1) return messages[0];
                 let next;
                 do {
                     next = messages[Math.floor(Math.random() * messages.length)];
@@ -97,16 +101,18 @@ export default function ProductGrid({
             });
         }, 4000);
 
+        return () => clearInterval(messageInterval);
+    }, [messages, showContent]);
+
+    useEffect(() => {
         const mountTimer = setTimeout(() => {
             setIsMounted(true);
-            setTimeout(() => setShowContent(true), 50);
+            const contentTimer = setTimeout(() => setShowContent(true), 150);
+            return () => clearTimeout(contentTimer);
         }, 200);
 
-        return () => {
-            clearInterval(messageInterval);
-            clearTimeout(mountTimer);
-        };
-    }, [messages]);
+        return () => clearTimeout(mountTimer);
+    }, []);
 
     return (
         <div className="relative min-h-[400px]">

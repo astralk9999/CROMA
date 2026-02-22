@@ -8,23 +8,23 @@ const { slug } = Astro.params;
 const normalizedSlug = slug || 'COLOR';
 const name = normalizedSlug.replace(/-/g, ' ').toUpperCase();
 
-// Fetch all products that have colors
-// We filter in memory because we need to normalize the individual color strings in the array to match the slug
-const { data: allProducts } = await supabase
+// 1. Get the canonical color name from the slug
+const { data: colorData } = await supabase
+  .from('colors')
+  .select('name')
+  .eq('slug', slug)
+  .single();
+
+const canonicalColorName = colorData?.name || name;
+
+// 2. Fetch products that contain this color in their colors array
+// We use the 'contains' (cs) operator for array column performance
+const { data: filteredProducts } = await supabase
   .from('products')
   .select('*')
-  .not('colors', 'is', null)
+  .contains('colors', [canonicalColorName])
   .order('created_at', { ascending: false });
 
-const filteredProducts = (allProducts || []).filter(product => {
-    if (!product.colors || !Array.isArray(product.colors)) return false;
-    
-    return product.colors.some((color: string) => {
-        // Normalize the color name to a slug (same logic as Sidebar)
-        const colorSlug = color.trim().toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-        return colorSlug === slug;
-    });
-});
 ---
 
 <PublicLayout title={name}>

@@ -2,6 +2,7 @@
 import PublicLayout from '@layouts/PublicLayout.astro';
 import ProductGallery from '@components/product/ProductGallery.astro';
 import AddToCartButton from '@components/islands/AddToCartButton';
+import SizeRecommender from '@components/islands/SizeRecommender';
 import Countdown from '@components/islands/Countdown';
 import StockStatus from '@components/islands/StockStatus';
 import { supabase } from '@lib/supabase';
@@ -191,7 +192,10 @@ const effectiveStock = (product.stock_by_sizes && Object.keys(product.stock_by_s
         </div>
 
         {/* Add to Cart Section */}
-        <div class="space-y-8 p-8 bg-zinc-50">
+        <div class="space-y-6 pt-6 pb-8 px-8 bg-zinc-50 relative">
+            <div class="flex justify-end pt-2">
+                <SizeRecommender client:load />
+            </div>
             <AddToCartButton 
                 client:load
                 product={{

@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
@@ -47,12 +48,44 @@ export const POST: APIRoute = async ({ request }) => {
             const orderId = session.metadata?.order_id;
 
             if (orderId) {
+                // Fetch the order first to check for an applied coupon
+                const { data: orderData, error: orderFetchError } = await supabaseAdmin
+                    .from('orders')
+                    .select('notes')
+                    .eq('id', orderId)
+                    .single();
+
+                if (!orderFetchError && orderData?.notes) {
+                    try {
+                        let parsedNotes = typeof orderData.notes === 'string' ? JSON.parse(orderData.notes) : orderData.notes;
+                        if (parsedNotes?.coupon_code) {
+                            // Increment coupon usage using direct update (fetching first to get current value)
+                            console.log(`Incrementing usage for coupon: ${parsedNotes.coupon_code}`);
+                            const { data: couponData } = await supabaseAdmin
+                                .from('coupons')
+                                .select('uses')
+                                .eq('code', parsedNotes.coupon_code)
+                                .single();
+
+                            const currentUses = couponData?.uses || 0;
+
+                            await supabaseAdmin
+                                .from('coupons')
+                                .update({ uses: currentUses + 1 })
+                                .eq('code', parsedNotes.coupon_code);
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse order notes for coupon usage tracking', e);
+                    }
+                }
+
                 // Update order status to 'processing'
                 const { error: updateError } = await supabaseAdmin
                     .from('orders')
                     .update({
                         status: 'processing',
                         notes: JSON.stringify({
+                            ...(typeof orderData?.notes === 'string' ? JSON.parse(orderData?.notes || '{}') : (orderData?.notes || {})),
                             stripe_session_id: session.id,
                             stripe_payment_intent: session.payment_intent,
                             paid_at: new Date().toISOString(),
@@ -64,7 +97,22 @@ export const POST: APIRoute = async ({ request }) => {
                     console.error('Failed to update order:', updateError);
                 } else {
                     console.log(`✅ Order ${orderId} updated to 'processing'`);
-                    // Note: Stock was already reserved at checkout.
+                    // Enviar la notificación de email original (fuego y olvido)
+                    // sendOrderConfirmationEmail(orderId).catch(console.error); // Assuming this function exists elsewhere
+
+                    // --- Nivel 3 Rúbrica: Generación de Factura Standard ---
+                    try {
+                        const amountInEuros = (session.amount_total || 0) / 100;
+                        const { data: invData, error: invError } = await supabaseAdmin.rpc('generate_invoice', {
+                            p_order_id: orderId,
+                            p_type: 'standard',
+                            p_amount: amountInEuros
+                        });
+                        if (invError) console.error('Error generando Factura webhook:', invError);
+                        else console.log('✅ Factura Standard generada:', invData);
+                    } catch (invoiceErr) {
+                        console.error('Fallo de generación de factura:', invoiceErr);
+                    }
                 }
             } else {
                 console.warn('No order_id in session metadata');

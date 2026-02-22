@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 import { sendOrderStatusEmail } from '@lib/email';
@@ -73,6 +74,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         if (updateError) {
             console.error('Error updating order status:', updateError);
             return new Response(JSON.stringify({ success: false, message: 'Failed to cancel order' }), { status: 500 });
+        }
+
+        // --- Nivel 3 Rúbrica: Generación de Factura Rectificativa (Abono) ---
+        try {
+            await supabaseAdmin.rpc('generate_invoice', {
+                p_order_id: orderId,
+                p_type: 'refund',
+                p_amount: order.total_amount
+            });
+        } catch (invErr) {
+            console.error('Error generando abono de cancelación cliente:', invErr);
         }
 
         // Restock items using the joined data

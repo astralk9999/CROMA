@@ -114,7 +114,7 @@ export const ui = {
         'nav.help.shipping': 'ENVÍOS Y DEVOLUCIONES',
         'common.help_center': 'CENTRO_DE_AYUDA',
         'home.newsletter.title': 'Unete a la Resistencia',
-        'home.newsletter.subtitle': 'Consigue acceso exclusivo a los próximos drops y un 15% de descuento',
+        'home.newsletter.subtitle': 'Consigue acceso exclusivo a los próximos drops y un 10% de descuento',
         'home.newsletter.placeholder': 'TU@EMAIL.COM',
         'home.newsletter.join': 'UNIRSE',
         'footer.description': 'Moda urbana premium para la era moderna.',

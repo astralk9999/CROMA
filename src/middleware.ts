@@ -55,9 +55,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // Admin route protection
-  if (url.pathname.startsWith('/admin')) {
-    if (url.pathname === '/admin/login') {
+  // Admin route protection (Frontend & API)
+  if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/api/admin')) {
+    if (url.pathname === '/admin/login' || url.pathname === '/api/admin/login') {
       return next();
     }
 

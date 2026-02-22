@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
@@ -71,8 +72,9 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
             }))
         }), { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[API Returnables] Error:', err);
-        return new Response(JSON.stringify({ success: false, message: err.message }), { status: 500 });
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return new Response(JSON.stringify({ success: false, message: errorMessage }), { status: 500 });
     }
 };

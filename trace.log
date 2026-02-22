@@ -1,0 +1,10 @@
+TRACE: Creating order
+TRACE: Mapping order items
+TRACE: Inserting order items
+TRACE: Decrementing stock for items
+TRACE: Decrementing stock for item 60d14e32-f3bd-4e8e-9e8e-1e069c7d071b
+TRACE: Processing Stripe line items
+TRACE: Creating Stripe Session
+TRACE: Stripe Session Created: cs_test_a16AWlVvpN4y6EeL6ZCzbxmp52uW9Vpq267WdxdcqPV6cXIClxkngcsVfV
+TRACE: Updating Order with Session ID
+TRACE: Returning Success

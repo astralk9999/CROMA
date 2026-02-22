@@ -140,7 +140,7 @@ export async function sendWelcomeEmail(to: string, couponCode: string) {
                             <td align="center" style="padding: 24px;">
                                 <p style="margin: 0 0 8px 0; font-size: 9px; font-weight: 700; color: #888888; text-transform: uppercase; letter-spacing: 2px;">CÓDIGO EXCLUSIVO</p>
                                 <p style="margin: 0; font-family: monospace; font-size: 28px; font-weight: 700; color: #000000; letter-spacing: 2px;">${couponCode}</p>
-                                <p style="margin: 12px 0 0 0; font-size: 10px; color: #666666;">15% OFF · Válido 30 días</p>
+                                <p style="margin: 12px 0 0 0; font-size: 10px; color: #666666;">10% OFF · Válido 30 días</p>
                             </td>
                         </tr>
                     </table>

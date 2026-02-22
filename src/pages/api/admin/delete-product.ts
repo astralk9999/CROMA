@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
@@ -53,11 +54,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
             message: 'Producto eliminado correctamente'
         }), { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[PROXY] Error crítico en API de borrado:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error interno del servidor';
         return new Response(JSON.stringify({
             success: false,
-            message: err.message || 'Error interno del servidor'
+            message: errorMessage
         }), { status: 500 });
     }
 };

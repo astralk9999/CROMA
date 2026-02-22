@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
@@ -55,12 +56,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
             message: 'Usuario actualizado correctamente.'
         }), { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[API Update User] Critical Error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error interno en el servidor';
         return new Response(JSON.stringify({
             success: false,
             message: 'Error crítico en el servidor.',
-            error: err.message
+            error: errorMessage
         }), { status: 500 });
     }
 };

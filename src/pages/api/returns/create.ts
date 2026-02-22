@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 
@@ -105,11 +106,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
             message: 'Solicitud de devolución creada correctamente'
         }), { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[API Returns] Error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error interno';
         return new Response(JSON.stringify({
             success: false,
-            message: err.message || 'Error interno'
+            message: errorMessage
         }), { status: 500 });
     }
 };

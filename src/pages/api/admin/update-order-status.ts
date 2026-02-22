@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 import { sendOrderStatusEmail } from '@lib/email';
@@ -75,6 +76,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
             }), { status: 500 });
         }
 
+        // --- NEW: Restore Stock if Cancelled ---
+        if (status === 'cancelled') {
+            try {
+                await supabaseAdmin.rpc('restore_stock', { p_order_id: orderId });
+                console.log(`[Admin API] Stock restored for cancelled order: ${orderId}`);
+
+                // --- Nivel 3 Rúbrica: Generar factura rectificativa (abono) al cancelar ---
+                const { data: currentOrder } = await supabaseAdmin.from('orders').select('total_amount').eq('id', orderId).single();
+                if (currentOrder) {
+                    await supabaseAdmin.rpc('generate_invoice', {
+                        p_order_id: orderId,
+                        p_type: 'refund',
+                        p_amount: currentOrder.total_amount
+                    });
+                    console.log(`[Admin API] Refund invoice generated for order: ${orderId}`);
+                }
+            } catch (restockError) {
+                console.error('[Admin API] Error restocking items during cancellation:', restockError);
+            }
+        }
+
         // 5. Trigger Email Notification
         // Use profile email or fallback to shipping_address email for guests
         const customerEmail = order.profiles?.email || (order.shipping_address as any)?.email;
@@ -102,7 +124,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             message: 'Estado del pedido actualizado y notificación enviada'
         }), { status: 200 });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Update status error:', err);
         return new Response(JSON.stringify({
             success: false,

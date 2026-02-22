@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 import { sendRecentlyViewedEmail } from '@lib/email';
@@ -68,8 +69,9 @@ export const GET: APIRoute = async ({ request }) => {
             try {
                 await sendRecentlyViewedEmail(email, products);
                 results.push({ email, status: 'Sent' });
-            } catch (err: any) {
-                results.push({ email, status: 'Failed', error: err.message });
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                results.push({ email, status: 'Failed', error: errorMessage });
             }
         }
 

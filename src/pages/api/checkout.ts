@@ -1,6 +1,8 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
+import { RateLimiter } from '@lib/rate-limit';
 
 const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
 if (!stripeKey) {
@@ -33,6 +35,15 @@ interface ShippingAddress {
 
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {
+        const ip = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip') || 'unknown';
+        const rateLimit = RateLimiter.check(`checkout_${ip}`, 10, 60000); // 10 checkouts per minute per IP
+
+        if (!rateLimit.success) {
+            return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+                status: 429, headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const body = await request.json();
         const { items, shippingAddress, origin, guestEmail, couponCode } = body as {
             items: CartItem[];

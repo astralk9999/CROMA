@@ -1,9 +1,20 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '@lib/supabase-admin';
 import { sendWelcomeEmail } from '@lib/email';
+import { RateLimiter } from '@lib/rate-limit';
 
 export const POST: APIRoute = async ({ request }) => {
     try {
+        const ip = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip') || 'unknown';
+        const rateLimit = RateLimiter.check(`newsletter_${ip}`, 5, 60000); // 5 requests per minute per IP
+
+        if (!rateLimit.success) {
+            return new Response(JSON.stringify({ error: 'Demasiadas peticiones. Inténtalo más tarde.' }), {
+                status: 429, headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const body = await request.json();
         const { email } = body;
 
@@ -55,7 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
                 .insert({
                     code: couponCode,
                     discount_type: 'percentage',
-                    value: 15,
+                    value: 10,
                     is_active: true,
                     max_uses: 1,
                     expires_at: expiresAt.toISOString()

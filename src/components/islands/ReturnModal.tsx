@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { uploadToCloudinaryClient } from '../../services/client-upload';
 
 interface ReturnModalProps {
     isOpen: boolean;
@@ -97,29 +98,7 @@ export default function ReturnModal({ isOpen, onClose, orderId, translations }: 
         setPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    const uploadToCloudinary = async (files: File[]) => {
-        const cloudName = (import.meta as any).env.PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const preset = (import.meta as any).env.PUBLIC_CLOUDINARY_PRESET || 'croma_uploads';
-        const urls: string[] = [];
-
-        for (let i = 0; i < files.length; i++) {
-            const formData = new FormData();
-            formData.append('file', files[i]);
-            formData.append('upload_preset', preset);
-            formData.append('folder', 'croma/returns');
-
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!res.ok) throw new Error('Error al subir imágenes');
-            const data = await res.json();
-            urls.push(data.secure_url);
-            setUploadProgress(Math.round(((i + 1) / files.length) * 100));
-        }
-        return urls;
-    };
+    // The uploadToCloudinary function was refactored to an external service
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -136,7 +115,7 @@ export default function ReturnModal({ isOpen, onClose, orderId, translations }: 
 
         setLoading(true);
         try {
-            const imageUrls = await uploadToCloudinary(images);
+            const imageUrls = await uploadToCloudinaryClient(images, setUploadProgress);
 
             const response = await fetch('/api/returns/create', {
                 method: 'POST',
@@ -159,8 +138,9 @@ export default function ReturnModal({ isOpen, onClose, orderId, translations }: 
             setTimeout(() => {
                 window.location.reload();
             }, 2500);
-        } catch (err: any) {
-            (window as any).showIndustrialAlert(translations.alertError.replace('{error}', err.message), 'error');
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            (window as any).showIndustrialAlert(translations.alertError.replace('{error}', errorMessage), 'error');
         } finally {
             setLoading(false);
             setUploadProgress(0);

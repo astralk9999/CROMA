@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
 
 export default defineConfig({
-  output: 'server',
+  output: 'hybrid',
   adapter: node({
     mode: 'standalone'
   }),

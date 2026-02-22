@@ -203,9 +203,14 @@ export async function sendOrderConfirmationEmail(
         <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
             <tr>
                 <td align="center" style="padding-bottom: 32px;">
-                    <div style="width: 40px; height: 40px; border: 1px solid #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-                        <span style="font-size: 18px; line-height: 40px;">✓</span>
-                    </div>
+                    <!-- Centered Circle with Table for cross-client support -->
+                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 16px auto;">
+                        <tr>
+                            <td align="center" valign="middle" width="40" height="40" style="width: 40px; height: 40px; border: 1px solid #000000; border-radius: 50%; background-color: #ffffff; text-align: center;">
+                                <span style="font-family: 'Inter', sans-serif; font-size: 20px; font-weight: 700; color: #000000; line-height: 40px; display: block; height: 40px; width: 40px; margin: 0 auto; text-transform: uppercase;">✓</span>
+                            </td>
+                        </tr>
+                    </table>
                     <h2 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 900; color: #000000; text-transform: uppercase; letter-spacing: 1px;">Confirmado</h2>
                     <p style="margin: 8px 0 0 0; font-family: monospace; font-size: 12px; color: #666666;">#${orderId.slice(0, 8).toUpperCase()}</p>
                 </td>

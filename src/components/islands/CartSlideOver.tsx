@@ -127,7 +127,6 @@ export default function CartSlideOver({ labels }: CartSlideOverProps) {
               </div>
               <a
                 href="/checkout"
-                onClick={closeCart}
                 className="block w-full py-4 bg-black text-white font-black uppercase tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
                 {labels?.checkout || 'Proceder al Pago'}

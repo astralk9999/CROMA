@@ -1,11 +1,13 @@
-# Guía de Configuración Paso a Paso - FashionMarket
+# Guía de Configuración Paso a Paso - Urban Collective | CROMA
 
-Esta guía te llevará desde cero hasta tener tu tienda online funcionando completamente.
+Esta guía te llevará desde cero hasta tener tu tienda online funcionando completamente con todas las integraciones modernas.
 
 ## 📋 Pre-requisitos
 
 - Node.js 18+ instalado
-- Cuenta en [Supabase](https://supabase.com) (gratis)
+- Cuenta en [Supabase](https://supabase.com) (base de datos y autenticación)
+- Cuenta en [Cloudinary](https://cloudinary.com) (gestión de imágenes)
+- Cuenta en [Stripe](https://stripe.com) (procesamiento de pagos)
 - Editor de código (VS Code recomendado)
 
 ## 🔧 Paso 1: Instalación de Dependencias
@@ -16,216 +18,125 @@ Abre una terminal en la carpeta del proyecto y ejecuta:
 npm install
 ```
 
-Esto instalará todas las dependencias necesarias:
-- Astro 5.0
-- React 18
-- Tailwind CSS
-- Supabase Client
+Esto instalará todas las dependencias principales del proyecto de CROMA:
+- Astro 5.16+
+- React 18+
+- Tailwind CSS 3.4+
+- Supabase SDK
+- Stripe SDK
+- Cloudinary SDK
 - Nano Stores
+- Nodemailer
 
-## 🗄️ Paso 2: Configurar Supabase
+## 🗄️ Paso 2: Configurar Supabase (Base de Datos)
 
 ### 2.1 Crear Proyecto
 
 1. Ve a [supabase.com](https://supabase.com)
 2. Crea una cuenta o inicia sesión
 3. Haz clic en "New Project"
-4. Completa:
-   - **Name**: FashionMarket
-   - **Database Password**: (guárdala de forma segura)
-   - **Region**: Elige la más cercana a ti
-5. Haz clic en "Create new project" y espera ~2 minutos
+4. Completa la información y crea el proyecto.
 
-### 2.2 Ejecutar el Esquema de Base de Datos
+### 2.2 Desplegar las Migraciones de la Base de Datos
 
-1. En tu proyecto de Supabase, ve a "SQL Editor" (en el menú lateral)
-2. Haz clic en "New query"
-3. Abre el archivo `supabase/schema.sql` de este proyecto
-4. Copia TODO el contenido y pégalo en el editor SQL de Supabase
-5. Haz clic en "Run" (botón verde inferior derecha)
-6. Deberías ver: "Success. No rows returned"
+En este proyecto se utilizan múltiples archivos de migración (ubicados en `supabase/migrations/`).
+La forma recomendada de desplegar la base de datos es mediante la CLI oficial de Supabase.
 
-✅ Esto creará:
-- Tabla `categories` con 4 categorías predefinidas
-- Tabla `products`
-- Índices para optimización
-- Políticas de seguridad RLS
-- Triggers de actualización automática
+1. Instala el CLI de Supabase si no lo tienes:
+   ```bash
+   npm install -g supabase
+   ```
+2. Vincula tu proyecto local con el remoto de Supabase:
+   ```bash
+   supabase link --project-ref tu-project-id
+   ```
+3. Empuja todas las migraciones para crear las tablas y políticas de seguridad:
+   ```bash
+   supabase db push
+   ```
 
-### 2.3 Configurar Storage para Imágenes
+✅ Esto creará automáticamente todas las tablas necesarias (`products`, `categories`, `brands`, orders, etc.) y sus correspondientes reglas (RLS).
 
-1. En Supabase, ve a "Storage" (menú lateral)
-2. Haz clic en "Create a new bucket"
-3. Configuración:
-   - **Name**: `product-images`
-   - **Public bucket**: ✅ ACTIVADO (importante)
-   - **File size limit**: 5MB
-   - **Allowed MIME types**: `image/jpeg,image/png,image/webp`
-4. Haz clic en "Create bucket"
+### 2.3 Obtener Credenciales de Supabase
 
-#### Configurar Políticas de Storage
-
-1. Haz clic en tu bucket `product-images`
-2. Ve a la pestaña "Policies"
-3. Crea las siguientes políticas haciendo clic en "New Policy":
-
-**Política 1: Subida de imágenes**
-- **Policy name**: Authenticated users can upload
-- **Policy definition**: 
-  ```sql
-  auth.role() = 'authenticated'
-  ```
-- **Allowed operations**: INSERT
-- Guarda
-
-**Política 2: Actualizar imágenes**
-- **Policy name**: Authenticated users can update
-- **Policy definition**: 
-  ```sql
-  auth.role() = 'authenticated'
-  ```
-- **Allowed operations**: UPDATE
-- Guarda
-
-**Política 3: Eliminar imágenes**
-- **Policy name**: Authenticated users can delete
-- **Policy definition**: 
-  ```sql
-  auth.role() = 'authenticated'
-  ```
-- **Allowed operations**: DELETE
-- Guarda
-
-### 2.4 Obtener las Credenciales
-
-1. En Supabase, ve a "Project Settings" (icono engranaje)
-2. Ve a "API"
-3. Copia estos valores:
+1. En Supabase, ve a "Project Settings" (icono de engranaje) -> "API"
+2. Copia estos valores para el archivo `.env`:
    - **Project URL**
    - **anon public key**
    - **service_role key** (haz clic en "Reveal" para verla)
 
-## 🔑 Paso 3: Configurar Variables de Entorno
+## 🖼️ Paso 3: Configurar Cloudinary (Imágenes)
 
-1. En la carpeta del proyecto, copia el archivo de ejemplo:
+CROMA utiliza Cloudinary para optimizar y servir imágenes de productos.
+
+1. Crea tu cuenta en Cloudinary.
+2. Ve al "Dashboard" y anota tu `Cloud Name`, `API Key` y `API Secret`.
+3. Ve a "Settings" -> "Upload" y crea un nuevo "Upload Preset" llamado `croma_uploads`. 
+   - Configúralo como **"Unsigned"** si vas a permitir cargas desde el frontend directamente, o mantenlo "Signed" si se validan en el backend.
+
+## 💳 Paso 4: Configurar Stripe (Pagos)
+
+1. En tu Dashboard de Stripe, obtén tus claves API de prueba (modo "Test").
+2. Copia la `Secret key`.
+3. Si utilizas Webhooks, configura un Webhook en Stripe apuntando a tu endpoint (`/api/webhooks/stripe`) y copia el `Webhook secret`.
+
+## 🔑 Paso 5: Configurar Variables de Entorno
+
+1. Copia el archivo `.env.example` para crear tu `.env`:
    ```bash
    cp .env.example .env
    ```
-
-2. Abre el archivo `.env` y reemplaza con tus valores:
+2. Completa los valores copiados de los pasos anteriores:
    ```env
    PUBLIC_SUPABASE_URL=https://tu-proyecto-id.supabase.co
-   PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
+   SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-aqui
+
+   # Cloudinary
+   PUBLIC_CLOUDINARY_CLOUD_NAME=tu-cloud-name
+   PUBLIC_CLOUDINARY_PRESET=croma_uploads
+   CLOUDINARY_API_KEY=tu-api-key
+   CLOUDINARY_API_SECRET=tu-api-secret
+
+   # Stripe
+   STRIPE_SECRET_KEY=sk_test_tu-clave-aqui
+   STRIPE_WEBHOOK_SECRET=whsec_tu-webhook-secret-aqui
+
+   # Cron/Seguridad
+   CRON_SECRET=croma-email-cron-2026-x9kM2pL
    ```
 
-⚠️ **IMPORTANTE**: Nunca compartas tu `service_role_key` públicamente.
+⚠️ **IMPORTANTE**: ¡Nunca subas tu archivo `.env` a GitHub!
 
-## 👤 Paso 4: Crear Usuario Administrador
+## 👤 Paso 6: Crear Usuario Administrador
 
-1. En Supabase, ve a "Authentication" → "Users"
-2. Haz clic en "Add user" → "Create new user"
-3. Completa:
-   - **Email**: admin@fashionmarket.com (o el que prefieras)
-   - **Password**: (una contraseña segura)
-   - **Auto Confirm User**: ✅ ACTIVADO
-4. Haz clic en "Create user"
+1. En Supabase, ve a "Authentication" -> "Users"
+2. Haz clic en "Add user" -> "Create new user"
+3. Introduce un email (ej. admin@urban-croma.com) y contraseña.
+4. Auto-confirma el usuario.
+5. (Importante): Para que tenga privilegios de administrador, tendrás que asegurarte de que su rol en tu tabla o lógica de perfiles coincida con el requerido para el panel de administración.
 
-✅ Este usuario podrá acceder al panel de administración.
-
-## 🚀 Paso 5: Ejecutar la Aplicación
+## 🚀 Paso 7: Ejecutar la Aplicación
 
 ```bash
 npm run dev
 ```
 
-Deberías ver algo como:
-```
-🚀 astro v5.0.0 started in XXms
+La tienda estará disponible en `http://localhost:4321`.
 
-┃ Local    http://localhost:4321/
-┃ Network  use --host to expose
-```
+## 🧪 Pruebas Iniciales
 
-## 🧪 Paso 6: Probar la Aplicación
+1. **Catálogo**: Verifica que puedes acceder a la tienda en el navegador. (http://localhost:4321)
+2. **Panel Admin**: Ingresa a `/admin/login` e inicia sesión con el usuario que creaste.
+3. **Imágenes**: Intenta crear un producto de prueba en el panel y verifica que la subida a Cloudinary funcione correctamente.
+4. **Pagos (Opcional)**: Añade items al carrito y prueba el flujo de checkout con las tarjetas de prueba de Stripe.
 
-### Acceder a la Tienda Pública
-1. Abre http://localhost:4321
-2. Deberías ver el homepage (aunque sin productos todavía)
+## 🐛 Problemas Frecuentes
 
-### Acceder al Panel de Administración
-1. Abre http://localhost:4321/admin/login
-2. Inicia sesión con las credenciales del Paso 4
-3. Serás redirigido al Dashboard
-
-### Crear tu Primer Producto
-1. En el admin, ve a "Productos" → "Nuevo Producto"
-2. Completa el formulario:
-   - **Nombre**: Camisa Oxford Azul
-   - **Precio**: 89.99
-   - **Stock**: 10
-   - **Categoría**: Camisas
-   - **Tallas**: S, M, L, XL
-   - **Descripción**: Camisa elegante de algodón premium...
-   - **Destacado**: ✅ (para que aparezca en homepage)
-3. Arrastra algunas imágenes (puedes usar imágenes de prueba de internet)
-4. Haz clic en "Crear Producto"
-
-⚠️ **Nota sobre imágenes**: La función de subida a Supabase Storage requiere implementación adicional en el formulario. Por ahora, puedes añadir URLs directas de imágenes en el campo de imágenes.
-
-### Ver el Producto en la Tienda
-1. Ve a http://localhost:4321
-2. Deberías ver tu producto en "Productos Destacados"
-3. Haz clic para ver la página del producto
-4. Prueba añadir al carrito
-
-## ✅ Verificación Final
-
-Confirma que todo funciona:
-- [ ] Homepage se carga correctamente
-- [ ] Puedes ver productos (si creaste alguno)
-- [ ] Puedes acceder a /admin/login
-- [ ] Puedes iniciar sesión en el admin
-- [ ] El dashboard muestra estadísticas
-- [ ] Puedes crear/editar productos
-- [ ] El carrito funciona (añadir/quitar items)
-
-## 🐛 Solución de Problemas
-
-### Error: "Missing Supabase environment variables"
-- Verifica que el archivo `.env` existe en la raíz
-- Confirma que las variables están correctamente copiadas
-- Reinicia el servidor de desarrollo
-
-### Error de autenticación en /admin
-- Verifica que creaste un usuario en Supabase Authentication
-- Confirma que el usuario tiene "Email confirmed" en true
-- Prueba cerrar sesión y volver a iniciar
-
-### Las imágenes no se muestran
-- Confirma que el bucket `product-images` es público
-- Verifica las políticas de Storage
-- Comprueba que las URLs son accesibles
-
-### Error "Cannot find module"
-- Ejecuta `npm install` nuevamente
-- Elimina `node_modules` y `package-lock.json`, luego `npm install`
-
-## 📚 Próximos Pasos
-
-1. **Añadir más productos**: Crea un catálogo completo
-2. **Personalizar colores**: Edita `tailwind.config.mjs`
-3. **Añadir procesador de pagos**: Integrar Stripe
-4. **Optimizar imágenes**: Implementar carga automática a Storage
-5. **Deploy**: Subir a Vercel o Netlify
-
-## 🆘 Soporte
-
-Si encuentras problemas:
-1. Revisa la consola del navegador (F12) para errores
-2. Revisa la terminal donde corre `npm run dev`
-3. Consulta la documentación de [Astro](https://docs.astro.build) y [Supabase](https://supabase.com/docs)
+- **Errores de RLS en base de datos**: Verifica que hayas empujado TODAS las migraciones con `supabase db push`.
+- **Fallo en "Cannot find module"**: Ejecuta `npm install` nuevamente o borra `node_modules` y reinstala.
+- **Las imágenes de productos no se ven**: Revisa que tus credenciales de Cloudinary y el nombre del bucket de tu "preset" coincidan.
 
 ---
 
-¡Felicidades! Tu tienda FashionMarket debería estar funcionando. 🎉
+¡Disfruta construyendo y personalizando Urban Collective | CROMA! 🎉

@@ -18,6 +18,18 @@ FashionStore es una plataforma de comercio electrónico orientada a ofrecer una 
 - **Buscador en Tiempo Real (Live Search)**: Interfaz de filtrado inteligente desacoplada del _Document Object Model_ para indexar eficientemente categorías corporativas, marcas y perfiles de tallas.
 - **Recomendador Inteligente de Tallas**: Algoritmo modal algorítmico diseñado en una Isla React para sugerir a los clientes su talla basándose en sus métricas morfológicas (peso/altura).
 - **Procesamiento Legal Integral**: Generación dinámica y atómica de **Facturas (Invoices)** con soporte visual PDF/HTML. Expide facturas rectificativas o Abonos al devolver una prenda o tramitar cancelaciones, manteniendo el libro contable de la tienda inmaculado de cara al Fisco.
+- **Ecosistema Móvil Nativo**: Aplicación Flutter integrada que replica toda la lógica de negocio, pasarelas de pago y sincronización de favoritos en tiempo real.
+
+---
+
+## 📱 Mobile Application (Flutter)
+
+El ecosistema CROMA cuenta con una aplicación móvil dedicada diseñada para ofrecer la mejor experiencia en dispositivos iOS y Android:
+
+- **Sincronización Total**: Favoritos y perfiles compartidos con la web a través de Supabase.
+- **Admin Portal Móvil**: Panel de control industrial para gestionar el inventario y pedidos desde cualquier lugar.
+- **Diseño Ultra-Premium**: Animaciones `scroll-fading` y micro-interacciones de alto nivel.
+- **Repositorio**: [CROMA_APP](https://github.com/astralk9999/CROMA_APP)
 
 ---
 

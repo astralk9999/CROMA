@@ -2,6 +2,9 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@lib/supabase-admin';
+import type { APIRoute } from 'astro';
+import Stripe from 'stripe';
+import { supabaseAdmin } from '@lib/supabase-admin';
 
 const stripeKey = import.meta.env.STRIPE_SECRET_KEY;
 if (!stripeKey) {
@@ -12,12 +15,29 @@ const stripe = new Stripe(stripeKey || '', {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export const OPTIONS: APIRoute = async () => {
+    return new Response(null, {
+        status: 204,
+        headers: CORS_HEADERS,
+    });
+};
+
+
 export const POST: APIRoute = async ({ request, cookies }) => {
     try {
         const body = await request.json();
         const { items, shippingAddress, email, userId: paramUserId } = body;
 
-        if (!items || items.length === 0) return new Response(JSON.stringify({ error: 'No items' }), { status: 400 });
+        if (!items || items.length === 0) return new Response(JSON.stringify({ error: 'No items' }), { 
+            status: 400,
+            headers: CORS_HEADERS 
+        });
 
         // User Resolution
         let userId = paramUserId;
@@ -47,7 +67,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                     userId = guestProfile.id;
                 } else {
                     console.error('Guest user not found. Set GUEST_USER_ID env var.');
-                    return new Response(JSON.stringify({ error: 'Error en sistema de invitados' }), { status: 500 });
+                    return new Response(JSON.stringify({ error: 'Error en sistema de invitados' }), { 
+                        status: 500,
+                        headers: CORS_HEADERS
+                    });
+
                 }
             }
         }
@@ -69,7 +93,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
         if (orderError) {
             console.error('Order create failed:', orderError);
-            return new Response(JSON.stringify({ error: 'Error creando el pedido' }), { status: 500 });
+            return new Response(JSON.stringify({ error: 'Error creando el pedido' }), { 
+                status: 500,
+                headers: CORS_HEADERS
+            });
         }
 
         // 2. Create Order Items
@@ -88,7 +115,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         if (itemsError) {
             console.error('Order items creation error:', itemsError);
             await supabaseAdmin.from('orders').delete().eq('id', order.id);
-            return new Response(JSON.stringify({ error: 'Error creando los items del pedido' }), { status: 500 });
+            return new Response(JSON.stringify({ error: 'Error creando los items del pedido' }), { 
+                status: 500,
+                headers: CORS_HEADERS
+            });
         }
 
         // 3. Reserve Stock (same logic as checkout.ts)
@@ -117,7 +147,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
                 }
                 await supabaseAdmin.from('order_items').delete().eq('order_id', order.id);
                 await supabaseAdmin.from('orders').delete().eq('id', order.id);
-                return new Response(JSON.stringify({ error: `Sin stock suficiente para ${item.name} (${item.size})` }), { status: 400 });
+                return new Response(JSON.stringify({ error: `Sin stock suficiente para ${item.name} (${item.size})` }), { 
+                    status: 400,
+                    headers: CORS_HEADERS
+                });
             }
             decrementedItems.push(item);
         }
@@ -141,10 +174,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         return new Response(JSON.stringify({
             clientSecret: paymentIntent.client_secret,
             orderId: order.id
-        }), { status: 200 });
+        }), { 
+            status: 200,
+            headers: CORS_HEADERS
+        });
 
     } catch (e: any) {
         console.error('Mobile checkout error:', e);
-        return new Response(JSON.stringify({ error: 'Error procesando el pago móvil' }), { status: 500 });
+        return new Response(JSON.stringify({ error: 'Error procesando el pago móvil' }), { 
+            status: 500,
+            headers: CORS_HEADERS
+        });
     }
 };
